@@ -28,6 +28,8 @@ class VAR(Constant):
     MOTOR_ONE_MOVETO    = 'var:motor_one_moveto'
     MOTOR_TWO_MOVETO    = 'var:motor_two_moveto'
 
+
+
 class Core(object):
 
     def __init__(self, *args, **kwargs):
@@ -69,9 +71,10 @@ class Core(object):
         elif motor_name == 'two':
             self.monitor.update(VAR.MOTOR_TWO_MOVETO, int(value))
 
+
     def check_motor_pos(self,motor_name):
         if motor_name == 'one':
-            self.monitor.update(VAR.MOTOR_ONE_POS, int(1))
+            self.monitor.update(VAR.MOTOR_ONE_POS, int(3))
             print repr(self.monitor.get_value(VAR.MOTOR_ONE_POS))
         elif motor_name == 'two':
             self.monitor.update(VAR.MOTOR_TWO_POS, int(2))

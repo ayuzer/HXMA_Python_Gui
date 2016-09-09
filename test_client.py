@@ -1,6 +1,9 @@
 import os
 import inspect
 import sys
+import time
+
+
 
 #Import directories from settings
 import settings
@@ -20,7 +23,6 @@ for dir in settings.IMPORT_DIRS:
     if dir_real not in sys.path:
         sys.path.insert(0, dir_real)
 
-import SpecClient.SpecMotor as SpecMotor
 #
 #
 #
@@ -68,6 +70,11 @@ import SpecClient.SpecMotor as SpecMotor
 #
 # import socket
 
+import Spec
+import SpecMotor
+import SpecCounter
+
+
 serv_add = ('10.52.36.1',8585)
 serv_add_host = '10.52.36.1'
 serv_add_port = '8585'
@@ -87,12 +94,61 @@ serv_add_str = ''.join((serv_add_host,':',serv_add_port))
 #
 # print("sucess?",svr_head)
 motor_name = 'phi'
-server_name = serv_add_str
 
-import SpecMessage
 
-SpecMessage.message_with_reply('ct 1')
+Spec_test = Spec.Spec()
+SpecMotor_test = SpecMotor.SpecMotor()
+SpecCounter_test = SpecCounter.SpecCounter()
 
-print connection
+class test_client(object):
+    def __init__(self,*args, **kwargs):
+        self.debug = True
+        serv_add = ('10.52.36.1', 8585)
+        serv_add_host = '10.52.36.1'
+        serv_add_port = '8585'
+        serv_name = 'OPI1606-101'
+        serv_add_str = ''.join((serv_add_host, ':', serv_add_port))
+
+        self.server_name = serv_add_str
+        self.motor_name = 'phi'
+    def connect(self):
+        Spec.Spec.connectToSpec(Spec_test,self.server_name)
+        self.MotorMne = Spec.Spec.getMotorsMne(Spec_test)
+        self.MotorNames = Spec.Spec.getMotorsNames(Spec_test)
+        if self.debug == True:
+            print self.MotorNames
+            print self.MotorMne
+    def motor_connect(self,motor_name):
+        SpecMotor.SpecMotor.connectToSpec(SpecMotor_test,motor_name,self.server_name)
+        self.motor_pos = SpecMotor.SpecMotor.getPosition(SpecMotor_test)
+        if self.debug == True:
+            print self.motor_pos
+    def motor_move_rel(self,dist):
+        SpecMotor.SpecMotor.moveRelative(SpecMotor_test,dist)
+        self.motor_pos = SpecMotor.SpecMotor.getPosition(SpecMotor_test)
+        if self.debug == True:
+            print self.motor_pos
+    def counter_connect(self,count_name):
+        SpecCounter.SpecCounter.connectToSpec(SpecCounter_test,count_name,self.server_name)
+    def counter_count(self,time):
+        self.count = SpecCounter.SpecCounter.count(SpecCounter_test,time)
+        print self.count
+    def counter_read(self):
+        print SpecCounter.SpecCounter.getValue(SpecCounter_test)
+
+
+
+test = test_client()
+test.connect()
+# test.motor_connect('phi')
+# test.motor_move_rel(10)
+test.counter_connect('sec')
+test.counter_count(1)
+test.counter_connect('ic2')
+test.counter_read()
+test.counter_connect('pinf')
+test.counter_read()
+
+
 
 #serv.close()

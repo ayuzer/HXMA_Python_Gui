@@ -1,4 +1,6 @@
 IMPORT_DIRS = [
     "windows",
-    "utils"
+    "utils",
+	"spec_tools",
+	"spec_tools\\SpecClient"
 ]

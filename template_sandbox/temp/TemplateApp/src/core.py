@@ -53,7 +53,14 @@ class Core(object):
         # self._queue_timer.start()
 
     def move_motor(self,motor_name):
-        self.monitor.update(VAR.STATUS_MSG, "Moving Motor" + motor_name)
+        self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor_name)
+        if motor_name == 'one':
+            moveto =  self.monitor.get_value(VAR.MOTOR_ONE_MOVETO)
+        elif motor_name == 'two':
+            moveto =  self.monitor.get_value(VAR.MOTOR_TWO_MOVETO)
+        else:
+            moveto = 'UNDEFINED MOTOR'
+        print "moving motor "+ motor_name + " to " + repr(moveto)
 
 
     def set_motor_moveto(self,value,motor_name):
@@ -61,6 +68,14 @@ class Core(object):
             self.monitor.update(VAR.MOTOR_ONE_MOVETO, int(value))
         elif motor_name == 'two':
             self.monitor.update(VAR.MOTOR_TWO_MOVETO, int(value))
+
+    def check_motor_pos(self,motor_name):
+        if motor_name == 'one':
+            self.monitor.update(VAR.MOTOR_ONE_POS, int(1))
+            print repr(self.monitor.get_value(VAR.MOTOR_ONE_POS))
+        elif motor_name == 'two':
+            self.monitor.update(VAR.MOTOR_TWO_POS, int(2))
+            print repr(self.monitor.get_value(VAR.MOTOR_TWO_POS))
 
     # def handle_queue_timer(self):
     #
@@ -119,7 +134,6 @@ class Core(object):
     #
     def set_status(self, status_msg):
         self.monitor.update(VAR.STATUS_MSG, status_msg)
-
     # def set_pixel_x(self, value):
     #     self.monitor.update(VAR.X_PIXEL, int(value))
     #

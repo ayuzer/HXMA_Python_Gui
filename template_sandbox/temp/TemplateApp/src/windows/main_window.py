@@ -206,10 +206,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin):
         self.set_window_position()
         self.monitor.start()
     @decorator_busy_cursor
-    def handle_pushButton_motor_one_movego(self):
+    def handle_pushButton_motor_one_movego(self,dummy):
+        self.core.check_motor_pos('one')
         self.core.move_motor('one')
     @decorator_busy_cursor
-    def handle_pushButton_motor_two_movego(self):
+    def handle_pushButton_motor_two_movego(self,dummy):
+        self.core.check_motor_pos('two')
         self.core.move_motor('two')
 
     # @decorator_busy_cursor
@@ -269,8 +271,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin):
             PV.SYSTEM_TIME  : (self.label_system_time,  '{:s}',  12, True),
             VAR.STATUS_MSG  : (self.label_status_msg,   '{:s}',  12, True),
 #            VAR.QUEUE_SIZE  : (self.label_queue_size,   '{:,d}',  12, True),
-            VAR.MOTOR_ONE_POS  :  (self.label_motor_one_currpos,   '(:,d)',  12, True),
-            VAR.MOTOR_TWO_POS  :  (self.label_motor_two_currpos, '(:,d)', 12, True),
+            VAR.MOTOR_ONE_POS  :  (self.label_motor_one_pos,        '{:,d}',  12, True),
+            VAR.MOTOR_TWO_POS  :  (self.label_motor_two_pos,        '{:,d}', 12, True), #NOTE THAT THESE ARE {} brakets
         }
 
         for pv_name, data in label_map.iteritems():

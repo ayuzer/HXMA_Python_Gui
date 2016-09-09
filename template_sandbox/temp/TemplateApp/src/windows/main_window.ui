@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1072</width>
-    <height>616</height>
+    <width>786</width>
+    <height>581</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -85,7 +85,7 @@
                </spacer>
               </item>
               <item row="0" column="1">
-               <widget class="QLabel" name="label_motor_one_currpos">
+               <widget class="QLabel" name="label_motor_one_pos">
                 <property name="minimumSize">
                  <size>
                   <width>100</width>
@@ -125,7 +125,7 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QLabel" name="label_motor_two_currpos">
+               <widget class="QLabel" name="label_motor_two_pos">
                 <property name="minimumSize">
                  <size>
                   <width>100</width>
@@ -384,7 +384,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1072</width>
+     <width>786</width>
      <height>25</height>
     </rect>
    </property>

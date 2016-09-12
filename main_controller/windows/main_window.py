@@ -37,11 +37,13 @@ from windows.css import CSS_LABEL_PV_LOST
 from windows.pv_list_window import PvListWindow
 from windows.drag_text_mixin import DragTextMixin
 
+from collections import namedtuple
+
 #from scene import MyScene
 
 UNKNOWN_DISPLAY = 'Unknown'
 
-GRAPHICS_LABEL_KEY_BEAM_HEIGHT = 'label_beam_height'
+#GRAPHICS_LABEL_KEY_BEAM_HEIGHT = 'label_beam_height'
 
 EDIT_FONT = QtGui.QFont('Courier', 12)
 EDIT_ALIGN = Qt.Qt.AlignRight | Qt.Qt.AlignVCenter
@@ -212,11 +214,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
         self.set_server_address()
     @decorator_busy_cursor
     def handle_pushButton_motor_one_movego(self,dummy):
-        self.core.check_motor_pos('one')
         self.core.move_motor('one')
     @decorator_busy_cursor
     def handle_pushButton_motor_two_movego(self,dummy):
-        self.core.check_motor_pos('two')
         self.core.move_motor('two')
 
     # @decorator_busy_cursor
@@ -237,12 +237,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
     #     self.core.queue_clear()
 
     def handle_SpinBox_motor_one_changed(self):
-        motor_one_moveto = self.doubleSpinBox_motor_one_moveto.value()
-        self.core.set_motor_moveto(motor_one_moveto,'one')
+        self.core.set_motor_moveto(self.doubleSpinBox_motor_one_moveto.value(),'one')
 
     def handle_SpinBox_motor_two_changed(self):
-        motor_two_moveto = self.doubleSpinBox_motor_two_moveto.value()
-        self.core.set_motor_moveto(motor_two_moveto,'two')
+        self.core.set_motor_moveto(self.doubleSpinBox_motor_two_moveto.value(),'two')
 
     def handle_tabWidget_changed(self, current):
         tabText = self.tabWidget.tabText(current)
@@ -371,15 +369,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
         window.show()
 
     def handle_action_set_server(self):
-        """
-        Right now this is simply a placeholder function for an interactive set server
-        This is awful
-
-        RECODE THIS!!!!
-        """
-        self.monitor.update(VAR.SERVER_HOST, '10.52.36.1')
-        self.monitor.update(VAR.SERVER_PORT, '8585')
-        self.monitor.update(VAR.SERVER_ADDRESS, ''.join((self.monitor.get_value(VAR.SERVER_HOST), ':', self.monitor.get_value(VAR.SERVER_PORT))))
+        self.core.set_server()
 
     def callback_window_closed(self, window):
         self.child_windows = [w for w in self.child_windows if w != window]

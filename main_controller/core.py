@@ -8,7 +8,12 @@ import time
 from utils.monitor import KEY as MONITOR_KEY
 from utils import Constant
 
+from SpecClient.SpecMotor import SpecMotor
+from SpecClient.Spec import Spec
+
 import settings
+
+motor_dict = {'one':'phi','two':''}
 
 class PV(Constant):
 
@@ -31,7 +36,6 @@ class VAR(Constant):
     SERVER_ADDRESS      = 'var:server_address'
     SERVER_HOST         = 'var:server_host'
     SERVER_PORT         = 'var:server_port'
-
 
 
 class Core(object):
@@ -58,31 +62,51 @@ class Core(object):
         # self._queue_timer = threading.Timer(1, self.handle_queue_timer)
         # self._queue_timer.start()
 
-    def move_motor(self,motor_name):
-        self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor_name)
-        if motor_name == 'one':
-            moveto =  self.monitor.get_value(VAR.MOTOR_ONE_MOVETO)
-        elif motor_name == 'two':
-            moveto =  self.monitor.get_value(VAR.MOTOR_TWO_MOVETO)
+        self.Spec_sess = Spec()
+        self.SpecMotor_sess = SpecMotor()
+        self.SpecMotor_init = False
+
+    def init(self):
+        if self.SpecMotor_init == False:
+            # starting up the Spec server
+            Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
+            self.SpecMotor_init = True
         else:
-            moveto = 'UNDEFINED MOTOR'
-        print "moving motor "+ motor_name + " to " + repr(moveto)
+            pass
 
+    def move_motor(self,motor_num):
+        motor_name = motor_dict[motor_num]
+        self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor_name)
+        self.check_motor_pos(motor_num)
+        if motor_num == 'one':
+            moveto = self.monitor.get_value(VAR.MOTOR_ONE_MOVETO)
+        elif motor_num == 'two':
+            moveto = self.monitor.update(VAR.MOTOR_TWO_MOVETO)
+            print repr(self.monitor.get_value(VAR.MOTOR_TWO_POS))
+        else:
+            pass
+        print "moving motor " + motor_name + " up " + repr(moveto)
+        SpecMotor.moveRelative(self.SpecMotor_sess,moveto)
 
-    def set_motor_moveto(self,value,motor_name):
-        if motor_name == 'one':
+    def set_motor_moveto(self,value,motor_num):
+        if motor_num == 'one':
             self.monitor.update(VAR.MOTOR_ONE_MOVETO, int(value))
-        elif motor_name == 'two':
+        elif motor_num == 'two':
             self.monitor.update(VAR.MOTOR_TWO_MOVETO, int(value))
 
-
-    def check_motor_pos(self,motor_name):
-        if motor_name == 'one':
-            self.monitor.update(VAR.MOTOR_ONE_POS, int(3))
+    def check_motor_pos(self,motor_num):
+        motor_name = motor_dict[motor_num]
+        self.init()
+        SpecMotor.connectToSpec(self.SpecMotor_sess, motor_name, self.monitor.get_value(VAR.SERVER_ADDRESS))
+        pos = SpecMotor.getPosition(self.SpecMotor_sess)
+        if motor_num == 'one':
+            self.monitor.update(VAR.MOTOR_ONE_POS, pos)
             print repr(self.monitor.get_value(VAR.MOTOR_ONE_POS))
-        elif motor_name == 'two':
-            self.monitor.update(VAR.MOTOR_TWO_POS, int(2))
+        elif motor_num == 'two':
+            self.monitor.update(VAR.MOTOR_TWO_POS, pos)
             print repr(self.monitor.get_value(VAR.MOTOR_TWO_POS))
+        else:
+            pass
 
     # def handle_queue_timer(self):
     #
@@ -141,11 +165,14 @@ class Core(object):
     #
     def set_status(self, status_msg):
         self.monitor.update(VAR.STATUS_MSG, status_msg)
-    # def set_pixel_x(self, value):
-    #     self.monitor.update(VAR.X_PIXEL, int(value))
-    #
-    # def set_pixel_y(self, value):
-    #     self.monitor.update(VAR.Y_PIXEL, int(value))
+
+    def set_server(self):
+        """Right now this is simply a placeholder function for an interactive set server
+        This is awful -----------------------------RECODE THIS!!!!-------------------
+        """
+        self.monitor.update(VAR.SERVER_HOST, '10.52.36.1')
+        self.monitor.update(VAR.SERVER_PORT, '8585')
+        self.monitor.update(VAR.SERVER_ADDRESS, ''.join((self.monitor.get_value(VAR.SERVER_HOST), ':', self.monitor.get_value(VAR.SERVER_PORT))))
 
     def terminate(self):
         print "core.terminate called"

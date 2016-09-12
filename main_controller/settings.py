@@ -2,16 +2,17 @@
 IMPORT_DIRS = [
     "windows",
     "utils",
-    "/home/epics/src/R3.14.9-SL-5/base/lib/linux-x86_64"
+    "/home/epics/src/R3.14.9-SL-5/base/lib/linux-x86_64",
+    "utils/spec_tools"
 ]
 
-APP_NAME                    = 'TemplateApp'
+APP_NAME                    = 'HXMA : X-Ray Diffraction Controller'
 
 ENABLE_ERROR_DECORATOR      = False
 PROMPT_ON_QUIT              = False
 USE_SIMULATED_PVS           = True
 
-SETTINGS_FILE_NAME = ".TemplateApp/settings.json"
+SETTINGS_FILE_NAME = ".HXMAguiXRay/settings.json"
 
 class KEY(object):
     X_MM_START      = 'x_start'

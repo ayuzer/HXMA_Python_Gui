@@ -22,6 +22,8 @@ from utils.gui import dialog_info
 from utils.gui import decorator_dialog_error
 from utils.gui import decorator_busy_cursor
 
+from utils.server import ServMixin
+
 from utils import Constant
 from utils import to_rad
 
@@ -143,7 +145,7 @@ class LabelFormatter(object):
         self.data_dict[label] = kwargs
 
 
-class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin):
+class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
 
     SIGNAL_DIALOG_INFO = QtCore.pyqtSignal(unicode)
 
@@ -205,6 +207,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin):
 
         self.set_window_position()
         self.monitor.start()
+
+        self.set_server_address()
     @decorator_busy_cursor
     def handle_pushButton_motor_one_movego(self,dummy):
         self.core.check_motor_pos('one')
@@ -386,6 +390,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin):
         print self.geometry()
         print "------------------------------------"
         self.save_window_position()
+
+        self.save_server_address()
 
         self.core.terminate()
 

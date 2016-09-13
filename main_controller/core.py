@@ -13,7 +13,6 @@ from SpecClient.Spec import Spec
 
 import settings
 
-motor_dict = {'one':'phi','two':''}
 
 class PV(Constant):
 
@@ -24,20 +23,36 @@ class VAR(Constant):
 
     # X_PIXEL             = 'var:x_pixel'
     # Y_PIXEL             = 'var:y_pixel'
-    STATUS_MSG          = 'var:status_message'
+    STATUS_MSG      = 'var:status_message'
     # QUEUE_SIZE          = 'var:queue_size'
 
-    MOTOR_ONE_POS       = 'var:motor_one_pos'
-    MOTOR_TWO_POS       = 'var:motor_two_pos'
+    MOTOR_1_POS     = 'var:motor_1_pos'
+    MOTOR_2_POS     = 'var:motor_2_pos'
+    MOTOR_3_POS     = 'var:motor_3_pos'
+    MOTOR_4_POS     = 'var:motor_4_pos'
+    MOTOR_5_POS     = 'var:motor_5_pos'
+    MOTOR_6_POS     = 'var:motor_6_pos'
 
-    MOTOR_ONE_MOVETO    = 'var:motor_one_moveto'
-    MOTOR_TWO_MOVETO    = 'var:motor_two_moveto'
+    MOTOR_1_MOVETO  = 'var:motor_1_moveto'
+    MOTOR_2_MOVETO  = 'var:motor_2_moveto'
+    MOTOR_3_MOVETO = 'var:motor_3_moveto'
+    MOTOR_4_MOVETO = 'var:motor_4_moveto'
+    MOTOR_5_MOVETO = 'var:motor_5_moveto'
+    MOTOR_6_MOVETO = 'var:motor_6_moveto'
 
-    SERVER_ADDRESS      = 'var:server_address'
-    SERVER_HOST         = 'var:server_host'
-    SERVER_PORT         = 'var:server_port'
+    SERVER_ADDRESS  = 'var:server_address'
+    SERVER_HOST     = 'var:server_host'
+    SERVER_PORT     = 'var:server_port'
 
+motor_0 = ('name',  """Motor pos VAR""","""Motor moveto VAR""")
+motor_1 = ('phi',   VAR.MOTOR_1_POS, VAR.MOTOR_1_MOVETO)
+motor_2 = ('eta',   VAR.MOTOR_2_POS, VAR.MOTOR_2_MOVETO)
+motor_3 = ('name',  VAR.MOTOR_3_POS, VAR.MOTOR_3_MOVETO)
+motor_4 = ('name',  VAR.MOTOR_4_POS, VAR.MOTOR_4_MOVETO)
+motor_5 = ('name',  VAR.MOTOR_5_POS, VAR.MOTOR_5_MOVETO)
+motor_6 = ('name',  VAR.MOTOR_6_POS, VAR.MOTOR_6_MOVETO)
 
+motor_list = [motor_0, motor_1, motor_2, motor_3, motor_4, motor_5, motor_6]
 class Core(object):
 
     def __init__(self, *args, **kwargs):
@@ -74,39 +89,45 @@ class Core(object):
         else:
             pass
 
-    def move_motor(self,motor_num):
-        motor_name = motor_dict[motor_num]
+    def move_motor(self,motor_num,movetype):
+        motor_var = motor_list[motor_num]
+        motor_name = motor_var[0]
         self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor_name)
-        self.check_motor_pos(motor_num)
-        if motor_num == 'one':
-            moveto = self.monitor.get_value(VAR.MOTOR_ONE_MOVETO)
-        elif motor_num == 'two':
-            moveto = self.monitor.update(VAR.MOTOR_TWO_MOVETO)
-            print repr(self.monitor.get_value(VAR.MOTOR_TWO_POS))
+        pos = self.check_motor_pos(motor_num)
+        moveto = self.monitor.get_value(motor_var[2])
+        if movetype == 'Relative':
+            SpecMotor.moveRelative(self.SpecMotor_sess, moveto)
+            print "Moving motor " + motor_name + " to " + repr(moveto + pos)
+        elif movetype == 'Absolute':
+            SpecMotor.move(self.SpecMotor_sess, moveto)
+            print "Moving motor " + motor_name + " to " + repr(moveto)
         else:
-            pass
-        print "moving motor " + motor_name + " up " + repr(moveto)
-        SpecMotor.moveRelative(self.SpecMotor_sess,moveto)
+            print "Move command FAILED"
 
     def set_motor_moveto(self,value,motor_num):
-        if motor_num == 'one':
-            self.monitor.update(VAR.MOTOR_ONE_MOVETO, int(value))
-        elif motor_num == 'two':
-            self.monitor.update(VAR.MOTOR_TWO_MOVETO, int(value))
+        motor_var = motor_list[motor_num]
+        self.monitor.update(motor_var[2], int(value))
 
     def check_motor_pos(self,motor_num):
-        motor_name = motor_dict[motor_num]
+        motor_var = motor_list[motor_num]
+        motor_name = motor_var[0]
         self.init()
         SpecMotor.connectToSpec(self.SpecMotor_sess, motor_name, self.monitor.get_value(VAR.SERVER_ADDRESS))
         pos = SpecMotor.getPosition(self.SpecMotor_sess)
-        if motor_num == 'one':
-            self.monitor.update(VAR.MOTOR_ONE_POS, pos)
-            print repr(self.monitor.get_value(VAR.MOTOR_ONE_POS))
-        elif motor_num == 'two':
-            self.monitor.update(VAR.MOTOR_TWO_POS, pos)
-            print repr(self.monitor.get_value(VAR.MOTOR_TWO_POS))
-        else:
-            pass
+        self.monitor.update(motor_var[1], pos)
+        print repr(self.monitor.get_value(motor_var[1]))
+        return pos
+
+    def checkpos_motor_all(self):
+        try:
+            for i in range(1,len(motor_list)): #simply sending all of the "motor_num"s to the check pos command
+                self.check_motor_pos(i)
+            return True
+        except:
+            return False
+    def move_motor_all(self):
+        for i in range(1,len(motor_list)):  # simply sending all of the "motor_num"s to the check pos command
+            self.move_motor(i)
 
     # def handle_queue_timer(self):
     #

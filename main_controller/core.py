@@ -8,9 +8,10 @@ import time
 from utils.monitor import KEY as MONITOR_KEY
 from utils import Constant
 
-from SpecClient.SpecMotor import SpecMotor
+from SpecClient.SpecMotor import SpecMotorA as SpecMotor
 from SpecClient.Spec import Spec
-
+from SpecClient.SpecCounter_toki import SpecCounter as SpecCounter
+from SpecClient.SpecClientError import SpecClientError
 import settings
 
 
@@ -35,24 +36,32 @@ class VAR(Constant):
 
     MOTOR_1_MOVETO  = 'var:motor_1_moveto'
     MOTOR_2_MOVETO  = 'var:motor_2_moveto'
-    MOTOR_3_MOVETO = 'var:motor_3_moveto'
-    MOTOR_4_MOVETO = 'var:motor_4_moveto'
-    MOTOR_5_MOVETO = 'var:motor_5_moveto'
-    MOTOR_6_MOVETO = 'var:motor_6_moveto'
+    MOTOR_3_MOVETO  = 'var:motor_3_moveto'
+    MOTOR_4_MOVETO  = 'var:motor_4_moveto'
+    MOTOR_5_MOVETO  = 'var:motor_5_moveto'
+    MOTOR_6_MOVETO  = 'var:motor_6_moveto'
+
+    COUNTER_1_COUNT = 'var:counter_1_count'
+    COUNTER_2_COUNT = 'var:counter_2_count'
 
     SERVER_ADDRESS  = 'var:server_address'
     SERVER_HOST     = 'var:server_host'
     SERVER_PORT     = 'var:server_port'
 
-motor_0 = ('name',  """Motor pos VAR""","""Motor moveto VAR""")
-motor_1 = ('phi',   VAR.MOTOR_1_POS, VAR.MOTOR_1_MOVETO)
-motor_2 = ('eta',   VAR.MOTOR_2_POS, VAR.MOTOR_2_MOVETO)
-motor_3 = ('name',  VAR.MOTOR_3_POS, VAR.MOTOR_3_MOVETO)
-motor_4 = ('name',  VAR.MOTOR_4_POS, VAR.MOTOR_4_MOVETO)
-motor_5 = ('name',  VAR.MOTOR_5_POS, VAR.MOTOR_5_MOVETO)
-motor_6 = ('name',  VAR.MOTOR_6_POS, VAR.MOTOR_6_MOVETO)
+motor_0 = (True, 'Name', 'mne',  """Motor pos VAR""","""Motor moveto VAR""") # This is just a sample entry which fills up slot 0
+motor_1 = (True, 'Phi', 'phi',   VAR.MOTOR_1_POS, VAR.MOTOR_1_MOVETO) # YOU MUST ENABLE ALL IN ORDER or numbering will break
+motor_2 = (True, 'Eta', 'eta',   VAR.MOTOR_2_POS, VAR.MOTOR_2_MOVETO) # This is super jenky... FIX LATER
+motor_3 = (False, 'Name3', 'n3',  VAR.MOTOR_3_POS, VAR.MOTOR_3_MOVETO)
+motor_4 = (False, 'Name4', 'n4',  VAR.MOTOR_4_POS, VAR.MOTOR_4_MOVETO)
+motor_5 = (False, 'Name5', 'n5',  VAR.MOTOR_5_POS, VAR.MOTOR_5_MOVETO)
+motor_6 = (False, 'Name6', 'n6',  VAR.MOTOR_6_POS, VAR.MOTOR_6_MOVETO)
 
-motor_list = [motor_0, motor_1, motor_2, motor_3, motor_4, motor_5, motor_6]
+motor_prelist = [motor_0, motor_1, motor_2, motor_3, motor_4, motor_5, motor_6]
+motor_list = []
+for i in range(len(motor_prelist)):
+    motor = motor_prelist[i]
+    if motor[0]:
+        motor_list.append(motor)
 class Core(object):
 
     def __init__(self, *args, **kwargs):
@@ -77,25 +86,36 @@ class Core(object):
         # self._queue_timer = threading.Timer(1, self.handle_queue_timer)
         # self._queue_timer.start()
 
+        self._counter_timer = threading.Timer(1,self.handle_counter)
+        self._counter_timer.start()
+        self.count = False
+
         self.Spec_sess = Spec()
+
+
+
+        #Initalizing variables, dont know if theres a better place to
+        self.monitor.update(VAR.MOTOR_1_MOVETO, 0)
+        self.monitor.update(VAR.MOTOR_2_MOVETO, 0)
+        self.monitor.update(VAR.MOTOR_3_MOVETO, 0)
+        self.monitor.update(VAR.MOTOR_4_MOVETO, 0)
+        self.monitor.update(VAR.MOTOR_5_MOVETO, 0)
+        self.monitor.update(VAR.MOTOR_6_MOVETO, 0)
+
+    def init_Spec(self):
+        # starting up the Spec server, completed in main_window as monitor needs to load
+        Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
         self.SpecMotor_sess = SpecMotor()
-        self.SpecMotor_init = False
 
-    def init(self):
-        if self.SpecMotor_init == False:
-            # starting up the Spec server
-            Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
-            self.SpecMotor_init = True
-        else:
-            pass
-
-    def move_motor(self,motor_num,movetype):
+    def move_motor(self, motor_num, movetype):
         motor_var = motor_list[motor_num]
-        motor_name = motor_var[0]
+        motor_name = motor_var[2]
         self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor_name)
         pos = self.check_motor_pos(motor_num)
-        moveto = self.monitor.get_value(motor_var[2])
-        if movetype == 'Relative':
+        moveto = self.monitor.get_value(motor_var[4])
+        if isinstance(pos, basestring):
+            print "Motor " + motor_name + " " + motor_num + " is not initalized"
+        elif movetype == 'Relative':
             SpecMotor.moveRelative(self.SpecMotor_sess, moveto)
             print "Moving motor " + motor_name + " to " + repr(moveto + pos)
         elif movetype == 'Absolute':
@@ -106,29 +126,65 @@ class Core(object):
 
     def set_motor_moveto(self,value,motor_num):
         motor_var = motor_list[motor_num]
-        self.monitor.update(motor_var[2], int(value))
+        self.monitor.update(motor_var[4], int(value))
 
     def check_motor_pos(self,motor_num):
         motor_var = motor_list[motor_num]
-        motor_name = motor_var[0]
-        self.init()
+        motor_name = motor_var[2]
         SpecMotor.connectToSpec(self.SpecMotor_sess, motor_name, self.monitor.get_value(VAR.SERVER_ADDRESS))
-        pos = SpecMotor.getPosition(self.SpecMotor_sess)
-        self.monitor.update(motor_var[1], pos)
-        print repr(self.monitor.get_value(motor_var[1]))
+        try:
+            pos = SpecMotor.getPosition(self.SpecMotor_sess)
+        except SpecClientError as e:
+            print repr(e) + ' unconfig = Motor Name: ' + motor_name +' Motor Num: ' + repr (motor_num)
+            pos = 'None'
+        if isinstance(pos, basestring) ==  True:
+            pass
+        else:
+            self.monitor.update(motor_var[3], pos)
+            print repr(self.monitor.get_value(motor_var[3]))
         return pos
 
     def checkpos_motor_all(self):
-        try:
-            for i in range(1,len(motor_list)): #simply sending all of the "motor_num"s to the check pos command
-                self.check_motor_pos(i)
-            return True
-        except:
-            return False
+        fail = []
+        for i in range(1,len(motor_list)):  # Simply sending all of the "motor_num"s to the check pos command & checking
+            fail.append(isinstance(self.check_motor_pos(i), basestring))  # if a string return, if so it has failed
+        return any(fail)
+
     def move_motor_all(self):
         for i in range(1,len(motor_list)):  # simply sending all of the "motor_num"s to the check pos command
             self.move_motor(i)
 
+    def handle_counter(self):
+        address = self.monitor.get_value(VAR.SERVER_ADDRESS) #Just initalizing the counter classes which we'll read
+        self.SpecCounter_ic2 = SpecCounter()
+        self.SpecCounter_pinf = SpecCounter()
+        self.SpecCounter_sec = SpecCounter()
+        SpecCounter.connectToSpec(self.SpecCounter_ic2, 'ic2', address)
+        SpecCounter.connectToSpec(self.SpecCounter_pinf, 'pinf', address)
+        SpecCounter.connectToSpec(self.SpecCounter_sec, 'sec', address)
+        i=0
+        while True:
+            i = i+1
+            print i
+            if self._terminate_flag: break
+            count_time = SpecCounter.count(self.SpecCounter_sec, 5)
+            """
+            try:
+#                self._lock.acquire()
+#                count_time = SpecCounter.count(self.SpecCounter_sec, 1, self._lock)
+                count_time = SpecCounter.count(self.SpecCounter_sec, 5)
+            # print "the counter counted for " + repr(count_time)
+            except Exception as e:
+                print "Counter Failed - sleeping for 5 sec"
+                print str(e)
+                time.sleep(5)
+            finally:
+                pass
+#                self._lock.release()
+            """
+            if self.count:
+                self.monitor.update(VAR.COUNTER_1_COUNT, SpecCounter.getValue(self.SpecCounter_ic2))
+                self.monitor.update(VAR.COUNTER_2_COUNT, SpecCounter.getValue(self.SpecCounter_pinf))
     # def handle_queue_timer(self):
     #
     #     while True:
@@ -184,6 +240,15 @@ class Core(object):
     #
     #     self.monitor.update(VAR.QUEUE_SIZE, queue_size)
     #
+
+    def start_count(self):
+        self.count = True
+        print "COUNT STARTED"
+
+    def stop_count(self):
+        self.count = False
+        print "COUNT STOPPED"
+
     def set_status(self, status_msg):
         self.monitor.update(VAR.STATUS_MSG, status_msg)
 

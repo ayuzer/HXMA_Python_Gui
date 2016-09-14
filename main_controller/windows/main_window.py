@@ -180,9 +180,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
 
         self._item_count = 0
 
-        self.doubleSpinBox_motor_1_moveto.valueChanged.connect(self.handle_SpinBox_motor_1_changed)
-        self.doubleSpinBox_motor_2_moveto.valueChanged.connect(self.handle_SpinBox_motor_2_changed)
-
         # # Track mouse position while in graphics view
         # self.mouse_tracker = MouseTracker(self.graphicsView)
         # self.mouse_tracker.SIGNAL_MOVE.connect(self.handle_mouse_signal_move)
@@ -191,12 +188,21 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
 
         self.init_labels()
         self.init_groupBoxes()
-
-        # self.pushButton_1.clicked.connect(self.handle_pushButton_1)
-        # self.pushButton_2.clicked.connect(self.handle_pushButton_2)
+#######################################################################################################
+        #Connecting Buttons - can we do this better?
+        self.doubleSpinBox_motor_1_moveto.valueChanged.connect(self.handle_SpinBox_motor_1_changed)
+        self.doubleSpinBox_motor_2_moveto.valueChanged.connect(self.handle_SpinBox_motor_2_changed)
+        self.doubleSpinBox_motor_3_moveto.valueChanged.connect(self.handle_SpinBox_motor_3_changed)
+        self.doubleSpinBox_motor_4_moveto.valueChanged.connect(self.handle_SpinBox_motor_4_changed)
+        self.doubleSpinBox_motor_5_moveto.valueChanged.connect(self.handle_SpinBox_motor_5_changed)
+        self.doubleSpinBox_motor_6_moveto.valueChanged.connect(self.handle_SpinBox_motor_6_changed)
 
         self.pushButton_motor_1_movego.clicked.connect(self.handle_pushButton_motor_1_movego)
         self.pushButton_motor_2_movego.clicked.connect(self.handle_pushButton_motor_2_movego)
+        self.pushButton_motor_3_movego.clicked.connect(self.handle_pushButton_motor_3_movego)
+        self.pushButton_motor_4_movego.clicked.connect(self.handle_pushButton_motor_4_movego)
+        self.pushButton_motor_5_movego.clicked.connect(self.handle_pushButton_motor_5_movego)
+        self.pushButton_motor_6_movego.clicked.connect(self.handle_pushButton_motor_6_movego)
 
         self.pushButton_motor_all_checkpos.clicked.connect(self.handle_pushButton_motor_all_checkpos)
         self.pushButton_motor_all_move.clicked.connect(self.handle_pushButton_motor_all_move)
@@ -208,7 +214,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
             self.action_var_list    : self.handle_action_var_list,
             self.action_set_server  : self.handle_action_set_server,
         }
-
+#########################################################################################################
         for action, handler in actions.iteritems():
             action.triggered.connect(handler)
 
@@ -216,6 +222,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
         self.monitor.start()
 
         self.set_server_address()
+
+        self.core.init_Spec()
 
         self.core.checkpos_motor_all()
 
@@ -291,17 +299,21 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
 ############################################################################################################
 
     def handle_pushButton_motor_all_checkpos(self):
-        allcheck = self.core.checkpos_motor_all()
-        if allcheck == True:
+        checkfailed = self.core.checkpos_motor_all()
+        if checkfailed == False:
             self.core.set_status("All Motor Positions Updated")
         else:
-            self.core.set_status("Motor Positions Were NOT Updated")
+            self.core.set_status("NOT all Motor Positions were updated")
 
     def handle_pushButton_motor_all_stop(self):
         pass
 
     def handle_tabWidget_changed(self, current):
         tabText = self.tabWidget.tabText(current)
+        if tabText == 'Count':
+            self.core.start_count()
+        else:
+            self.core.stop_count()
         self.core.set_status("Tab Clicked: %s" % QtCore.QString(tabText))
 
     def init_groupBoxes(self):
@@ -333,13 +345,14 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
             VAR.STATUS_MSG     :  (self.label_status_msg,           '{:s}',   12, True),
             VAR.SERVER_ADDRESS :  (self.label_server_address,       '{:s}',   12, True),
 #            VAR.QUEUE_SIZE    : (self.label_queue_size,   '{:,d}',  12, True),
-            VAR.MOTOR_1_POS    :  (self.label_motor_1_pos,        '{:,d}',  12, True),
-            VAR.MOTOR_2_POS    :  (self.label_motor_2_pos,        '{:,d}',  12, True), #NOTE THAT THESE ARE {} brakets
-            VAR.MOTOR_3_POS    :  (self.label_motor_3_pos,         '{:,d}', 12, True),
-            VAR.MOTOR_4_POS    :  (self.label_motor_4_pos,         '{:,d}', 12, True),
-            VAR.MOTOR_5_POS    :  (self.label_motor_5_pos,         '{:,d}', 12, True),
-            VAR.MOTOR_6_POS    :  (self.label_motor_6_pos,         '{:,d}', 12, True),
-
+            VAR.MOTOR_1_POS    :  (self.label_motor_1_pos,         '{:,f}',  12, True),
+            VAR.MOTOR_2_POS    :  (self.label_motor_2_pos,         '{:,f}',  12, True), #NOTE THAT THESE ARE {} brakets
+            VAR.MOTOR_3_POS    :  (self.label_motor_3_pos,         '{:,f}', 12, True),
+            VAR.MOTOR_4_POS    :  (self.label_motor_4_pos,         '{:,f}', 12, True),
+            VAR.MOTOR_5_POS    :  (self.label_motor_5_pos,         '{:,f}', 12, True),
+            VAR.MOTOR_6_POS    :  (self.label_motor_6_pos,         '{:,f}', 12, True),
+            VAR.COUNTER_1_COUNT:  (self.label_counter_1_count,      '{:,d}', 12, True),
+            VAR.COUNTER_2_COUNT:  (self.label_counter_2_count,      '{:,d}', 12, True),
         }
 
         for pv_name, data in label_map.iteritems():

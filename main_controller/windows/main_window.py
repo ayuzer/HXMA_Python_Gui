@@ -1,6 +1,7 @@
 # System imports
 import simplejson
 import os
+from functools import partial
 
 # Library imports
 from PyQt4 import Qt
@@ -147,7 +148,7 @@ class LabelFormatter(object):
         self.data_dict[label] = kwargs
 
 
-class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
+class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
 
     SIGNAL_DIALOG_INFO = QtCore.pyqtSignal(unicode)
 
@@ -188,21 +189,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
 
         self.init_labels()
         self.init_groupBoxes()
-#######################################################################################################
-        #Connecting Buttons - can we do this better?
-        self.doubleSpinBox_motor_1_moveto.valueChanged.connect(self.handle_SpinBox_motor_1_changed)
-        self.doubleSpinBox_motor_2_moveto.valueChanged.connect(self.handle_SpinBox_motor_2_changed)
-        self.doubleSpinBox_motor_3_moveto.valueChanged.connect(self.handle_SpinBox_motor_3_changed)
-        self.doubleSpinBox_motor_4_moveto.valueChanged.connect(self.handle_SpinBox_motor_4_changed)
-        self.doubleSpinBox_motor_5_moveto.valueChanged.connect(self.handle_SpinBox_motor_5_changed)
-        self.doubleSpinBox_motor_6_moveto.valueChanged.connect(self.handle_SpinBox_motor_6_changed)
-
-        self.pushButton_motor_1_movego.clicked.connect(self.handle_pushButton_motor_1_movego)
-        self.pushButton_motor_2_movego.clicked.connect(self.handle_pushButton_motor_2_movego)
-        self.pushButton_motor_3_movego.clicked.connect(self.handle_pushButton_motor_3_movego)
-        self.pushButton_motor_4_movego.clicked.connect(self.handle_pushButton_motor_4_movego)
-        self.pushButton_motor_5_movego.clicked.connect(self.handle_pushButton_motor_5_movego)
-        self.pushButton_motor_6_movego.clicked.connect(self.handle_pushButton_motor_6_movego)
 
         self.pushButton_motor_all_checkpos.clicked.connect(self.handle_pushButton_motor_all_checkpos)
         self.pushButton_motor_all_move.clicked.connect(self.handle_pushButton_motor_all_move)
@@ -214,7 +200,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
             self.action_var_list    : self.handle_action_var_list,
             self.action_set_server  : self.handle_action_set_server,
         }
-#########################################################################################################
+
         for action, handler in actions.iteritems():
             action.triggered.connect(handler)
 
@@ -225,85 +211,97 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
 
         self.core.init_Spec()
 
-        self.core.checkpos_motor_all()
+        self.init_motor_slots()
+        self.init_motors()
 
+        self.pushButton_motor_1_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_1))
+        self.pushButton_motor_2_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_2))
+        self.pushButton_motor_3_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_3))
+        self.pushButton_motor_4_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_4))
+        self.pushButton_motor_5_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_5))
+        self.pushButton_motor_6_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_6))
 
-    # @decorator_busy_cursor
-    # def handle_pushButton_1(self, dummy):
-    #     # print "button 1 clicked"
-    #     # self.core.set_status("Button 1 clicked")
-    #     # dialog_info(sender=self, msg="Button 1 clicked")
-    #
-    #     self._item_count += 1
-    #     self.core.queue_item(self._item_count)
-    #
-    # @decorator_busy_cursor
-    # def handle_pushButton_2(self, dummy):
-    #     # print "button 2 clicked"
-    #     # self.core.set_status("Button 2 clicked")
-    #     # dialog_info(sender=self, msg="Button 2 clicked")
-    #
-    #     self.core.queue_clear()
+        self.handle_pushButton_motor_all_checkpos(False)  # just checking position at init, False is a dummy var
 
+    def init_motor_slots(self):
+        Motor_Slot = namedtuple('Motor_Slot',['Name', 'Mne', 'Enabled', 'Pos_VAR', 'Moveto_SB', 'Move_PB', 'MoveType_CB'])
+        self.Motor_1 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_1_POS,
+                                  Moveto_SB     =  self.doubleSpinBox_motor_1_moveto,
+                                  Move_PB       =  self.pushButton_motor_1_movego,
+                                  MoveType_CB   =  self.comboBox_motor_1_movetype,
+                                  Name          =  '',
+                                  Mne           =  '',
+                                  Enabled       =  False,
+                                  )
+        self.Motor_2 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_2_POS,
+                                  Moveto_SB     =  self.doubleSpinBox_motor_2_moveto,
+                                  Move_PB       =  self.pushButton_motor_2_movego,
+                                  MoveType_CB   =  self.comboBox_motor_2_movetype,
+                                  Name          =  '',
+                                  Mne           =  '',
+                                  Enabled       =  False,
+                                  )
+        self.Motor_3 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_3_POS,
+                                  Moveto_SB     =  self.doubleSpinBox_motor_3_moveto,
+                                  Move_PB       =  self.pushButton_motor_3_movego,
+                                  MoveType_CB   =  self.comboBox_motor_3_movetype,
+                                  Name          =  '',
+                                  Mne           =  '',
+                                  Enabled       =  False,
+                                  )
+        self.Motor_4 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_4_POS,
+                                  Moveto_SB     =  self.doubleSpinBox_motor_4_moveto,
+                                  Move_PB       =  self.pushButton_motor_4_movego,
+                                  MoveType_CB   =  self.comboBox_motor_4_movetype,
+                                  Name          =  '',
+                                  Mne           =  '',
+                                  Enabled       =  False,
+                                  )
+        self.Motor_5 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_5_POS,
+                                  Moveto_SB     =  self.doubleSpinBox_motor_5_moveto,
+                                  Move_PB       =  self.pushButton_motor_5_movego,
+                                  MoveType_CB   =  self.comboBox_motor_5_movetype,
+                                  Name          =  '',
+                                  Mne           =  '',
+                                  Enabled       =  False,
+                                  )
+        self.Motor_6 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_6_POS,
+                                  Moveto_SB     =  self.doubleSpinBox_motor_6_moveto,
+                                  Move_PB       =  self.pushButton_motor_6_movego,
+                                  MoveType_CB   =  self.comboBox_motor_6_movetype,
+                                  Name          =  '',
+                                  Mne           =  '',
+                                  Enabled       =  False,
+                                  )
 
-############################################################################################################
+    def init_motors(self):
+        self.Motor_1 = self.Motor_1._replace(Name='Phi',
+                                             Mne='phi',
+                                             Enabled=True
+                                             )
 
-    #This is where we input new motors, they pass their motor NAME to the core, which allows us to set it later
-    #to add more motors simply add more buttons/numbers
-    def handle_SpinBox_motor_1_changed(self):
-        self.core.set_motor_moveto(self.doubleSpinBox_motor_1_moveto.value(),1)
-    def handle_SpinBox_motor_2_changed(self):
-        self.core.set_motor_moveto(self.doubleSpinBox_motor_2_moveto.value(),2)
-    def handle_SpinBox_motor_3_changed(self):
-        self.core.set_motor_moveto(self.doubleSpinBox_motor_3_moveto.value(),3)
-    def handle_SpinBox_motor_4_changed(self):
-        self.core.set_motor_moveto(self.doubleSpinBox_motor_4_moveto.value(), 4)
-    def handle_SpinBox_motor_5_changed(self):
-        self.core.set_motor_moveto(self.doubleSpinBox_motor_5_moveto.value(), 5)
-    def handle_SpinBox_motor_6_changed(self):
-        self.core.set_motor_moveto(self.doubleSpinBox_motor_6_moveto.value(), 6)
+        self.Motor_2 = self.Motor_2._replace(Name='Eta',
+                                             Mne='eta',
+                                             Enabled=True
+                                             )
+        self.Motors = [self.Motor_1, self.Motor_2, self.Motor_3, self.Motor_4, self.Motor_5, self.Motor_6]
 
     @decorator_busy_cursor
-    def handle_pushButton_motor_1_movego(self,dummy):
-        self.core.move_motor(1,self.comboBox_motor_1_movetype.currentText())
-        self.core.checkpos_motor_all()
-    @decorator_busy_cursor
-    def handle_pushButton_motor_2_movego(self,dummy):
-        self.core.move_motor(2,self.comboBox_motor_2_movetype.currentText())
-        self.core.checkpos_motor_all()
-    @decorator_busy_cursor
-    def handle_pushButton_motor_3_movego(self,dummy):
-        self.core.move_motor(3,self.comboBox_motor_3_movetype.currentText())
-        self.core.checkpos_motor_all()
-    @decorator_busy_cursor
-    def handle_pushButton_motor_4_movego(self,dummy):
-        self.core.move_motor(4,self.comboBox_motor_4_movetype.currentText())
-        self.core.checkpos_motor_all()
-    @decorator_busy_cursor
-    def handle_pushButton_motor_5_movego(self,dummy):
-        self.core.move_motor(5,self.comboBox_motor_5_movetype.currentText())
-        self.core.checkpos_motor_all()
-    @decorator_busy_cursor
-    def handle_pushButton_motor_6_movego(self,dummy):
-        self.core.move_motor(6,self.comboBox_motor_6_movetype.currentText())
-        self.core.checkpos_motor_all()
+    def handle_pushButton_motor_movego(self, motor, dummy):
+        self.core.move_motor(motor)
+        self.handle_pushButton_motor_all_checkpos(self.Motors)
 
-    def handle_pushButton_motor_all_move(self): #this just calls the above moving functions in succesion
-        self.handle_pushButton_motor_1_movego('NONE') #if new motors are added, please add other lines
-        self.handle_pushButton_motor_2_movego('NONE')
-        self.handle_pushButton_motor_3_movego('NONE')
-        self.handle_pushButton_motor_4_movego('NONE')
-        self.handle_pushButton_motor_5_movego('NONE')
-        self.handle_pushButton_motor_6_movego('NONE')
+    def handle_pushButton_motor_all_move(self, dummy): # this just calls the moving function if enabled for each
+        for i in range(len(self.Motors)):
+            Motor_inst = self.Motors[i]
+            if Motor_inst.Enabled:
+                self.core.move_motor(Motor_inst)
 
-############################################################################################################
-
-    def handle_pushButton_motor_all_checkpos(self):
-        checkfailed = self.core.checkpos_motor_all()
-        if checkfailed == False:
-            self.core.set_status("All Motor Positions Updated")
-        else:
-            self.core.set_status("NOT all Motor Positions were updated")
+    def handle_pushButton_motor_all_checkpos(self,dummy):
+        for i in range(len(self.Motors)):
+            Motor_inst = self.Motors[i]
+            if Motor_inst.Enabled:
+                self.core.checkpos_motor(Motor_inst)
 
     def handle_pushButton_motor_all_stop(self):
         pass
@@ -345,12 +343,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin,ServMixin):
             VAR.STATUS_MSG     :  (self.label_status_msg,           '{:s}',   12, True),
             VAR.SERVER_ADDRESS :  (self.label_server_address,       '{:s}',   12, True),
 #            VAR.QUEUE_SIZE    : (self.label_queue_size,   '{:,d}',  12, True),
-            VAR.MOTOR_1_POS    :  (self.label_motor_1_pos,         '{:,f}',  12, True),
-            VAR.MOTOR_2_POS    :  (self.label_motor_2_pos,         '{:,f}',  12, True), #NOTE THAT THESE ARE {} brakets
-            VAR.MOTOR_3_POS    :  (self.label_motor_3_pos,         '{:,f}', 12, True),
-            VAR.MOTOR_4_POS    :  (self.label_motor_4_pos,         '{:,f}', 12, True),
-            VAR.MOTOR_5_POS    :  (self.label_motor_5_pos,         '{:,f}', 12, True),
-            VAR.MOTOR_6_POS    :  (self.label_motor_6_pos,         '{:,f}', 12, True),
+            VAR.MOTOR_1_POS    :  (self.label_motor_1_pos,         '{:,.3f}',  12, True),
+            VAR.MOTOR_2_POS    :  (self.label_motor_2_pos,         '{:,.3f}',  12, True), #NOTE THAT THESE ARE {} brakets
+            VAR.MOTOR_3_POS    :  (self.label_motor_3_pos,         '{:,.3f}', 12, True),
+            VAR.MOTOR_4_POS    :  (self.label_motor_4_pos,         '{:,.3f}', 12, True),
+            VAR.MOTOR_5_POS    :  (self.label_motor_5_pos,         '{:,.3f}', 12, True),
+            VAR.MOTOR_6_POS    :  (self.label_motor_6_pos,         '{:,.3f}', 12, True),
             VAR.COUNTER_1_COUNT:  (self.label_counter_1_count,      '{:,d}', 12, True),
             VAR.COUNTER_2_COUNT:  (self.label_counter_2_count,      '{:,d}', 12, True),
         }

@@ -337,12 +337,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
                   (CSS_COLOUR.GROUP_BOX, CSS_COLOUR.BLUE)
 
         label_map = {
-            # VAR.X_PIXEL     : (self.label_pixel_x,      '{:,d}', 12, True),
-            # VAR.Y_PIXEL     : (self.label_pixel_y,      '{:,d}', 12, True),
             PV.SYSTEM_TIME     :  (self.label_system_time,          '{:s}',   12, True),
             VAR.STATUS_MSG     :  (self.label_status_msg,           '{:s}',   12, True),
             VAR.SERVER_ADDRESS :  (self.label_server_address,       '{:s}',   12, True),
-#            VAR.QUEUE_SIZE    : (self.label_queue_size,   '{:,d}',  12, True),
             VAR.MOTOR_1_POS    :  (self.label_motor_1_pos,         '{:,.3f}',  12, True),
             VAR.MOTOR_2_POS    :  (self.label_motor_2_pos,         '{:,.3f}',  12, True), #NOTE THAT THESE ARE {} brakets
             VAR.MOTOR_3_POS    :  (self.label_motor_3_pos,         '{:,.3f}', 12, True),

@@ -15,6 +15,9 @@ from SpecClient.SpecMotor import SpecMotorA as SpecMotor
 from SpecClient.Spec import Spec
 from SpecClient.SpecCounter_toki import SpecCounter as SpecCounter
 from SpecClient.SpecClientError import SpecClientError
+
+from SpecClient.SpecScan_toki import SpecScanA as SpecScan
+
 import settings
 
 
@@ -39,6 +42,8 @@ class VAR(Constant):
 
     COUNTER_1_COUNT = 'var:counter_1_count'
     COUNTER_2_COUNT = 'var:counter_2_count'
+
+    COUNT_TIME      = 'var:count_time'
 
     SERVER_ADDRESS  = 'var:server_address'
     SERVER_HOST     = 'var:server_host'
@@ -71,11 +76,12 @@ class Core(object):
         self._counter_timer = threading.Timer(1, self.handle_counter)
         self._counter_timer.start()
         self.count = False
-
-
+        self.count_event = threading.Event()
+        self.count_event.clear()
 
         self.Spec_sess = Spec()
         self.SpecMotor_sess = SpecMotor()
+        self.SpecScan_sess = SpecScan()
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
@@ -118,17 +124,6 @@ class Core(object):
         # starting up the Spec server, completed in main_window as monitor needs to load
         Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
 
-
-
-    def motorStateChanged(self, state):
-        self.state = state
-        if self.state in [SpecMotor_module.MOVING, SpecMotor_module.MOVESTARTED]:
-            print "MOVING"
-        elif self.state in [SpecMotor_module.UNUSABLE, SpecMotor_module.NOTINITIALIZED]:
-            print "NOT WORKING"
-        elif self.state in [SpecMotor_module.READY, SpecMotor_module.ONLIMIT]:
-            print "READY"
-
     def move_motor(self, motor):
         motor_name = motor.Mne
         self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor.Name)
@@ -168,10 +163,6 @@ class Core(object):
             pos = 'None'
         return {'pos': pos, 'moved': moved}
 
-    def move_motor_all(self):
-        for i in range(1,len(motor_list)):  # simply sending all of the "motor_num"s to the check pos command
-            self.move_motor(i)
-
     def handle_counter(self):
         address = self.monitor.get_value(VAR.SERVER_ADDRESS) #Just initalizing the counter classes which we'll read
         self.SpecCounter_ic2 = SpecCounter()
@@ -182,13 +173,14 @@ class Core(object):
         SpecCounter.connectToSpec(self.SpecCounter_sec, 'sec', address)
         i=0
         while True:
+            self.count_event.wait()
             i = i+1
             print i
             if self._terminate_flag: break
-            count_time = SpecCounter.count(self.SpecCounter_sec, 5)
-            if self.count:
-                self.monitor.update(VAR.COUNTER_1_COUNT, SpecCounter.getValue(self.SpecCounter_ic2))
-                self.monitor.update(VAR.COUNTER_2_COUNT, SpecCounter.getValue(self.SpecCounter_pinf))
+            count_time = SpecCounter.count(self.SpecCounter_sec, self.count_time_set_SB.value())
+            self.monitor.update(VAR.COUNT_TIME, count_time)
+            self.monitor.update(VAR.COUNTER_1_COUNT, SpecCounter.getValue(self.SpecCounter_ic2))
+            self.monitor.update(VAR.COUNTER_2_COUNT, SpecCounter.getValue(self.SpecCounter_pinf))
     # def handle_queue_timer(self):
     #
     #     while True:
@@ -245,13 +237,43 @@ class Core(object):
     #     self.monitor.update(VAR.QUEUE_SIZE, queue_size)
     #
 
-    def start_count(self):
-        self.count = True
-        print "COUNT STARTED"
+    def counting_state(self, state, spinBox_counter):
+        self.count_time_set_SB = spinBox_counter
+        if state:  #Enable Counting
+            self.count_state = True
+            self.count_event.set()
+        else:  # Disable Counting
+            self.count_event.clear()
 
-    def stop_count(self):
-        self.count = False
-        print "COUNT STOPPED"
+    def is_scanning(self):
+        return SpecScan(self.SpecScan_sess).scanning
+
+    def scan_start(self, scantype, motor_name, startpos, endpos, intervals, count_time, Motors):
+
+        for i in range(len(Motors)):
+            Motor_inst = Motors[i]
+            if Motor_inst.Name == motor_name:
+                if Motor_inst.Enabled:
+                    SpecScan.connectToSpec(self.SpecScan_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
+                    if scantype:
+                        checkpos = self.checkpos_motor(Motor_inst, False)
+                        pos = checkpos['pos']
+                        relstartpos = startpos - pos
+                        relendpos = endpos - pos
+                        SpecScan.dscan(self.SpecScan_sess, Motor_inst.Mne, relstartpos, relendpos, intervals, count_time)
+                    else:
+                        SpecScan.ascan(self.SpecScan_sess, Motor_inst.Mne, startpos, endpos, intervals, count_time)
+                else:
+                    raise Exception('Scan cannot be started as the motor was not Enabled')
+            else:
+                pass
+        print "Scan Started"
+        return True  # Saying the scan is started
+
+    def scan_stop(self):
+        SpecScan.abort(self.SpecScan_sess)
+        print "Scan Stopped"
+        return False  # Saying the scan is stopped
 
     def set_status(self, status_msg):
         self.monitor.update(VAR.STATUS_MSG, status_msg)

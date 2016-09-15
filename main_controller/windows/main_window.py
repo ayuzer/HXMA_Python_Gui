@@ -60,7 +60,7 @@ class COLOR(object):
 
 #------------------------------------------------------------------------------
 
-RELEASE_DATE            = 'NOT RELEASED : IN TESTING'
+RELEASE_DATE            = 'NOT Released : IN TESTING'
 
 class SETTINGS(Constant):
     KEY = 'main_window_settings'
@@ -188,7 +188,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
         # self.mouse_tracker.SIGNAL_RELEASE.connect(self.handle_mouse_signal_release)
 
         self.init_labels()
-        self.init_groupBoxes()
 
         self.pushButton_motor_all_checkpos.clicked.connect(self.handle_pushButton_motor_all_checkpos)
         self.pushButton_motor_all_move.clicked.connect(self.handle_pushButton_motor_all_move)
@@ -212,7 +211,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
         self.core.init_Spec()
 
         self.init_motor_slots()
-        self.init_motors()
+        self.update_motors()
 
         self.pushButton_motor_1_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_1))
         self.pushButton_motor_2_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_2))
@@ -221,71 +220,16 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
         self.pushButton_motor_5_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_5))
         self.pushButton_motor_6_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_6))
 
+        self.pushButton_scan_start_stop.setText(self.scan_button_text())
+
+        self.pushButton_scan_start_stop.clicked.connect(self.handle_pushButton_scan_start_stop)
+
+        self.checkBox_count.stateChanged.connect(self.handle_checkBox_count)
+
+        self.handle_checkBox_count()  # handing down the count variables to core with this
+
         self.handle_pushButton_motor_all_checkpos(False)  # just checking position at init, False is a dummy var
 
-    def init_motor_slots(self):
-        Motor_Slot = namedtuple('Motor_Slot',['Name', 'Mne', 'Enabled', 'Pos_VAR', 'Moveto_SB', 'Move_PB', 'MoveType_CB'])
-        self.Motor_1 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_1_POS,
-                                  Moveto_SB     =  self.doubleSpinBox_motor_1_moveto,
-                                  Move_PB       =  self.pushButton_motor_1_movego,
-                                  MoveType_CB   =  self.comboBox_motor_1_movetype,
-                                  Name          =  '',
-                                  Mne           =  '',
-                                  Enabled       =  False,
-                                  )
-        self.Motor_2 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_2_POS,
-                                  Moveto_SB     =  self.doubleSpinBox_motor_2_moveto,
-                                  Move_PB       =  self.pushButton_motor_2_movego,
-                                  MoveType_CB   =  self.comboBox_motor_2_movetype,
-                                  Name          =  '',
-                                  Mne           =  '',
-                                  Enabled       =  False,
-                                  )
-        self.Motor_3 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_3_POS,
-                                  Moveto_SB     =  self.doubleSpinBox_motor_3_moveto,
-                                  Move_PB       =  self.pushButton_motor_3_movego,
-                                  MoveType_CB   =  self.comboBox_motor_3_movetype,
-                                  Name          =  '',
-                                  Mne           =  '',
-                                  Enabled       =  False,
-                                  )
-        self.Motor_4 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_4_POS,
-                                  Moveto_SB     =  self.doubleSpinBox_motor_4_moveto,
-                                  Move_PB       =  self.pushButton_motor_4_movego,
-                                  MoveType_CB   =  self.comboBox_motor_4_movetype,
-                                  Name          =  '',
-                                  Mne           =  '',
-                                  Enabled       =  False,
-                                  )
-        self.Motor_5 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_5_POS,
-                                  Moveto_SB     =  self.doubleSpinBox_motor_5_moveto,
-                                  Move_PB       =  self.pushButton_motor_5_movego,
-                                  MoveType_CB   =  self.comboBox_motor_5_movetype,
-                                  Name          =  '',
-                                  Mne           =  '',
-                                  Enabled       =  False,
-                                  )
-        self.Motor_6 = Motor_Slot(Pos_VAR       =  VAR.MOTOR_6_POS,
-                                  Moveto_SB     =  self.doubleSpinBox_motor_6_moveto,
-                                  Move_PB       =  self.pushButton_motor_6_movego,
-                                  MoveType_CB   =  self.comboBox_motor_6_movetype,
-                                  Name          =  '',
-                                  Mne           =  '',
-                                  Enabled       =  False,
-                                  )
-
-    def init_motors(self):
-        self.Motor_1 = self.Motor_1._replace(Name='Phi',
-                                             Mne='phi',
-                                             Enabled=True
-                                             )
-
-        self.Motor_2 = self.Motor_2._replace(Name='Eta',
-                                             Mne='eta',
-                                             Enabled=True
-                                             )
-        self.Motors = [self.Motor_1, self.Motor_2, self.Motor_3, self.Motor_4, self.Motor_5, self.Motor_6]
-        self.core.init_motor_thread(self.Motors)
 
     @decorator_busy_cursor
     def handle_pushButton_motor_movego(self, motor, dummy):
@@ -309,28 +253,102 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
 
     def handle_tabWidget_changed(self, current):
         tabText = self.tabWidget.tabText(current)
-        if tabText == 'Count':
-            self.core.start_count()
-        else:
-            self.core.stop_count()
         self.core.set_status("Tab Clicked: %s" % QtCore.QString(tabText))
 
-    def init_groupBoxes(self):
+    def handle_checkBox_count(self):  #Also passes the reference to the count-time down
+        self.core.counting_state(self.checkBox_count.isChecked(), self.doubleSpinBox_count_time_set)
 
-        groupBoxes = [
-            self.groupBox_example
-        ]
+    def scan_button_text(self):
+        if self.core.is_scanning():
+            return 'Stop'
+        else:
+            return 'Start'
 
-        ## Disable MRT Lift group box for now
-        #self.groupBox_mrt_lift.setVisible(False)
+    def handle_pushButton_scan_start_stop(self):
+        if self.core.is_scanning():
+            self.core.scan_stop()
+            self.pushButton_scan_start_stop.setText('Start')
+        else:
+            self.core.scan_start(self.checkBox_scan_return_home.checkState(),  # What Mode True = dscan False = ascan
+                                 self.comboBox_scan_motor.currentText(),  # Which Motor are we using? Passes NAME back
+                                 self.doubleSpinBox_scan_startpos.value(),  # the rest are just values
+                                 self.doubleSpinBox_scan_stoppos.value(),
+                                 self.doubleSpinBox_scan_steps.value(),
+                                 self.doubleSpinBox_scan_waittime.value(),
+                                 self.Motors  # We need to pass this so we can see which motor we are scanning with
+                                 )
+            self.pushButton_scan_start_stop.setText('Stop')
 
-        for groupBox in groupBoxes:
-            groupBox.setStyleSheet(GROUP_BOX_STYLE)
 
-        groupBoxes_no_title = [ self.groupBox_statusBar ]
 
-        for groupBox in groupBoxes_no_title:
-            groupBox.setStyleSheet(GROUP_BOX_STYLE_NO_TITLE)
+    def init_motor_slots(self):
+        Motor_Slot = namedtuple('Motor_Slot',
+                                ['Name', 'Mne', 'Enabled', 'Pos_VAR', 'Moveto_SB', 'Move_PB', 'MoveType_CB'])
+        self.Motor_1 = Motor_Slot(Pos_VAR=VAR.MOTOR_1_POS,
+                                  Moveto_SB=self.doubleSpinBox_motor_1_moveto,
+                                  Move_PB=self.pushButton_motor_1_movego,
+                                  MoveType_CB=self.comboBox_motor_1_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False,
+                                  )
+        self.Motor_2 = Motor_Slot(Pos_VAR=VAR.MOTOR_2_POS,
+                                  Moveto_SB=self.doubleSpinBox_motor_2_moveto,
+                                  Move_PB=self.pushButton_motor_2_movego,
+                                  MoveType_CB=self.comboBox_motor_2_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False,
+                                  )
+        self.Motor_3 = Motor_Slot(Pos_VAR=VAR.MOTOR_3_POS,
+                                  Moveto_SB=self.doubleSpinBox_motor_3_moveto,
+                                  Move_PB=self.pushButton_motor_3_movego,
+                                  MoveType_CB=self.comboBox_motor_3_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False,
+                                  )
+        self.Motor_4 = Motor_Slot(Pos_VAR=VAR.MOTOR_4_POS,
+                                  Moveto_SB=self.doubleSpinBox_motor_4_moveto,
+                                  Move_PB=self.pushButton_motor_4_movego,
+                                  MoveType_CB=self.comboBox_motor_4_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False,
+                                  )
+        self.Motor_5 = Motor_Slot(Pos_VAR=VAR.MOTOR_5_POS,
+                                  Moveto_SB=self.doubleSpinBox_motor_5_moveto,
+                                  Move_PB=self.pushButton_motor_5_movego,
+                                  MoveType_CB=self.comboBox_motor_5_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False,
+                                  )
+        self.Motor_6 = Motor_Slot(Pos_VAR=VAR.MOTOR_6_POS,
+                                  Moveto_SB=self.doubleSpinBox_motor_6_moveto,
+                                  Move_PB=self.pushButton_motor_6_movego,
+                                  MoveType_CB=self.comboBox_motor_6_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False,
+                                  )
+
+    def update_motors(self):
+        self.Motor_1 = self.Motor_1._replace(Name='Phi',
+                                             Mne='phi',
+                                             Enabled=True
+                                             )
+
+        self.Motor_2 = self.Motor_2._replace(Name='Eta',
+                                             Mne='eta',
+                                             Enabled=True
+                                             )
+        self.Motors = [self.Motor_1, self.Motor_2, self.Motor_3, self.Motor_4, self.Motor_5, self.Motor_6]
+        self.core.init_motor_thread(self.Motors)
+        for i in range(len(self.Motors)):
+            Motor_inst = self.Motors[i]
+            if Motor_inst.Enabled:
+                self.comboBox_scan_motor.addItem(Motor_inst.Name)
 
     def init_labels(self):
 
@@ -338,17 +356,18 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
                   (CSS_COLOUR.GROUP_BOX, CSS_COLOUR.BLUE)
 
         label_map = {
-            PV.SYSTEM_TIME     :  (self.label_system_time,          '{:s}',   12, True),
-            VAR.STATUS_MSG     :  (self.label_status_msg,           '{:s}',   12, True),
-            VAR.SERVER_ADDRESS :  (self.label_server_address,       '{:s}',   12, True),
-            VAR.MOTOR_1_POS    :  (self.label_motor_1_pos,         '{:,.3f}',  12, True),
-            VAR.MOTOR_2_POS    :  (self.label_motor_2_pos,         '{:,.3f}',  12, True), #NOTE THAT THESE ARE {} brakets
-            VAR.MOTOR_3_POS    :  (self.label_motor_3_pos,         '{:,.3f}', 12, True),
-            VAR.MOTOR_4_POS    :  (self.label_motor_4_pos,         '{:,.3f}', 12, True),
-            VAR.MOTOR_5_POS    :  (self.label_motor_5_pos,         '{:,.3f}', 12, True),
-            VAR.MOTOR_6_POS    :  (self.label_motor_6_pos,         '{:,.3f}', 12, True),
-            VAR.COUNTER_1_COUNT:  (self.label_counter_1_count,      '{:,d}', 12, True),
-            VAR.COUNTER_2_COUNT:  (self.label_counter_2_count,      '{:,d}', 12, True),
+            PV.SYSTEM_TIME      :  (self.label_system_time,         '{:s}',     12, True),
+            VAR.STATUS_MSG      :  (self.label_status_msg,          '{:s}',     12, True),
+            VAR.SERVER_ADDRESS  :  (self.label_server_address,      '{:s}',     12, True),
+            VAR.MOTOR_1_POS     :  (self.label_motor_1_pos,         '{:,.3f}',  12, True),
+            VAR.MOTOR_2_POS     :  (self.label_motor_2_pos,         '{:,.3f}',  12, True),
+            VAR.MOTOR_3_POS     :  (self.label_motor_3_pos,         '{:,.3f}',  12, True),
+            VAR.MOTOR_4_POS     :  (self.label_motor_4_pos,         '{:,.3f}',  12, True),
+            VAR.MOTOR_5_POS     :  (self.label_motor_5_pos,         '{:,.3f}',  12, True),
+            VAR.MOTOR_6_POS     :  (self.label_motor_6_pos,         '{:,.3f}',  12, True),
+            VAR.COUNTER_1_COUNT :  (self.label_counter_1_count,     '{:,d}',    12, True),
+            VAR.COUNTER_2_COUNT :  (self.label_counter_2_count,     '{:,d}',    12, True),
+            VAR.COUNT_TIME      :  (self.label_count_time,          '{:.3f}',   12, True),
         }
 
         for pv_name, data in label_map.iteritems():

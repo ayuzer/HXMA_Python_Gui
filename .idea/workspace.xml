@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ce5d3c2b-1f57-4bc2-8bdf-c273a09e7e10" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main_controller/windows/main_window.ui" afterPath="$PROJECT_DIR$/main_controller/windows/main_window.ui" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main_controller/core.py" afterPath="$PROJECT_DIR$/main_controller/core.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main_controller/windows/main_window.py" afterPath="$PROJECT_DIR$/main_controller/windows/main_window.py" />
@@ -18,33 +19,71 @@
   <component name="CreatePatchCommitExecutor">
     <option name="PATCH_PATH" value="" />
   </component>
+  <component name="DockManager">
+    <window id="2">
+      <content type="file-editors">
+        <state>
+          <leaf>
+            <file leaf-file-name="main_window.py" pinned="false" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/main_controller/windows/main_window.py">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state relative-caret-position="486">
+                    <caret line="258" column="99" selection-start-line="258" selection-start-column="99" selection-end-line="258" selection-end-column="99" />
+                    <folding>
+                      <element signature="e#1604#1637#0" expanded="false" />
+                      <element signature="e#2703#3897#0" expanded="false" />
+                      <element signature="e#9579#12486#0" expanded="false" />
+                      <element signature="e#12525#13292#0" expanded="false" />
+                      <element signature="e#15304#15351#0" expanded="false" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </state>
+      </content>
+    </window>
+  </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FavoritesManager">
     <favorites_list name="HXMA_Python_Gui" />
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main_window.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_controller/windows/main_window.py">
+      <file leaf-file-name="core.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/main_controller/core.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="176">
-              <caret line="287" column="0" selection-start-line="287" selection-start-column="0" selection-end-line="287" selection-end-column="0" />
+            <state relative-caret-position="254">
+              <caret line="267" column="17" selection-start-line="267" selection-start-column="17" selection-end-line="267" selection-end-column="17" />
               <folding>
-                <element signature="e#1604#1637#0" expanded="false" />
-                <element signature="e#2703#3897#0" expanded="false" />
-                <element signature="e#4076#6997#0" expanded="false" />
-                <element signature="e#4897#4944#0" expanded="false" />
-                <element signature="e#7039#10297#0" expanded="false" />
+                <element signature="e#17#30#0" expanded="true" />
+                <element signature="e#2455#2782#0" expanded="false" />
+                <element signature="e#2844#3865#0" expanded="false" />
+                <element signature="e#3909#4128#0" expanded="false" />
+                <element signature="e#4163#4330#0" expanded="false" />
+                <element signature="e#4373#5299#0" expanded="false" />
+                <element signature="e#7148#7179#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="asyncore.py" pinned="false" current-in-tab="false">
-        <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/asyncore.py">
+      <file leaf-file-name="SpecScan_toki.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecScan_toki.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="185">
-              <caret line="151" column="0" selection-start-line="151" selection-start-column="0" selection-end-line="151" selection-end-column="0" />
+            <state relative-caret-position="501">
+              <caret line="320" column="24" selection-start-line="320" selection-start-column="24" selection-end-line="320" selection-end-column="24" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="pydevd.py" pinned="false" current-in-tab="false">
+        <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="391">
+              <caret line="1579" column="0" selection-start-line="1579" selection-start-column="0" selection-end-line="1579" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -60,73 +99,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="threading.py" pinned="false" current-in-tab="false">
-        <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/threading.py">
+      <file leaf-file-name="saferef.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/saferef.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="185">
-              <caret line="503" column="0" selection-start-line="503" selection-start-column="0" selection-end-line="503" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="core.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/main_controller/core.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="336">
-              <caret line="164" column="65" selection-start-line="164" selection-start-column="65" selection-end-line="164" selection-end-column="65" />
-              <folding>
-                <element signature="e#17#30#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SpecMotor.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecMotor.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="214">
-              <caret line="384" column="0" selection-start-line="384" selection-start-column="0" selection-end-line="384" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SpecConnection.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecConnection.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="246">
-              <caret line="293" column="0" selection-start-line="293" selection-start-column="0" selection-end-line="293" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SpecWaitObject.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecWaitObject.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="182">
-              <caret line="36" column="0" selection-start-line="36" selection-start-column="0" selection-end-line="36" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="emitter.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_controller/utils/emitter.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="196">
-              <caret line="43" column="0" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="monitor.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_controller/utils/monitor.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="182">
-              <caret line="239" column="0" selection-start-line="239" selection-start-column="0" selection-end-line="239" selection-end-column="0" />
+            <state relative-caret-position="421">
+              <caret line="111" column="0" selection-start-line="111" selection-start-column="0" selection-end-line="111" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -166,15 +143,16 @@
         <option value="$PROJECT_DIR$/main_controller/settings.py" />
         <option value="$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecCounter_toki.py" />
         <option value="$PROJECT_DIR$/main_controller/windows/motors.py" />
+        <option value="$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecScan_toki.py" />
         <option value="$PROJECT_DIR$/main_controller/windows/main_window.py" />
         <option value="$PROJECT_DIR$/main_controller/core.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="517" />
+    <option name="x" value="679" />
     <option name="y" value="25" />
-    <option name="width" value="1402" />
+    <option name="width" value="1240" />
     <option name="height" value="1030" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
@@ -548,19 +526,19 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="517" y="25" width="1402" height="1030" extended-state="0" />
+    <frame x="679" y="25" width="1240" height="1030" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.22341955" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25284553" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3404711" sideWeight="0.38429406" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31584582" sideWeight="0.72583646" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.23233405" sideWeight="0.49628252" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23233405" sideWeight="0.49628252" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.37794432" sideWeight="0.6157059" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3340471" sideWeight="0.6157059" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -647,7 +625,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="205" />
+      <option name="time" value="209" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
@@ -656,13 +634,6 @@
     </watches-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../../splot/splot.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="416">
-          <caret line="26" column="1" selection-start-line="26" selection-start-column="1" selection-end-line="26" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/spec_tools/SpecClient/SpecCommand.py" />
     <entry file="file://$PROJECT_DIR$/template_sandbox/TemplateApp/src/core.py" />
     <entry file="file://$PROJECT_DIR$/spec_tools/SpecClient/Spec.py" />
@@ -695,6 +666,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="623">
           <caret line="142" column="0" selection-start-line="142" selection-start-column="0" selection-end-line="142" selection-end-column="25" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -752,14 +724,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/saferef.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1904">
-          <caret line="120" column="0" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/main_controller/run.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="559">
@@ -808,14 +772,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="451">
-          <caret line="1585" column="0" selection-start-line="1585" selection-start-column="0" selection-end-line="1585" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecChannel.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="278">
@@ -828,14 +784,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="182">
           <caret line="239" column="0" selection-start-line="239" selection-start-column="0" selection-end-line="239" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecConnection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="246">
-          <caret line="293" column="0" selection-start-line="293" selection-start-column="0" selection-end-line="293" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -856,32 +804,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main_controller/windows/main_window.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="176">
-          <caret line="287" column="0" selection-start-line="287" selection-start-column="0" selection-end-line="287" selection-end-column="0" />
-          <folding>
-            <element signature="e#1604#1637#0" expanded="false" />
-            <element signature="e#2703#3897#0" expanded="false" />
-            <element signature="e#4076#6997#0" expanded="false" />
-            <element signature="e#4897#4944#0" expanded="false" />
-            <element signature="e#7039#10297#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/threading.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="185">
           <caret line="503" column="0" selection-start-line="503" selection-start-column="0" selection-end-line="503" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecConnectionsManager.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="185">
-          <caret line="101" column="0" selection-start-line="101" selection-start-column="0" selection-end-line="101" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -902,12 +828,72 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecConnection.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="246">
+          <caret line="293" column="0" selection-start-line="293" selection-start-column="0" selection-end-line="293" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecConnectionsManager.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="185">
+          <caret line="101" column="0" selection-start-line="101" selection-start-column="0" selection-end-line="101" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/saferef.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="421">
+          <caret line="111" column="0" selection-start-line="111" selection-start-column="0" selection-end-line="111" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="391">
+          <caret line="1579" column="0" selection-start-line="1579" selection-start-column="0" selection-end-line="1579" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecScan_toki.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="501">
+          <caret line="320" column="24" selection-start-line="320" selection-start-column="24" selection-end-line="320" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/windows/main_window.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="486">
+          <caret line="258" column="99" selection-start-line="258" selection-start-column="99" selection-end-line="258" selection-end-column="99" />
+          <folding>
+            <element signature="e#1604#1637#0" expanded="false" />
+            <element signature="e#2703#3897#0" expanded="false" />
+            <element signature="e#9579#12486#0" expanded="false" />
+            <element signature="e#12525#13292#0" expanded="false" />
+            <element signature="e#15304#15351#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/main_controller/core.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="336">
-          <caret line="164" column="65" selection-start-line="164" selection-start-column="65" selection-end-line="164" selection-end-column="65" />
+        <state relative-caret-position="254">
+          <caret line="267" column="17" selection-start-line="267" selection-start-column="17" selection-end-line="267" selection-end-column="17" />
           <folding>
             <element signature="e#17#30#0" expanded="true" />
+            <element signature="e#2455#2782#0" expanded="false" />
+            <element signature="e#2844#3865#0" expanded="false" />
+            <element signature="e#3909#4128#0" expanded="false" />
+            <element signature="e#4163#4330#0" expanded="false" />
+            <element signature="e#4373#5299#0" expanded="false" />
+            <element signature="e#7148#7179#0" expanded="false" />
           </folding>
         </state>
       </provider>

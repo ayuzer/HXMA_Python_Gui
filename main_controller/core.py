@@ -68,18 +68,57 @@ class Core(object):
         # self._queue_timer = threading.Timer(1, self.handle_queue_timer)
         # self._queue_timer.start()
 
-        self._counter_timer = threading.Timer(.25, self.handle_counter)
+        self._counter_timer = threading.Timer(1, self.handle_counter)
         self._counter_timer.start()
         self.count = False
+
+
 
         self.Spec_sess = Spec()
         self.SpecMotor_sess = SpecMotor()
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
+
+    def init_motor_thread(self,Motors):
+        for i in range(len(Motors)):
+            Motor_inst = Motors[i]
+            if Motor_inst.Enabled:
+                self.move_thread = threading.Thread(group=None, target=self.handle_motor_moving_thread, name=None,
+                                                   args=(Motor_inst, i))
+                self.move_thread.start()
+    def handle_motor_moving_thread(self, motor, id):
+        while True:
+            inst_self = self.move_thread_update()
+            if inst_self['term_flag']: break
+            moving = inst_self['state'] in [SpecMotor_module.MOVING, SpecMotor_module.MOVESTARTED]
+            if inst_self['specName'] == motor.Mne:
+                if moving:  # this doesnt seem to work because it doesnt properly register when the motor is moving
+                    time.sleep(0.25)  # I believe this issue is with SpecClient and not with my code...
+                    print "moving"
+                else:
+                    time.sleep(1)
+                motor_check = self.checkpos_motor(motor, False)
+                moved = motor_check['moved']
+                pos = motor_check['pos']
+                if moved:
+                    print motor.Name + " has moved to " + repr(pos)
+            else:  # making sure we're looking at the right motor
+                time.sleep(1)
+                SpecMotor.connectToSpec(inst_self['sess'], motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
+
+    def move_thread_update(self):
+        return {'state': self.SpecMotor_sess.motorState,
+                'specName': self.SpecMotor_sess.specName,
+                'sess': self.SpecMotor_sess,
+                'term_flag': self._terminate_flag
+                }
+
     def init_Spec(self):
         # starting up the Spec server, completed in main_window as monitor needs to load
         Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
+
+
 
     def motorStateChanged(self, state):
         self.state = state
@@ -94,7 +133,8 @@ class Core(object):
         motor_name = motor.Mne
         self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor.Name)
         if motor.Enabled:
-            pos = self.checkpos_motor(motor) # This sets the motor to the correct Mne as well
+            motor_check = self.checkpos_motor(motor)  # This sets the motor to the correct Mne as well
+            pos = motor_check['pos']
             moveto = motor.Moveto_SB.value()
             movetype = motor.MoveType_CB.currentText()
             if movetype == 'Relative':
@@ -107,41 +147,26 @@ class Core(object):
                 print "Move command FAILED:  INVESTIGATE"
                 print movetype
                 print moveto
-            self.move_thread = threading.Timer(0.1, partial(self.handle_motor_moving_thread, motor))
-            self.move_thread.start()
         else:
             print "Cannot Move non-enabled motor"
 
-    def handle_motor_moving_thread(self, motor):
-        self.SpecMotor_sess.moving = True
-        while self.SpecMotor_sess.moving:
-            if self.SpecMotor_sess.specName == motor.Mne:
-                self.SpecMotor_sess.moving = self.SpecMotor_sess.motorState in [SpecMotor_module.MOVING, SpecMotor_module.MOVESTARTED]
-                time.sleep(0.1)
-                self.checkpos_motor(motor)
-            else:# making sure we're looking at the right motor
-                SpecMotor.connectToSpec(self.SpecMotor_sess, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
-                time.sleep(1)
-            if self._terminate_flag: break
-        time.sleep(2)
-        self.checkpos_motor(motor)
-
-    def checkpos_motor(self, motor):
+    def checkpos_motor(self, motor, print_val = True):
         if self.SpecMotor_sess.specName == motor.Mne:
             pass
         else:
             SpecMotor.connectToSpec(self.SpecMotor_sess, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
         try:
+            init_pos = self.monitor.get_value(motor.Pos_VAR)
             pos = SpecMotor.getPosition(self.SpecMotor_sess)
+            moved = not (init_pos == pos)
+            if moved:  # this is where you can hook if motors are moving or not
+                self.monitor.update(motor.Pos_VAR, pos)
+                if print_val:
+                    print repr(self.monitor.get_value(motor.Pos_VAR))
         except SpecClientError as e:
             print repr(e) + ' unconfig = Motor Name: ' + motor.Name
             pos = 'None'
-        if isinstance(pos, basestring) ==  True:
-            pass
-        else:
-            self.monitor.update(motor.Pos_VAR, pos)
-            print repr(self.monitor.get_value(motor.Pos_VAR))
-        return pos
+        return {'pos': pos, 'moved': moved}
 
     def move_motor_all(self):
         for i in range(1,len(motor_list)):  # simply sending all of the "motor_num"s to the check pos command

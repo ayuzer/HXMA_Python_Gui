@@ -285,6 +285,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
                                              Enabled=True
                                              )
         self.Motors = [self.Motor_1, self.Motor_2, self.Motor_3, self.Motor_4, self.Motor_5, self.Motor_6]
+        self.core.init_motor_thread(self.Motors)
 
     @decorator_busy_cursor
     def handle_pushButton_motor_movego(self, motor, dummy):

@@ -18,6 +18,8 @@ from SpecClient.SpecClientError import SpecClientError
 
 from SpecClient.SpecScan_toki import SpecScanA as SpecScan
 
+from SpecDataConnection import SpecDataConnection
+
 import settings
 
 
@@ -68,7 +70,7 @@ class Core(object):
         # self.monitor.update(VAR.QUEUE_SIZE, 0)
 
         self._terminate_flag = False
-        self._lock = threading.Lock()
+        # self._lock = threading.Lock()
         # self._queue = []
         # self._queue_timer = threading.Timer(1, self.handle_queue_timer)
         # self._queue_timer.start()
@@ -79,32 +81,52 @@ class Core(object):
         self.count_event = threading.Event()
         self.count_event.clear()
 
+        self.move_event = threading.Event()
+        self.move_event.set()
+
+        self._scan_timer = threading.Timer(1, self.handle_scan)
+        self._scan_timer.start()
+        self.scan_event = threading.Event()
+        self.scan_event.clear()
+
         self.Spec_sess = Spec()
         self.SpecMotor_sess = SpecMotor()
         self.SpecScan_sess = SpecScan()
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
+        self.connect_data()
 
-    def init_motor_thread(self,Motors):
-        for i in range(len(Motors)):
-            Motor_inst = Motors[i]
-            if Motor_inst.Enabled:
+    def connect_data(self):
+        self.SpecDataConn = SpecDataConnection(self, self.monitor.get_value(VAR.SERVER_HOST),
+                                           self.monitor.get_value(VAR.SERVER_PORT))
+
+    def init_motor_thread(self, motors):
+        for i in range(len(motors)):
+            motor_inst = motors[i]
+            if motor_inst.Enabled:
                 self.move_thread = threading.Thread(group=None, target=self.handle_motor_moving_thread, name=None,
-                                                   args=(Motor_inst, i))
+                                                    args=(motor_inst, i))
                 self.move_thread.start()
     def handle_motor_moving_thread(self, motor, id):
+        moved = False  # initializing variable which gets checked before assigned on first loop
         while True:
+            self.move_event.wait()
+            if self._terminate_flag: break
             inst_self = self.move_thread_update()
             if inst_self['term_flag']: break
-            moving = inst_self['state'] in [SpecMotor_module.MOVING, SpecMotor_module.MOVESTARTED]
             if inst_self['specName'] == motor.Mne:
+                '''
+                moving = inst_self['state'] in [SpecMotor_module.MOVING, SpecMotor_module.MOVESTARTED]
                 if moving:  # this doesnt seem to work because it doesnt properly register when the motor is moving
-                    time.sleep(0.25)  # I believe this issue is with SpecClient and not with my code...
-                    print "moving"
+                # I believe this issue is with SpecClient and not with my code...
+                '''
+                motor_check = self.checkpos_motor(motor, False)
+                if moved:
+                    time.sleep(0.33)
+                    print motor.Name + " is moving"
                 else:
                     time.sleep(1)
-                motor_check = self.checkpos_motor(motor, False)
                 moved = motor_check['moved']
                 pos = motor_check['pos']
                 if moved:
@@ -174,9 +196,9 @@ class Core(object):
         i=0
         while True:
             self.count_event.wait()
-            i = i+1
-            print i
             if self._terminate_flag: break
+            i = i + 1
+            print i
             count_time = SpecCounter.count(self.SpecCounter_sec, self.count_time_set_SB.value())
             self.monitor.update(VAR.COUNT_TIME, count_time)
             self.monitor.update(VAR.COUNTER_1_COUNT, SpecCounter.getValue(self.SpecCounter_ic2))
@@ -246,7 +268,7 @@ class Core(object):
             self.count_event.clear()
 
     def is_scanning(self):
-        return SpecScan(self.SpecScan_sess).scanning
+        return self.SpecScan_sess.scanning
 
     def scan_start(self, scantype, motor_name, startpos, endpos, intervals, count_time, Motors):
 
@@ -255,6 +277,7 @@ class Core(object):
             if Motor_inst.Name == motor_name:
                 if Motor_inst.Enabled:
                     SpecScan.connectToSpec(self.SpecScan_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
+                    SpecScan.newScan(self.SpecScan_sess, True)
                     if scantype:
                         checkpos = self.checkpos_motor(Motor_inst, False)
                         pos = checkpos['pos']
@@ -263,15 +286,31 @@ class Core(object):
                         SpecScan.dscan(self.SpecScan_sess, Motor_inst.Mne, relstartpos, relendpos, intervals, count_time)
                     else:
                         SpecScan.ascan(self.SpecScan_sess, Motor_inst.Mne, startpos, endpos, intervals, count_time)
+                    self.scan_event.set()
                 else:
                     raise Exception('Scan cannot be started as the motor was not Enabled')
             else:
                 pass
         print "Scan Started"
+
         return True  # Saying the scan is started
+    def handle_scan(self):
+        #Thread which handles scan data
+        self.scan_event.wait()
+        SpecDataConnection.connect(self.SpecDataConn, self.monitor.get_value(VAR.SERVER_HOST),
+                                   self.monitor.get_value(VAR.SERVER_PORT), "SCAN_D")
+        while True:
+            self.scan_event.wait()
+            if self._terminate_flag: break
+            while self.SpecScan_sess.scanning:
+                if self._terminate_flag: break
+                self.scan_data = SpecDataConnection.getData(self.SpecDataConn)
+                print self.scan_data
+            time.sleep(5)
 
     def scan_stop(self):
         SpecScan.abort(self.SpecScan_sess)
+        self.scan_event.clear()
         print "Scan Stopped"
         return False  # Saying the scan is stopped
 
@@ -289,6 +328,9 @@ class Core(object):
     def terminate(self):
         print "core.terminate called"
         self._terminate_flag = True
-
+        self.count_event.set()  # allow any blocked threads to terminate
+        self.move_event.set()
+        self.scan_event.set()
+        self.scan_stop()
 
 

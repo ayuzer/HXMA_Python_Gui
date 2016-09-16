@@ -23,7 +23,8 @@ __editor__ = 'Michael Tokiyoshi Hamel'  # added in dscan
 
 (TIMESCAN) = (16)
 
-DEBUG = False
+DEBUG = True
+
 
 
 def _iterable(next, terminator):
@@ -177,7 +178,9 @@ class SpecScanA:
     def isScanning(self):
         return self.scanning
 
-
+	def isReady(self):
+		return self.ready
+		
     def __newScan(self, scanParams):
         if DEBUG: print( "SpecScanA.__newScan", scanParams )
 
@@ -306,7 +309,10 @@ class SpecScanA:
         if self.connection.isSpecConnected():
             cmd = "ascan %s %f %f %d %f" % (motorMne, startPos, endPos,
                                             nbPoints, countTime)
-            self.connection.send_msg_cmd(cmd)
+            # self.connection.send_msg_cmd(cmd)
+            self.SpecCommander = SpecCommand.SpecCommand(cmd, self.connection)
+            SpecCommand.SpecCommand.executeCommand(self.SpecCommander, cmd)
+            self.__status = 'scanning'
             return True
         else:
             return False
@@ -315,7 +321,10 @@ class SpecScanA:
         if self.connection.isSpecConnected():
             cmd = "dscan %s %f %f %d %f" % (motorMne, startPos, endPos,
                                             nbPoints, countTime)
-            self.connection.send_msg_cmd(cmd)
+            self.SpecCommander = SpecCommand.SpecCommand(cmd, self.connection)
+            print (SpecCommand.SpecCommand.executeCommand(self.SpecCommander, cmd))
+            # self.connection.send_msg_cmd(cmd)
+            self.__status = 'scanning'
             return True
         else:
             return False

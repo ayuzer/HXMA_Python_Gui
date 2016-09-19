@@ -34,8 +34,9 @@ class ServMixin(object):
             self.monitor.update(VAR.SERVER_HOST, serv_dict[KEY.HOST])
             self.monitor.update(VAR.SERVER_PORT, serv_dict[KEY.PORT])
             self.monitor.update(VAR.SERVER_ADDRESS,''.join((serv_dict[KEY.HOST],':',serv_dict[KEY.PORT])))
+            return True
         except:
-            pass
+            return False
     def save_server_address(self):
 
         key = self.__class__.__name__

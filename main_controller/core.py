@@ -4,6 +4,8 @@ import math
 import threading
 import time
 
+from numpy import array_equal
+
 from functools import partial
 
 # App imports
@@ -95,11 +97,6 @@ class Core(object):
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
-        self.connect_data()
-
-    def connect_data(self):
-        self.SpecDataConn = SpecDataConnection(self, self.monitor.get_value(VAR.SERVER_HOST),
-                                           self.monitor.get_value(VAR.SERVER_PORT))
 
     def init_motor_thread(self, motors):
         for i in range(len(motors)):
@@ -110,12 +107,11 @@ class Core(object):
                 self.move_thread.start()
     def handle_motor_moving_thread(self, motor, id):
         moved = False  # initializing variable which gets checked before assigned on first loop
+        _SpecMotor_sess = SpecMotor()
         while True:
             self.move_event.wait()
             if self._terminate_flag: break
-            inst_self = self.move_thread_update()
-            if inst_self['term_flag']: break
-            if inst_self['specName'] == motor.Mne:
+            if _SpecMotor_sess.specName == motor.Mne:
                 '''
                 moving = inst_self['state'] in [SpecMotor_module.MOVING, SpecMotor_module.MOVESTARTED]
                 if moving:  # this doesnt seem to work because it doesnt properly register when the motor is moving
@@ -133,18 +129,18 @@ class Core(object):
                     print motor.Name + " has moved to " + repr(pos)
             else:  # making sure we're looking at the right motor
                 time.sleep(1)
-                SpecMotor.connectToSpec(inst_self['sess'], motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
-
-    def move_thread_update(self):
-        return {'state': self.SpecMotor_sess.motorState,
-                'specName': self.SpecMotor_sess.specName,
-                'sess': self.SpecMotor_sess,
-                'term_flag': self._terminate_flag
-                }
+                SpecMotor.connectToSpec(_SpecMotor_sess, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
 
     def init_Spec(self):
         # starting up the Spec server, completed in main_window as monitor needs to load
         Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
+
+    def motor_track_state(self,state):
+        if state:  # If the checkbox is clicked
+            self.move_event.set()
+        else:  # Disable movecheck
+            self.move_event.clear()
+
 
     def move_motor(self, motor):
         motor_name = motor.Mne
@@ -267,11 +263,21 @@ class Core(object):
         else:  # Disable Counting
             self.count_event.clear()
 
-    def is_scanning(self):
+    def is_scanning(self, button=None):
+        if button == None:
+            try:
+                button = self.saved_button
+            except UnboundLocalError:
+                pass
+        else:
+            self.saved_button = button
+        if self.SpecScan_sess.scanning:  # This property is checked, so functions here will work
+            button.setText('Stop')
+        else:
+            button.setText('Start')
         return self.SpecScan_sess.scanning
 
     def scan_start(self, scantype, motor_name, startpos, endpos, intervals, count_time, Motors):
-
         for i in range(len(Motors)):
             Motor_inst = Motors[i]
             if Motor_inst.Name == motor_name:
@@ -297,15 +303,18 @@ class Core(object):
     def handle_scan(self):
         #Thread which handles scan data
         self.scan_event.wait()
-        SpecDataConnection.connect(self.SpecDataConn, self.monitor.get_value(VAR.SERVER_HOST),
-                                   self.monitor.get_value(VAR.SERVER_PORT), "SCAN_D")
+        self.scan_data = []  # Initalizing empty array
         while True:
             self.scan_event.wait()
             if self._terminate_flag: break
-            while self.SpecScan_sess.scanning:
+            while self.is_scanning():
                 if self._terminate_flag: break
-                self.scan_data = SpecDataConnection.getData(self.SpecDataConn)
-                print self.scan_data
+                old_scan = self.scan_data
+                self.scan_data = SpecScan.get_SCAN_D(self.SpecScan_sess)
+                if array_equal(old_scan, self.scan_data):
+                    time.sleep(1)
+                else:  # here is where you would graph it/save it to the csv
+                    print self.scan_data
             time.sleep(5)
 
     def scan_stop(self):
@@ -332,5 +341,3 @@ class Core(object):
         self.move_event.set()
         self.scan_event.set()
         self.scan_stop()
-
-

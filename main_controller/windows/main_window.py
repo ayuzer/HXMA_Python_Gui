@@ -206,9 +206,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
         self.set_window_position()
         self.monitor.start()
 
-        self.set_server_address()
-
-        self.core.init_Spec()
+        if self.set_server_address():
+            self.core.init_Spec()
+        else:
+            print "SERVER ADDRESS NOT IN JSON, REVERTING TO DEFAULT"
+            self.handle_action_set_server()
+            self.core.init_Spec()
 
         self.init_motor_slots()
         self.update_motors()
@@ -219,6 +222,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
         self.pushButton_motor_4_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_4))
         self.pushButton_motor_5_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_5))
         self.pushButton_motor_6_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_6))
+
+        self.checkBox_motor_all_checkpos.stateChanged.connect(self.handle_checkBox_motor_all_checkpos)
 
         self.pushButton_scan_start_stop.setText(self.scan_button_text())
 
@@ -248,6 +253,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
             if Motor_inst.Enabled:
                 self.core.checkpos_motor(Motor_inst)
 
+    def handle_checkBox_motor_all_checkpos(self):
+        self.core.motor_track_state(self.checkBox_motor_all_checkpos.isChecked())
+
     def handle_pushButton_motor_all_stop(self):
         pass
 
@@ -259,15 +267,15 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
         self.core.counting_state(self.checkBox_count.isChecked(), self.doubleSpinBox_count_time_set)
 
     def scan_button_text(self):
-        if self.core.is_scanning():
+        if self.core.is_scanning(self.pushButton_scan_start_stop):
             return 'Stop'
         else:
             return 'Start'
 
     def handle_pushButton_scan_start_stop(self):
-        if self.core.is_scanning():
+        if self.core.is_scanning(self.pushButton_scan_start_stop):
             self.core.scan_stop()
-            self.pushButton_scan_start_stop.setText('Start')
+            # self.pushButton_scan_start_stop.setText('Start')
         else:
             self.core.scan_start(self.checkBox_scan_return_home.checkState(),  # What Mode True = dscan False = ascan
                                  self.comboBox_scan_motor.currentText(),  # Which Motor are we using? Passes NAME back
@@ -276,8 +284,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
                                  self.doubleSpinBox_scan_steps.value(),
                                  self.doubleSpinBox_scan_waittime.value(),
                                  self.Motors  # We need to pass this so we can see which motor we are scanning with
-                                 )
-            self.pushButton_scan_start_stop.setText('Stop')
+                                  )
+            # self.pushButton_scan_start_stop.setText('Stop')
 
 
 

@@ -140,16 +140,20 @@ class SpecScanA:
 
 
     def __connected(self):
-       self.connection.registerChannel('status/ready', self.__statusReady,
-                                    dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       self.connection.registerChannel('var/_SC_NEWSCAN', self.__newScan,
-                                    dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       self.connection.registerChannel('var/_SC_NEWPLOTDATA',
-                                    self.__newScanPoint,
-                                    dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       self.connection.registerChannel('var/_SC_NEWSCANDATA',
-                                    self.__newScanData,
-                                    dispatchMode=SpecEventsDispatcher.FIREEVENT)
+       # self.connection.registerChannel('status/ready', self.__statusReady,
+       #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
+       # self.connection.registerChannel('var/_SC_NEWSCAN', self.__newScan,
+       #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
+       # self.connection.registerChannel('var/_SC_NEWPLOTDATA',
+       #                              self.__newScanPoint,
+       #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
+       # self.connection.registerChannel('var/_SC_NEWSCANDATA',
+       #                              self.__newScanData,
+       #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
+       self.connection.registerChannel('var/SCAN_STATUS', self.__statusChange,
+                                       dispatchMode=SpecEventsDispatcher.FIREEVENT)
+       self.connection.registerChannel('var/SCAN_PT', self.__newPT,
+                                       dispatchMode=SpecEventsDispatcher.FIREEVENT)
        self.connected()
 
     def connected(self):
@@ -180,7 +184,7 @@ class SpecScanA:
 
 	def isReady(self):
 		return self.ready
-		
+
     def __newScan(self, scanParams):
         if DEBUG: print( "SpecScanA.__newScan", scanParams )
 
@@ -208,7 +212,7 @@ class SpecScanA:
         self.scanCounterMne = self.scanParams.get('counter')
         if (not self.scanCounterMne) or self.scanCounterMne == '?':
             logging.getLogger("SpecClient").error(
-                                "No counter selected for scan.")
+                                "No counter selected for scstatusan.")
             self.scanCounterMne = None
             return
 
@@ -222,13 +226,14 @@ class SpecScanA:
 
     def __newScanData(self, scanData):
         if DEBUG: print( "SpecScanA.__newScanData", scanData )
-        if self.paused and scanData:
-            self.__status = 'scanning'
-            self.scanResumed()
-        if self.scanning and scanData:
-            scanData = simple_eval(scanData)
-
-            self.newScanData(scanData)
+        print "DATA TRIG"
+        # if self.paused and scanData:
+        #     self.__status = 'scanning'
+        #     self.scanResumed()
+        # if self.scanning and scanData:
+        #     scanData = simple_eval(scanData)
+        #
+        #     self.newScanData(scanData)
 
 
     def newScanData(self, scanData):
@@ -298,20 +303,34 @@ class SpecScanA:
     def scanStarted(self): # A.B
         pass # A.B
 
+    def __statusChange(self, input):
+        print "status = " + input
+        if input == 'running':
+            self.__status = 'scanning'
+        elif input == 'idle':
+            self.__status = 'ready'
 
-    def __statusReady(self, status):
-        if status and self.scanning:
-            self.__status = 'paused'
-            self.scanPaused()
+    def _SpecScanA__newPT(self, point):
+        print "POINT " + point
+
+    # def __statusReady(self, status):
+    #     if status:
+    #         if self.ready:
+    #             pass
+    #         elif self.scanning:
+    #             self.__status = 'ready'
+    #         # self.scanPaused()
+    #     else:
+    #         pass
 
 
     def ascan(self, motorMne, startPos, endPos, nbPoints, countTime):
         if self.connection.isSpecConnected():
             cmd = "ascan %s %f %f %d %f" % (motorMne, startPos, endPos,
                                             nbPoints, countTime)
-            # self.connection.send_msg_cmd(cmd)
-            self.SpecCommander = SpecCommand.SpecCommand(cmd, self.connection)
-            SpecCommand.SpecCommand.executeCommand(self.SpecCommander, cmd)
+            self.connection.send_msg_cmd(cmd)
+            # self.SpecCommander = SpecCommand.SpecCommand(cmd, self.connection)
+            # SpecCommand.SpecCommand.executeCommand(self.SpecCommander, cmd)
             self.__status = 'scanning'
             return True
         else:
@@ -321,10 +340,18 @@ class SpecScanA:
         if self.connection.isSpecConnected():
             cmd = "dscan %s %f %f %d %f" % (motorMne, startPos, endPos,
                                             nbPoints, countTime)
-            self.SpecCommander = SpecCommand.SpecCommand(cmd, self.connection)
-            print (SpecCommand.SpecCommand.executeCommand(self.SpecCommander, cmd))
-            # self.connection.send_msg_cmd(cmd)
+            # self.SpecCommander = SpecCommand.SpecCommand(cmd, self.connection)
+            # print (SpecCommand.SpecCommand.executeCommand(self.SpecCommander, cmd))
+            self.connection.send_msg_cmd(cmd)
             self.__status = 'scanning'
             return True
         else:
             return False
+			
+	
+    def get_SCAN_D(self):
+        """Return current scan values."""
+        if self.connection is not None:
+            c = self.connection.getChannel('var/SCAN_D')
+
+            return c.read()

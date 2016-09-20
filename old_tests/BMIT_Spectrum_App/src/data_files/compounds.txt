@@ -1,0 +1,67 @@
+# This file defines compounds
+#
+# density g/cm^3
+
+[Kapton]
+  Density:1.42      # A comment
+  C:44              # Another comment
+  H:20
+  N:4
+  O:10
+
+[  Water    ]
+  density:1.0
+  Hydrogen : 2
+   Oxygen : 1
+
+[Lucite]
+density: 1.19
+hydrogen: 8
+carbon: 5
+oxygen: 2
+
+
+ [ Polyvinyl Chloride ]
+density: 1.35
+Hydro:3
+carbon: 2
+chlorine: 1
+
+# For air, rely on the data file from NIST for the attenuation coefficients
+[Air]
+density:1.2754e-3
+
+[AlN (Al. Nitride)]
+density:3.26
+Al:1
+N:1
+
+[Diamond]
+density: 3.52
+carbon: 1
+
+[Glasseous]
+density:12.010
+C:1
+
+[Pyrolithic]
+density:12.010
+C:1
+
+[Carbon Glass]
+density:12.010
+C:1
+
+[Nuclear Grade]
+density:12.010
+C:1
+
+[Al 3mm+Sn 0.5]
+Al:0.85714
+Sn:0.14259
+
+[Al2+Sn0.5+Al1]
+Al:0.57143
+Sn:0.14259
+Al:0.28571
+

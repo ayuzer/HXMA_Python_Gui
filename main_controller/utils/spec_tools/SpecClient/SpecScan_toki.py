@@ -18,7 +18,7 @@ from SpecClient import SpecWaitObject
 __author__ = 'Matias Guijarro (ESRF) / Darren Dale (CHESS)'
 __version__ = 1
 
-__editor__ = 'Michael Tokiyoshi Hamel'  # added in dscan
+__editor__ = 'Michael Tokiyoshi Hamel(CLS)'  # added in dscan
 
 
 (TIMESCAN) = (16)
@@ -154,7 +154,28 @@ class SpecScanA:
                                        dispatchMode=SpecEventsDispatcher.FIREEVENT)
        self.connection.registerChannel('var/SCAN_PT', self.__newPT,
                                        dispatchMode=SpecEventsDispatcher.FIREEVENT)
+       # self.connection.registerChannel('var/SCAN_PLOTCONFIG', self.__plotconfigChange,
+       #                                 dispatchMode=SpecEventsDispatcher.FIREEVENT)
+       self.connection.registerChannel('var/SCAN_META', self.__scanmetaChange,
+                                       dispatchMode=SpecEventsDispatcher.FIREEVENT)
        self.connected()
+
+    def __plotconfigChange(self, plotconfig):
+        print "PLOT CONFIG " + repr(plotconfig)
+
+    def __scanmetaChange(self, scan_meta):
+        print "SCAN META " + repr(scan_meta)
+
+    def __statusChange(self, input):
+        print "status = " + input
+        if input == 'running':
+            self.__status = 'scanning'
+        elif input == 'idle':
+            self.__status = 'ready'
+
+    def __newPT(self, point):
+        # print "POINT " + point
+        pass
 
     def connected(self):
         pass
@@ -180,10 +201,15 @@ class SpecScanA:
 
 
     def isScanning(self):
-        return self.scanning
+        if self.connection is not None:
+            c = self.connection.getChannel('var/SCAN_STATUS')
+            if c.read() == 'running':
+                return True
+            else:
+                return False
 
-	def isReady(self):
-		return self.ready
+    def isReady(self):
+        return self.ready
 
     def __newScan(self, scanParams):
         if DEBUG: print( "SpecScanA.__newScan", scanParams )
@@ -303,16 +329,6 @@ class SpecScanA:
     def scanStarted(self): # A.B
         pass # A.B
 
-    def __statusChange(self, input):
-        print "status = " + input
-        if input == 'running':
-            self.__status = 'scanning'
-        elif input == 'idle':
-            self.__status = 'ready'
-
-    def _SpecScanA__newPT(self, point):
-        print "POINT " + point
-
     # def __statusReady(self, status):
     #     if status:
     #         if self.ready:
@@ -343,15 +359,22 @@ class SpecScanA:
             # self.SpecCommander = SpecCommand.SpecCommand(cmd, self.connection)
             # print (SpecCommand.SpecCommand.executeCommand(self.SpecCommander, cmd))
             self.connection.send_msg_cmd(cmd)
+            cmd = "prop_send var/SCAN_PT"
             self.__status = 'scanning'
             return True
         else:
             return False
-			
-	
+
     def get_SCAN_D(self):
         """Return current scan values."""
         if self.connection is not None:
             c = self.connection.getChannel('var/SCAN_D')
+
+            return c.read()
+
+    def get_SCAN_PT(self):
+        """Return current scan point."""
+        if self.connection is not None:
+            c = self.connection.getChannel('var/SCAN_PT')
 
             return c.read()

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>911</width>
-    <height>734</height>
+    <width>825</width>
+    <height>717</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="tab_move">
            <attribute name="title">
@@ -862,6 +862,9 @@
               </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_ScanSettings">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetDefaultConstraint</enum>
+                </property>
                 <item>
                  <layout class="QGridLayout" name="gridLayout_ScanSettings">
                   <item row="1" column="2">
@@ -1095,37 +1098,10 @@
                </widget>
               </item>
               <item>
-               <layout class="QVBoxLayout" name="verticalLayout_6">
-                <item>
-                 <widget class="Line" name="line_7">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="label">
-                  <property name="minimumSize">
-                   <size>
-                    <width>300</width>
-                    <height>300</height>
-                   </size>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>6</pointsize>
-                    <weight>75</weight>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>I AM A GRAPH</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
+               <layout class="QVBoxLayout" name="verticalLayout_scan_graph">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetDefaultConstraint</enum>
+                </property>
                </layout>
               </item>
               <item>
@@ -1149,9 +1125,6 @@
                    <string>Scan Data</string>
                   </property>
                  </widget>
-                </item>
-                <item>
-                 <widget class="QColumnView" name="columnView_scan_data"/>
                 </item>
                </layout>
               </item>
@@ -1300,7 +1273,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>911</width>
+     <width>825</width>
      <height>25</height>
     </rect>
    </property>

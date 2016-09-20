@@ -1,0 +1,7 @@
+#!/bin/bash
+
+DATE=`(set \`date +%Y-%m-%d\`; echo $1)`
+
+cd /home/bmit/bin/Spectrum_App/src
+/home/beamline/bin/python2.6 run.py >> /tmp/BMIT_Spectrum_App-$USER-$DATE.log
+

@@ -30,6 +30,8 @@ from utils import to_rad
 
 from utils.monitor import KEY as MONITOR_KEY
 
+from utils.graph import Plotter
+
 from windows.css import GROUP_BOX_STYLE
 from windows.css import GROUP_BOX_STYLE_NO_TITLE
 from windows.css import CSS_COLOUR
@@ -61,6 +63,10 @@ class COLOR(object):
 #------------------------------------------------------------------------------
 
 RELEASE_DATE            = 'NOT Released : IN TESTING'
+
+PLOT_TITLE = "SCAN POSITION vs INTENSITY"
+PLOT_LABEL_X = "POSITION"
+PLOT_LABEL_Y = "COUNTS"
 
 class SETTINGS(Constant):
     KEY = 'main_window_settings'
@@ -181,6 +187,15 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
 
         self._item_count = 0
 
+        self.plot_id = Plotter()
+        self.verticalLayout_scan_graph.addWidget(self.plot_id)
+        self.plot_id.set_title(PLOT_TITLE)
+        self.plot_id.set_axis_label_x(PLOT_LABEL_X)
+        self.plot_id.set_axis_label_y(PLOT_LABEL_Y)
+        # self.plot_id.set_mouse_position_callback(self.callback_mouse_pos_id)
+        self.plot_id.set_legend()
+        self.plot_id.timer = QtCore.QTimer()
+
         # # Track mouse position while in graphics view
         # self.mouse_tracker = MouseTracker(self.graphicsView)
         # self.mouse_tracker.SIGNAL_MOVE.connect(self.handle_mouse_signal_move)
@@ -227,6 +242,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
 
         self.pushButton_scan_start_stop.setText(self.scan_button_text())
 
+        self.comboBox_scan_motor.currentIndexChanged.connect(self.handle_comboBox_scan_motor)
+
         self.pushButton_scan_start_stop.clicked.connect(self.handle_pushButton_scan_start_stop)
 
         self.checkBox_count.stateChanged.connect(self.handle_checkBox_count)
@@ -235,9 +252,11 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
 
         self.handle_pushButton_motor_all_checkpos(False)  # just checking position at init, False is a dummy var
 
+        self.handle_comboBox_scan_motor()
 
+    """MOTOR"""
     @decorator_busy_cursor
-    def handle_pushButton_motor_movego(self, motor, dummy):
+    def handle_pushButton_motor_movego(self, motor, dummy):  # Will pass the ref to relevant motor
         self.core.move_motor(motor)
         self.handle_pushButton_motor_all_checkpos(self.Motors)
 
@@ -247,47 +266,20 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
             if Motor_inst.Enabled:
                 self.core.move_motor(Motor_inst)
 
-    def handle_pushButton_motor_all_checkpos(self,dummy):
+    def handle_pushButton_motor_all_checkpos(self,dummy):  # calls a check_pos for each motor if enabled
         for i in range(len(self.Motors)):
             Motor_inst = self.Motors[i]
             if Motor_inst.Enabled:
                 self.core.checkpos_motor(Motor_inst)
 
-    def handle_checkBox_motor_all_checkpos(self):
+    def handle_checkBox_motor_all_checkpos(self):  # Enables/disables constant position tracking
         self.core.motor_track_state(self.checkBox_motor_all_checkpos.isChecked())
 
     def handle_pushButton_motor_all_stop(self):
-        pass
-
-    def handle_tabWidget_changed(self, current):
-        tabText = self.tabWidget.tabText(current)
-        self.core.set_status("Tab Clicked: %s" % QtCore.QString(tabText))
-
-    def handle_checkBox_count(self):  #Also passes the reference to the count-time down
-        self.core.counting_state(self.checkBox_count.isChecked(), self.doubleSpinBox_count_time_set)
-
-    def scan_button_text(self):
-        if self.core.is_scanning(self.pushButton_scan_start_stop):
-            return 'Stop'
-        else:
-            return 'Start'
-
-    def handle_pushButton_scan_start_stop(self):
-        if self.core.is_scanning(self.pushButton_scan_start_stop):
-            self.core.scan_stop()
-            # self.pushButton_scan_start_stop.setText('Start')
-        else:
-            self.core.scan_start(self.checkBox_scan_return_home.checkState(),  # What Mode True = dscan False = ascan
-                                 self.comboBox_scan_motor.currentText(),  # Which Motor are we using? Passes NAME back
-                                 self.doubleSpinBox_scan_startpos.value(),  # the rest are just values
-                                 self.doubleSpinBox_scan_stoppos.value(),
-                                 self.doubleSpinBox_scan_steps.value(),
-                                 self.doubleSpinBox_scan_waittime.value(),
-                                 self.Motors  # We need to pass this so we can see which motor we are scanning with
-                                  )
-            # self.pushButton_scan_start_stop.setText('Stop')
-
-
+        for i in range(len(self.Motors)):
+            Motor_inst = self.Motors[i]
+            if Motor_inst.Enabled:
+                self.core.motor_stop(Motor_inst)
 
     def init_motor_slots(self):
         Motor_Slot = namedtuple('Motor_Slot',
@@ -357,6 +349,52 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
             Motor_inst = self.Motors[i]
             if Motor_inst.Enabled:
                 self.comboBox_scan_motor.addItem(Motor_inst.Name)
+                (min_lim, max_lim) = self.core.check_limits(Motor_inst)
+                Motor_inst.Moveto_SB.setRange(min_lim*2, max_lim*2)
+
+    """COUNT"""
+    def handle_checkBox_count(self):  #Also passes the reference to the count-time down
+        self.core.counting_state(self.checkBox_count.isChecked(), self.doubleSpinBox_count_time_set)
+        self.doubleSpinBox_count_time_set.setRange(0.01, 259200)  # 0.1 sec to 3 days
+
+    """SCAN"""
+    def scan_button_text(self):
+        if self.core.is_scanning(self.pushButton_scan_start_stop):
+            return 'Stop'
+        else:
+            return 'Start'
+
+    def handle_pushButton_scan_start_stop(self):
+        if self.core.is_scanning(self.pushButton_scan_start_stop):
+            self.core.scan_stop()
+        else:
+            self.core.scan_start(self.checkBox_scan_return_home.checkState(),  # What Mode True = dscan False = ascan
+                                 self.comboBox_scan_motor.currentText(),  # Which Motor are we using? Passes NAME back
+                                 self.doubleSpinBox_scan_startpos.value(),  # the rest are just values
+                                 self.doubleSpinBox_scan_stoppos.value(),
+                                 self.doubleSpinBox_scan_steps.value(),
+                                 self.doubleSpinBox_scan_waittime.value(),
+                                 self.Motors  # We need to pass this so we can see which motor we are scanning with
+                                 )
+            self.plot_id.timer.start(100.0)
+            self.connect(self.plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
+
+    def scan_plot(self):
+        data = self.monitor.get_value(VAR.SCAN_ARRAY)
+        self.plot_id.new_plot(data)
+
+    def handle_comboBox_scan_motor(self):
+        self.core.scan_settings(self.comboBox_scan_motor.currentText(),
+                                self.doubleSpinBox_scan_startpos,
+                                self.doubleSpinBox_scan_stoppos,
+                                self.Motors,
+                                self.doubleSpinBox_scan_waittime
+                                )
+
+    """RANDOM"""
+    def handle_tabWidget_changed(self, current):
+        tabText = self.tabWidget.tabText(current)
+        self.core.set_status("Tab Clicked: %s" % QtCore.QString(tabText))
 
     def init_labels(self):
 
@@ -402,21 +440,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
 
     def handle_label(self, pv_name):
         self.formatter.format(pv_name)
-
-    # def handle_mouse_signal_move(self, position):
-    #     self.core.set_pixel_x(position.x())
-    #     self.core.set_pixel_y(position.y())
-    #
-    # def handle_mouse_signal_press(self, position):
-    #     print "mouse press at X: %d Y: %s" % (position.x(), position.y())
-
-    # @decorator_busy_cursor
-    # def handle_mouse_signal_release(self, position):
-    #     pixel_x = position.x()
-    #     pixel_y = position.y()
-    #
-    #     msg = "Mouse clicked at X: %d Y: %d" % (pixel_x, pixel_y)
-    #     dialog_info(sender=self, msg=msg)
 
     def handle_signal_dialog_info(self, msg):
         dialog_info(sender=self, title=settings.APP_NAME, msg=msg)

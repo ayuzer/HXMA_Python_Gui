@@ -3,6 +3,7 @@ import random
 import math
 import threading
 import time
+import json
 
 from numpy import array_equal
 
@@ -11,6 +12,7 @@ from functools import partial
 # App imports
 from utils.monitor import KEY as MONITOR_KEY
 from utils import Constant
+from utils import graph
 
 import SpecClient.SpecMotor as SpecMotor_module
 from SpecClient.SpecMotor import SpecMotorA as SpecMotor
@@ -44,6 +46,8 @@ class VAR(Constant):
     MOTOR_5_POS     = 'var:motor_5_pos'
     MOTOR_6_POS     = 'var:motor_6_pos'
 
+    SCAN_ARRAY      = 'var:scan_array'
+
     COUNTER_1_COUNT = 'var:counter_1_count'
     COUNTER_2_COUNT = 'var:counter_2_count'
 
@@ -69,13 +73,7 @@ class Core(object):
         for var_name in vars.itervalues():
             self.monitor.add(var_name)
 
-        # self.monitor.update(VAR.QUEUE_SIZE, 0)
-
         self._terminate_flag = False
-        # self._lock = threading.Lock()
-        # self._queue = []
-        # self._queue_timer = threading.Timer(1, self.handle_queue_timer)
-        # self._queue_timer.start()
 
         self._counter_timer = threading.Timer(1, self.handle_counter)
         self._counter_timer.start()
@@ -97,6 +95,56 @@ class Core(object):
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
+        self.scan_array = []
+
+
+    """ MOTOR """
+    def move_motor(self, motor):
+        motor_name = motor.Mne
+        self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor.Name)
+        if motor.Enabled:
+            motor_check = self.checkpos_motor(motor)  # This sets the motor to the correct Mne as well
+            pos = motor_check['pos']
+            moveto = motor.Moveto_SB.value()
+            movetype = motor.MoveType_CB.currentText()
+            if movetype == 'Relative':
+                SpecMotor.moveRelative(self.SpecMotor_sess, moveto)
+                print "Moving motor " + motor.Name + " to " + repr(moveto + pos)
+            elif movetype == 'Absolute':
+                SpecMotor.move(self.SpecMotor_sess, moveto)
+                print "Moving motor " + motor_name + " to " + repr(moveto)
+            else:
+                print "Move command FAILED:  INVESTIGATE"
+                print movetype
+                print moveto
+        else:
+            print "Cannot Move non-enabled motor"
+
+    def motor_stop(self, motor):
+        if motor.Enabled:
+            self.checkpos_motor(motor)  # This sets the motor to the correct Mne as well
+            SpecMotor.stop(self.SpecMotor_sess)
+            print motor.Name + " has been stopped"
+        else:
+            print "Cannot stop a disabled motor"
+
+    def checkpos_motor(self, motor, print_val=True):
+        if self.SpecMotor_sess.specName == motor.Mne:
+            pass
+        else:
+            SpecMotor.connectToSpec(self.SpecMotor_sess, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
+        try:
+            init_pos = self.monitor.get_value(motor.Pos_VAR)
+            pos = SpecMotor.getPosition(self.SpecMotor_sess)
+            moved = not (init_pos == pos)
+            if moved:  # this is where you can hook if motors are moving or not
+                self.monitor.update(motor.Pos_VAR, pos)
+                if print_val:
+                    print repr(self.monitor.get_value(motor.Pos_VAR))
+        except SpecClientError as e:
+            print repr(e) + ' unconfig = Motor Name: ' + motor.Name
+            pos = 'None'
+        return {'pos': pos, 'moved': moved}
 
     def init_motor_thread(self, motors):
         for i in range(len(motors)):
@@ -105,6 +153,7 @@ class Core(object):
                 self.move_thread = threading.Thread(group=None, target=self.handle_motor_moving_thread, name=None,
                                                     args=(motor_inst, i))
                 self.move_thread.start()
+
     def handle_motor_moving_thread(self, motor, id):
         moved = False  # initializing variable which gets checked before assigned on first loop
         _SpecMotor_sess = SpecMotor()
@@ -131,56 +180,17 @@ class Core(object):
                 time.sleep(1)
                 SpecMotor.connectToSpec(_SpecMotor_sess, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
 
-    def init_Spec(self):
-        # starting up the Spec server, completed in main_window as monitor needs to load
-        Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
-
-    def motor_track_state(self,state):
+    def motor_track_state(self, state):
         if state:  # If the checkbox is clicked
             self.move_event.set()
         else:  # Disable movecheck
             self.move_event.clear()
 
+    def check_limits(self, motor):
+        self.checkpos_motor(motor) # check where the motor is and assigning it.
+        return SpecMotor.getLimits(self.SpecMotor_sess)
 
-    def move_motor(self, motor):
-        motor_name = motor.Mne
-        self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor.Name)
-        if motor.Enabled:
-            motor_check = self.checkpos_motor(motor)  # This sets the motor to the correct Mne as well
-            pos = motor_check['pos']
-            moveto = motor.Moveto_SB.value()
-            movetype = motor.MoveType_CB.currentText()
-            if movetype == 'Relative':
-                SpecMotor.moveRelative(self.SpecMotor_sess, moveto)
-                print "Moving motor " + motor.Name + " to " + repr(moveto + pos)
-            elif movetype == 'Absolute':
-                SpecMotor.move(self.SpecMotor_sess, moveto)
-                print "Moving motor " + motor_name + " to " + repr(moveto)
-            else:
-                print "Move command FAILED:  INVESTIGATE"
-                print movetype
-                print moveto
-        else:
-            print "Cannot Move non-enabled motor"
-
-    def checkpos_motor(self, motor, print_val = True):
-        if self.SpecMotor_sess.specName == motor.Mne:
-            pass
-        else:
-            SpecMotor.connectToSpec(self.SpecMotor_sess, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
-        try:
-            init_pos = self.monitor.get_value(motor.Pos_VAR)
-            pos = SpecMotor.getPosition(self.SpecMotor_sess)
-            moved = not (init_pos == pos)
-            if moved:  # this is where you can hook if motors are moving or not
-                self.monitor.update(motor.Pos_VAR, pos)
-                if print_val:
-                    print repr(self.monitor.get_value(motor.Pos_VAR))
-        except SpecClientError as e:
-            print repr(e) + ' unconfig = Motor Name: ' + motor.Name
-            pos = 'None'
-        return {'pos': pos, 'moved': moved}
-
+    """ COUNTER """
     def handle_counter(self):
         address = self.monitor.get_value(VAR.SERVER_ADDRESS) #Just initalizing the counter classes which we'll read
         self.SpecCounter_ic2 = SpecCounter()
@@ -199,61 +209,6 @@ class Core(object):
             self.monitor.update(VAR.COUNT_TIME, count_time)
             self.monitor.update(VAR.COUNTER_1_COUNT, SpecCounter.getValue(self.SpecCounter_ic2))
             self.monitor.update(VAR.COUNTER_2_COUNT, SpecCounter.getValue(self.SpecCounter_pinf))
-    # def handle_queue_timer(self):
-    #
-    #     while True:
-    #
-    #         if self._terminate_flag: break
-    #
-    #         try:
-    #             self._lock.acquire()
-    #             item = self._queue.pop(0)
-    #         except:
-    #             item = None
-    #         finally:
-    #             queue_size = len(self._queue)
-    #             self._lock.release()
-    #
-    #         self.monitor.update(VAR.QUEUE_SIZE, queue_size)
-    #         if queue_size ==  0:
-    #             self.monitor.update(VAR.STATUS_MSG, "Queue empty")
-    #
-    #         if not item:
-    #             time.sleep(1)
-    #             continue
-    #
-    #         msg = "Processing queue item: %s" % repr(item)
-    #         self.monitor.update(VAR.STATUS_MSG, msg)
-    #
-    #         for _ in xrange(2):
-    #             time.sleep(1)
-    #             if self._terminate_flag:
-    #                 break
-    #
-    # def queue_item(self, item):
-    #
-    #     try:
-    #         self._lock.acquire()
-    #         self._queue.append(item)
-    #
-    #     finally:
-    #         queue_size = len(self._queue)
-    #         self._lock.release()
-    #
-    #     self.monitor.update(VAR.QUEUE_SIZE, queue_size)
-    #
-    # def queue_clear(self):
-    #
-    #     try:
-    #         self._lock.acquire()
-    #         self._queue = []
-    #
-    #     finally:
-    #         queue_size = len(self._queue)
-    #         self._lock.release()
-    #
-    #     self.monitor.update(VAR.QUEUE_SIZE, queue_size)
-    #
 
     def counting_state(self, state, spinBox_counter):
         self.count_time_set_SB = spinBox_counter
@@ -263,6 +218,8 @@ class Core(object):
         else:  # Disable Counting
             self.count_event.clear()
 
+    """ SCANNING """
+
     def is_scanning(self, button=None):
         if button == None:
             try:
@@ -271,10 +228,13 @@ class Core(object):
                 pass
         else:
             self.saved_button = button
-        if self.SpecScan_sess.scanning:  # This property is checked, so functions here will work
+            # This property is checked, so functions here will work
+        self.SpecScan_sess.scanning = SpecScan.isScanning(self.SpecScan_sess)
+        if self.SpecScan_sess.scanning:
             button.setText('Stop')
         else:
             button.setText('Start')
+            #self.scan_event.clear() # stops the scanning thread when the scan isn't running
         return self.SpecScan_sess.scanning
 
     def scan_start(self, scantype, motor_name, startpos, endpos, intervals, count_time, Motors):
@@ -292,36 +252,86 @@ class Core(object):
                         SpecScan.dscan(self.SpecScan_sess, Motor_inst.Mne, relstartpos, relendpos, intervals, count_time)
                     else:
                         SpecScan.ascan(self.SpecScan_sess, Motor_inst.Mne, startpos, endpos, intervals, count_time)
+                    self.scan_array = []  # starting/wiping an array for the scan data to push into
+                    self.scan_array_counter = 0
                     self.scan_event.set()
                 else:
                     raise Exception('Scan cannot be started as the motor was not Enabled')
             else:
                 pass
         print "Scan Started"
-
         return True  # Saying the scan is started
+
     def handle_scan(self):
-        #Thread which handles scan data
+        # Thread which handles scan data
         self.scan_event.wait()
-        self.scan_data = []  # Initalizing empty array
+        self.scan_data = []  # Initalizing empty arrays
+        self.scan_point = []
         while True:
             self.scan_event.wait()
             if self._terminate_flag: break
-            while self.is_scanning():
+            # while self.is_scanning():
+            while True:
                 if self._terminate_flag: break
-                old_scan = self.scan_data
-                self.scan_data = SpecScan.get_SCAN_D(self.SpecScan_sess)
-                if array_equal(old_scan, self.scan_data):
-                    time.sleep(1)
-                else:  # here is where you would graph it/save it to the csv
-                    print self.scan_data
-            time.sleep(5)
+                old_data = self.scan_data
+                old_point = self.scan_point
+                #self.scan_data = SpecScan.get_SCAN_D(self.SpecScan_sess)
+                try:
+                    self.scan_point = json.JSONDecoder.decode(json.JSONDecoder(), SpecScan.get_SCAN_PT(self.SpecScan_sess))
+                except ValueError:
+                    pass
+                #elif array_equal(old_data, self.scan_data):
+                if not old_point == self.scan_point: # here is where you would graph it/save it to the csv
+                    # print self.scan_data
+                    if self.scan_point[0] > self.scan_array_counter:
+                        print "Scan point ignored"
+                    elif self.scan_point[0] == self.scan_array_counter:
+                        self.scan_array.insert(self.scan_point[0], self.scan_point[1])
+                        self.scan_array_counter = self.scan_array_counter + 1
+                        self.monitor.update(VAR.SCAN_ARRAY,self.scan_array)
+                    else:
+                        print "Entering data into the scan array has not worked properly"
+                    self.scan_SB_sleeper(ratio=0.75, _min=False)
+                    pass
+                elif not self.is_scanning():
+                    self.scan_SB_sleeper()
+                else:
+                    self.scan_SB_sleeper(ratio=0.5, _min=False)
+
+            self.scan_SB_sleeper()
 
     def scan_stop(self):
         SpecScan.abort(self.SpecScan_sess)
         self.scan_event.clear()
         print "Scan Stopped"
         return False  # Saying the scan is stopped
+
+    def scan_settings(self, motor_name, startpos_SB, stoppos_SB, Motors, wait_time_SB):
+        self.wait_time_SB = wait_time_SB
+        for i in range(len(Motors)):
+            Motor_inst = Motors[i]
+            if Motor_inst.Name == motor_name:
+                if Motor_inst.Enabled:
+                    (min_lim, max_lim) = self.check_limits(Motor_inst)
+                    startpos_SB.setRange(min_lim, max_lim)
+                    stoppos_SB.setRange(min_lim, max_lim)
+
+    def scan_SB_sleeper(self, default_time=3.0, ratio=1.0, _min=True):
+        try:  # Setting wait times to the interval time of the scan's spinbox if it isn't too small
+            if self.wait_time_SB.value() > 0.5 or not _min:
+                sleep_time = self.wait_time_SB.value() * ratio
+            else:
+                sleep_time = default_time
+        except:
+            sleep_time = default_time
+        #print "Scanning Thread is sleeping for " + repr(sleep_time)
+        time.sleep(sleep_time)
+
+    """ RANDOM UTILITIES """
+
+    def init_Spec(self):
+        # starting up the Spec server, completed in main_window as monitor needs to load
+        Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
 
     def set_status(self, status_msg):
         self.monitor.update(VAR.STATUS_MSG, status_msg)

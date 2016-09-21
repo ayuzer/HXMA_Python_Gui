@@ -4,8 +4,9 @@ import math
 import threading
 import time
 import json
+import operator
 
-from numpy import array_equal
+import numpy as np
 
 from functools import partial
 
@@ -33,29 +34,29 @@ class PV(Constant):
     CYCLES                  = 'TRG2400:cycles'
 
 class VAR(Constant):
+    STATUS_MSG          = 'var:status_message'
 
-    # X_PIXEL             = 'var:x_pixel'
-    # Y_PIXEL             = 'var:y_pixel'
-    STATUS_MSG      = 'var:status_message'
-    # QUEUE_SIZE          = 'var:queue_size'
+    MOTOR_1_POS         = 'var:motor_1_pos'
+    MOTOR_2_POS         = 'var:motor_2_pos'
+    MOTOR_3_POS         = 'var:motor_3_pos'
+    MOTOR_4_POS         = 'var:motor_4_pos'
+    MOTOR_5_POS         = 'var:motor_5_pos'
+    MOTOR_6_POS         = 'var:motor_6_pos'
 
-    MOTOR_1_POS     = 'var:motor_1_pos'
-    MOTOR_2_POS     = 'var:motor_2_pos'
-    MOTOR_3_POS     = 'var:motor_3_pos'
-    MOTOR_4_POS     = 'var:motor_4_pos'
-    MOTOR_5_POS     = 'var:motor_5_pos'
-    MOTOR_6_POS     = 'var:motor_6_pos'
+    SCAN_ARRAY          = 'var:scan_array'
+    SCAN_MAX_Y          = 'var:scan_max_y'
+    SCAN_FWHM           = 'var:scan_FWHM'
+    SCAN_COM            = 'var:scan_COM'
+    SCAN_CWHM           = 'var:scan_CWHM'
+    SCAN_CENTROID       = 'var:scan_centroid'
 
-    SCAN_ARRAY      = 'var:scan_array'
+    COUNTER_1_COUNT     = 'var:counter_1_count'
+    COUNTER_2_COUNT     = 'var:counter_2_count'
+    COUNT_TIME          = 'var:count_time'
 
-    COUNTER_1_COUNT = 'var:counter_1_count'
-    COUNTER_2_COUNT = 'var:counter_2_count'
-
-    COUNT_TIME      = 'var:count_time'
-
-    SERVER_ADDRESS  = 'var:server_address'
-    SERVER_HOST     = 'var:server_host'
-    SERVER_PORT     = 'var:server_port'
+    SERVER_ADDRESS      = 'var:server_address'
+    SERVER_HOST         = 'var:server_host'
+    SERVER_PORT         = 'var:server_port'
 
 class Core(object):
 
@@ -95,7 +96,7 @@ class Core(object):
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
-        self.scan_array = []
+        self.scan_array = self.old_x = self.old_y = []
 
 
     """ MOTOR """
@@ -232,6 +233,7 @@ class Core(object):
         self.SpecScan_sess.scanning = SpecScan.isScanning(self.SpecScan_sess)
         if self.SpecScan_sess.scanning:
             button.setText('Stop')
+            self.update_scan_counters(self.x_data_CB, self.y_data_CB)
         else:
             button.setText('Start')
             #self.scan_event.clear() # stops the scanning thread when the scan isn't running
@@ -327,7 +329,46 @@ class Core(object):
         #print "Scanning Thread is sleeping for " + repr(sleep_time)
         time.sleep(sleep_time)
 
+    def update_scan_counters(self, x_data_CB, y_data_CB):
+        self.x_data_CB = x_data_CB
+        self.y_data_CB = y_data_CB
+        scanner_names = self.get_var('SCAN_COLS')
+        i=0
+        (x_index, y_index) = x_data_CB.currentIndex(), y_data_CB.currentIndex()
+        x_data_CB.clear()
+        y_data_CB.clear()
+        for i in range(len(scanner_names)):
+            x_data_CB.addItem(scanner_names[str(i)])
+            y_data_CB.addItem(scanner_names[str(i)])
+        #print scanner_names
+        x_data_CB.setCurrentIndex(x_index)
+        y_data_CB.setCurrentIndex(y_index)
+
+    def get_data(self, x_index, y_index):
+        data = self.monitor.get_value(VAR.SCAN_ARRAY)
+        if data is None:
+            return False, [], []
+        else:
+            (x,y) = [point[x_index] for point in data], [point[y_index] for point in data]
+            return True, x, y
+
+    def scan_calculations(self, x, y):
+        if not self.old_x == x or not self.old_y == y:
+            calc = Calculation(x, y)
+            self.monitor.update(VAR.SCAN_MAX_Y, calc.y_max_string())
+            self.monitor.update(VAR.SCAN_FWHM, calc.FWHM())
+            self.monitor.update(VAR.SCAN_COM, calc.COM())
+            self.monitor.update(VAR.SCAN_CWHM, calc.CFWHM())
+            self.monitor.update(VAR.SCAN_CENTROID, calc.Centroid())
+        (self.old_x, self.old_y) = x, y
+
     """ RANDOM UTILITIES """
+
+    def get_var(self, var_name):
+        """Return variable"""
+        if self.Spec_sess.connection is not None:
+            c = self.Spec_sess.connection.getChannel('var/'+var_name)
+            return c.read()
 
     def init_Spec(self):
         # starting up the Spec server, completed in main_window as monitor needs to load
@@ -345,9 +386,91 @@ class Core(object):
         self.monitor.update(VAR.SERVER_ADDRESS, ''.join((self.monitor.get_value(VAR.SERVER_HOST), ':', self.monitor.get_value(VAR.SERVER_PORT))))
 
     def terminate(self):
-        print "core.terminate called"
         self._terminate_flag = True
+        print "core.terminate called"
+        sess_list = [self.SpecMotor_sess,
+                           self.SpecCounter_ic2,
+                           self.SpecCounter_pinf,
+                           self.SpecScan_sess,
+                           self.SpecScan_sess,
+                           ]
+        for sess in sess_list:
+            self.term_sess(sess)
+        print repr(globals())
         self.count_event.set()  # allow any blocked threads to terminate
         self.move_event.set()
         self.scan_event.set()
         self.scan_stop()
+
+    def term_sess(self, sess):
+        connection = sess.connection
+        try:
+            sess.stop()
+        except Exception, e:
+            print repr(e)
+        if connection is not None:
+            connection.dispatcher.disconnect()
+        else:
+            print repr(connection) + " was not initialized and hence was not closed"
+
+
+class Calculation:
+
+    def __init__(self, x, y):
+        (self.x, self.y) = x, y
+
+    def y_max_full(self):
+        i, y_val = max(enumerate(self.y), key=operator.itemgetter(1))
+        x_at_y_max = self.x[i]
+        return y_val, x_at_y_max
+
+    def y_max(self):
+        (y_max, unused) = self.y_max_full()
+        return y_max
+
+    def y_max_string(self):
+        (y_max, x_val) = self.y_max_full()
+        return " " + "{:.2f}".format(y_max) + "\n@" + r"{:.2f}".format(x_val)
+
+    def FWHM_full(self):
+        # modified from http://stackoverflow.com/a/16489955 second comment
+        zeroed_y = np.array(self.y) - min(self.y)
+        diff = zeroed_y - ((self.y_max()- min(self.y))/ 2)
+        indexes = np.where(diff > 0)[0]
+        try :
+            return np.array(self.x)[indexes[-1]], np.array(self.x)[indexes[0]], abs(np.array(self.x)[indexes[-1]] - np.array(self.x)[indexes[0]])
+        except IndexError:
+            return 0, 0, 0
+
+    def FWHM(self):
+        (bound_1, bound_2, FWHM) = self.FWHM_full()
+        return FWHM
+
+    def CFWHM(self):
+        (bound_1, bound_2, FWHM) = self.FWHM_full()
+        return (bound_1+bound_2)/2
+
+    def COM(self):
+        try:
+            return np.average(self.x, weights=self.y)
+        except ZeroDivisionError:
+            return 0
+
+    def Centroid(self):
+        x_y=[]
+        x_step=[]
+        steps=[]
+        for i in range(len(self.x)):
+            pos = self.x[i]
+            intes = self.y[i]
+            x_y.append(pos*intes)
+            try:
+                step = abs(self.x[i+1] - self.x[i])
+            except IndexError:
+                step = abs(self.x[i] - self.x[i-1])
+            steps.append(step)
+            x_step.append(step*intes)
+        step = np.average(steps)
+        return (step*np.sum(x_y))/(np.sum(x_step))
+
+

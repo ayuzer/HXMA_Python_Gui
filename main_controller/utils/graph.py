@@ -43,11 +43,7 @@ class Plotter(Qwt.QwtPlot):
         self.setAxisTitle(Qwt.QwtPlot.xBottom, xAxisLabel)
         self.setAxisTitle(Qwt.QwtPlot.yLeft, yAxisLabel)
 
-    def new_plot(self, data):
-
-        x = [point[0] for point in data]
-        y = [point[7] for point in data]
-
+    def new_plot(self, x, y):
         self.curve.setData(x, y)
         self.replot()
 

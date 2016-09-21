@@ -242,7 +242,11 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
 
         self.pushButton_scan_start_stop.setText(self.scan_button_text())
 
+        self.pushButton_scan_select_file.clicked.connect(partial(self.select_file, self.lineEdit_scan_select_file))
+
         self.comboBox_scan_motor.currentIndexChanged.connect(self.handle_comboBox_scan_motor)
+        self.comboBox_scan_data_x.activated.connect(self.handle_comboBox_scan_data)
+        self.comboBox_scan_data_y.activated.connect(self.handle_comboBox_scan_data)
 
         self.pushButton_scan_start_stop.clicked.connect(self.handle_pushButton_scan_start_stop)
 
@@ -253,6 +257,13 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
         self.handle_pushButton_motor_all_checkpos(False)  # just checking position at init, False is a dummy var
 
         self.handle_comboBox_scan_motor()
+        self.update_scan_cols()
+
+        #An attempt to get the picture displaying
+        pic= QtGui.QLabel(self.label_motor_picture)
+        pixmap = QtGui.QPixmap('/staff/hamelm/Documents/stage_background.png')
+        pic.setPixmap(pixmap.scaled(500, 500, QtCore.Qt.KeepAspectRatio))
+        pic.show()
 
     """MOTOR"""
     @decorator_busy_cursor
@@ -365,6 +376,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
             return 'Start'
 
     def handle_pushButton_scan_start_stop(self):
+        self.update_scan_cols()
         if self.core.is_scanning(self.pushButton_scan_start_stop):
             self.core.scan_stop()
         else:
@@ -380,8 +392,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
             self.connect(self.plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
 
     def scan_plot(self):
-        data = self.monitor.get_value(VAR.SCAN_ARRAY)
-        self.plot_id.new_plot(data)
+        go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(), self.comboBox_scan_data_y.currentIndex())
+        if go:
+            self.plot_id.new_plot(x, y)
+            self.core.scan_calculations(x, y)
 
     def handle_comboBox_scan_motor(self):
         self.core.scan_settings(self.comboBox_scan_motor.currentText(),
@@ -391,7 +405,16 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
                                 self.doubleSpinBox_scan_waittime
                                 )
 
+    def update_scan_cols(self):
+        self.core.update_scan_counters(self.comboBox_scan_data_x, self.comboBox_scan_data_y)
+
+    def handle_comboBox_scan_data(self):
+        pass
+
     """RANDOM"""
+    def select_file(self, line_edit):
+        line_edit.setText(QtGui.QFileDialog.getExistingDirectory(None, 'Select a folder to save data :', os.getcwd(), QtGui.QFileDialog.ShowDirsOnly))
+
     def handle_tabWidget_changed(self, current):
         tabText = self.tabWidget.tabText(current)
         self.core.set_status("Tab Clicked: %s" % QtCore.QString(tabText))
@@ -402,18 +425,23 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
                   (CSS_COLOUR.GROUP_BOX, CSS_COLOUR.BLUE)
 
         label_map = {
-            PV.SYSTEM_TIME      :  (self.label_system_time,         '{:s}',     12, True),
-            VAR.STATUS_MSG      :  (self.label_status_msg,          '{:s}',     12, True),
-            VAR.SERVER_ADDRESS  :  (self.label_server_address,      '{:s}',     12, True),
-            VAR.MOTOR_1_POS     :  (self.label_motor_1_pos,         '{:,.3f}',  12, True),
-            VAR.MOTOR_2_POS     :  (self.label_motor_2_pos,         '{:,.3f}',  12, True),
-            VAR.MOTOR_3_POS     :  (self.label_motor_3_pos,         '{:,.3f}',  12, True),
-            VAR.MOTOR_4_POS     :  (self.label_motor_4_pos,         '{:,.3f}',  12, True),
-            VAR.MOTOR_5_POS     :  (self.label_motor_5_pos,         '{:,.3f}',  12, True),
-            VAR.MOTOR_6_POS     :  (self.label_motor_6_pos,         '{:,.3f}',  12, True),
-            VAR.COUNTER_1_COUNT :  (self.label_counter_1_count,     '{:,d}',    12, True),
-            VAR.COUNTER_2_COUNT :  (self.label_counter_2_count,     '{:,d}',    12, True),
-            VAR.COUNT_TIME      :  (self.label_count_time,          '{:.3f}',   12, True),
+            PV.SYSTEM_TIME:         (self.label_system_time,        '{:s}',     12, True),
+            VAR.STATUS_MSG:         (self.label_status_msg,         '{:s}',     12, True),
+            VAR.SERVER_ADDRESS:     (self.label_server_address,     '{:s}',     12, True),
+            VAR.MOTOR_1_POS:        (self.label_motor_1_pos,        '{:,.3f}',  12, True),
+            VAR.MOTOR_2_POS:        (self.label_motor_2_pos,        '{:,.3f}',  12, True),
+            VAR.MOTOR_3_POS:        (self.label_motor_3_pos,        '{:,.3f}',  12, True),
+            VAR.MOTOR_4_POS:        (self.label_motor_4_pos,        '{:,.3f}',  12, True),
+            VAR.MOTOR_5_POS:        (self.label_motor_5_pos,        '{:,.3f}',  12, True),
+            VAR.MOTOR_6_POS:        (self.label_motor_6_pos,        '{:,.3f}',  12, True),
+            VAR.COUNTER_1_COUNT:    (self.label_counter_1_count,    '{:,d}',    12, True),
+            VAR.COUNTER_2_COUNT:    (self.label_counter_2_count,    '{:,d}',    12, True),
+            VAR.COUNT_TIME:         (self.label_count_time,         '{:.3f}',   12, True),
+            VAR.SCAN_MAX_Y:         (self.label_scan_max_y,         '{:s}',     12, True),
+            VAR.SCAN_FWHM:          (self.label_scan_FWHM,          '{:.2f}',   12, True),
+            VAR.SCAN_COM:           (self.label_scan_COM,           '{:.2f}',   12, True),
+            VAR.SCAN_CWHM:          (self.label_scan_CWHM,          '{:.2f}',   12, True),
+            VAR.SCAN_CENTROID:      (self.label_scan_centroid,      '{:.2f}',   12, True),
         }
 
         for pv_name, data in label_map.iteritems():

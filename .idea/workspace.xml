@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/main_controller/windows/main_window.py" line="240" />
+    <bookmark url="file://$PROJECT_DIR$/main_controller/windows/main_window.py" line="247" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ce5d3c2b-1f57-4bc2-8bdf-c273a09e7e10" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/main_controller/utils/local_save.py" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/main_controller/utils/server.py" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main_controller/windows/main_window.ui" afterPath="$PROJECT_DIR$/main_controller/windows/main_window.ui" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main_controller/core.py" afterPath="$PROJECT_DIR$/main_controller/core.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main_controller/utils/graph.py" afterPath="$PROJECT_DIR$/main_controller/utils/graph.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main_controller/windows/main_window.py" afterPath="$PROJECT_DIR$/main_controller/windows/main_window.py" />
     </list>
     <ignored path="HXMA_Python_Gui.iws" />
@@ -24,41 +25,50 @@
     <option name="PATCH_PATH" value="" />
   </component>
   <component name="DockManager">
-    <window id="2">
+    <window id="1">
       <content type="file-editors">
         <state>
-          <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <leaf>
             <file leaf-file-name="main_window.py" pinned="false" current-in-tab="true">
               <entry file="file://$PROJECT_DIR$/main_controller/windows/main_window.py">
                 <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="301">
-                    <caret line="252" column="76" selection-start-line="252" selection-start-column="76" selection-end-line="252" selection-end-column="76" />
+                  <state relative-caret-position="276">
+                    <caret line="414" column="31" selection-start-line="414" selection-start-column="31" selection-end-line="414" selection-end-column="31" />
                     <folding>
                       <element signature="e#17#34#0" expanded="true" />
-                      <element signature="e#10074#12981#0" expanded="false" />
-                      <element signature="e#13020#13927#0" expanded="false" />
-                      <element signature="e#14041#14219#0" expanded="false" />
-                      <element signature="e#14276#14401#0" expanded="false" />
-                      <element signature="e#15744#16082#0" expanded="false" />
-                      <element signature="e#16124#16208#0" expanded="false" />
-                      <element signature="e#16682#19028#0" expanded="false" />
-                      <element signature="e#19265#19616#0" expanded="false" />
-                      <element signature="e#19664#20060#0" expanded="false" />
-                      <element signature="e#20109#20516#0" expanded="false" />
-                      <element signature="e#20755#21743#0" expanded="false" />
-                      <element signature="e#21783#22483#0" expanded="false" />
-                      <element signature="e#22523#23166#0" expanded="false" />
+                      <element signature="e#1773#1806#0" expanded="false" />
+                      <element signature="e#2872#4066#0" expanded="false" />
+                      <element signature="e#9379#9469#0" expanded="false" />
+                      <element signature="e#9592#9749#0" expanded="false" />
+                      <element signature="e#9864#10025#0" expanded="false" />
+                      <element signature="e#10132#10205#0" expanded="false" />
+                      <element signature="e#10263#10420#0" expanded="false" />
+                      <element signature="e#10462#13369#0" expanded="false" />
+                      <element signature="e#13408#14315#0" expanded="false" />
+                      <element signature="e#14429#14607#0" expanded="false" />
+                      <element signature="e#14664#14789#0" expanded="false" />
+                      <element signature="e#14848#15831#0" expanded="false" />
+                      <element signature="e#15866#16080#0" expanded="false" />
+                      <element signature="e#16132#16470#0" expanded="false" />
+                      <element signature="e#16512#16590#0" expanded="false" />
+                      <element signature="e#16641#16645#0" expanded="false" />
+                      <element signature="e#16687#16907#0" expanded="false" />
+                      <element signature="e#16972#17114#0" expanded="false" />
+                      <element signature="e#17173#17288#0" expanded="false" />
+                      <element signature="e#17326#19672#0" expanded="false" />
+                      <element signature="e#19719#19749#0" expanded="false" />
+                      <element signature="e#19805#19863#0" expanded="false" />
+                      <element signature="e#19909#20260#0" expanded="false" />
+                      <element signature="e#20308#20704#0" expanded="false" />
+                      <element signature="e#20753#21160#0" expanded="false" />
+                      <element signature="e#21210#21232#0" expanded="false" />
+                      <element signature="e#21288#21355#0" expanded="false" />
+                      <element signature="e#21399#22418#0" expanded="false" />
+                      <element signature="e#22458#23158#0" expanded="false" />
+                      <element signature="e#23198#23841#0" expanded="false" />
+                      <marker date="1474570839666" expanded="true" signature="4246:7980" ph="..." />
+                      <marker date="1474570839666" expanded="true" signature="19000:19026" ph="..." />
                     </folding>
-                  </state>
-                </provider>
-              </entry>
-            </file>
-            <file leaf-file-name="pydevd.py" pinned="false" current-in-tab="false">
-              <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="721">
-                    <caret line="1579" column="0" selection-start-line="1579" selection-start-column="0" selection-end-line="1579" selection-end-column="0" />
-                    <folding />
                   </state>
                 </provider>
               </entry>
@@ -74,106 +84,139 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="core.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/main_controller/core.py">
+      <file leaf-file-name="local_save.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/main_controller/utils/local_save.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="659">
-              <caret line="447" column="0" selection-start-line="447" selection-start-column="0" selection-end-line="447" selection-end-column="0" />
+            <state relative-caret-position="508">
+              <caret line="111" column="42" selection-start-line="111" selection-start-column="42" selection-end-line="111" selection-end-column="42" />
               <folding>
-                <element signature="e#17#30#0" expanded="true" />
-                <element signature="e#2848#3774#0" expanded="false" />
-                <element signature="e#3817#4085#0" expanded="false" />
-                <element signature="e#4148#4923#0" expanded="false" />
-                <element signature="e#4974#5302#0" expanded="false" />
-                <element signature="e#5365#6606#0" expanded="false" />
-                <element signature="e#6656#6800#0" expanded="false" />
-                <element signature="e#6845#6972#0" expanded="false" />
-                <element signature="e#7032#7998#0" expanded="false" />
-                <element signature="e#8062#8280#0" expanded="false" />
-                <element signature="e#8352#9019#0" expanded="false" />
-                <element signature="e#9126#10384#0" expanded="false" />
-                <element signature="e#10421#12203#0" expanded="false" />
-                <element signature="e#12238#12384#0" expanded="false" />
-                <element signature="e#12482#12859#0" expanded="false" />
-                <element signature="e#12940#13368#0" expanded="false" />
-                <element signature="e#13436#13956#0" expanded="false" />
-                <element signature="e#14008#14246#0" expanded="false" />
-                <element signature="e#14295#14734#0" expanded="false" />
-                <element signature="e#14807#14976#0" expanded="false" />
-                <element signature="e#15011#15178#0" expanded="false" />
-                <element signature="e#15226#15273#0" expanded="false" />
-                <element signature="e#15309#15745#0" expanded="false" />
-                <element signature="e#15780#16361#0" expanded="false" />
-                <element signature="e#16402#16703#0" expanded="false" />
-                <element signature="e#16764#16787#0" expanded="false" />
-                <element signature="e#16823#16948#0" expanded="false" />
-                <element signature="e#16979#17035#0" expanded="false" />
-                <element signature="e#17073#17185#0" expanded="false" />
-                <element signature="e#17220#17649#0" expanded="false" />
-                <element signature="e#17773#17851#0" expanded="false" />
-                <element signature="e#17880#17993#0" expanded="false" />
-                <element signature="e#18027#18502#0" expanded="false" />
+                <element signature="e#0#20#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="run.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_controller/run.py">
+      <file leaf-file-name="core.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/main_controller/core.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="688">
-              <caret line="51" column="28" selection-start-line="51" selection-start-column="28" selection-end-line="51" selection-end-column="28" />
+            <state relative-caret-position="156">
+              <caret line="243" column="0" selection-start-line="243" selection-start-column="0" selection-end-line="243" selection-end-column="0" />
+              <folding>
+                <element signature="e#17#30#0" expanded="true" />
+                <element signature="e#2897#3823#0" expanded="false" />
+                <element signature="e#3866#4266#0" expanded="false" />
+                <element signature="e#4329#5104#0" expanded="false" />
+                <element signature="e#5155#5483#0" expanded="false" />
+                <element signature="e#5546#6787#0" expanded="false" />
+                <element signature="e#6837#6981#0" expanded="false" />
+                <element signature="e#7026#7153#0" expanded="false" />
+                <element signature="e#7213#8179#0" expanded="false" />
+                <element signature="e#8243#8461#0" expanded="false" />
+                <element signature="e#9332#10590#0" expanded="false" />
+                <element signature="e#10627#12409#0" expanded="false" />
+                <element signature="e#12444#12590#0" expanded="false" />
+                <element signature="e#12688#13065#0" expanded="false" />
+                <element signature="e#13146#13574#0" expanded="false" />
+                <element signature="e#13636#14176#0" expanded="false" />
+                <element signature="e#14228#14466#0" expanded="false" />
+                <element signature="e#14515#14954#0" expanded="false" />
+                <element signature="e#15016#16214#0" expanded="false" />
+                <element signature="e#17796#17963#0" expanded="false" />
+                <element signature="e#18011#18058#0" expanded="false" />
+                <element signature="e#18094#18530#0" expanded="false" />
+                <element signature="e#18565#19116#0" expanded="false" />
+                <element signature="e#19157#19458#0" expanded="false" />
+                <element signature="e#19485#21257#0" expanded="false" />
+                <marker date="1474572778876" expanded="false" signature="17487:17520" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="threading.py" pinned="false" current-in-tab="false">
+        <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/threading.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="165">
+              <caret line="523" column="0" selection-start-line="523" selection-start-column="0" selection-end-line="523" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="function_base.py" pinned="false" current-in-tab="false">
-        <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/site-packages/numpy/lib/function_base.py">
+      <file leaf-file-name="SpecChannel.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecChannel.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="177">
-              <caret line="515" column="0" selection-start-line="515" selection-start-column="0" selection-end-line="515" selection-end-column="0" />
+            <state relative-caret-position="405">
+              <caret line="201" column="0" selection-start-line="201" selection-start-column="0" selection-end-line="201" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Spec.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/Spec.py">
+      <file leaf-file-name="asyncore.py" pinned="false" current-in-tab="false">
+        <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/asyncore.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="704">
-              <caret line="47" column="0" selection-start-line="47" selection-start-column="0" selection-end-line="47" selection-end-column="0" />
+            <state relative-caret-position="117">
+              <caret line="151" column="0" selection-start-line="151" selection-start-column="0" selection-end-line="151" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SpecConnectionsManager.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecConnectionsManager.py">
+      <file leaf-file-name="emitter.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/main_controller/utils/emitter.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="656">
-              <caret line="50" column="13" selection-start-line="50" selection-start-column="13" selection-end-line="50" selection-end-column="13" />
+            <state relative-caret-position="42">
+              <caret line="43" column="0" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="atexit.py" pinned="false" current-in-tab="false">
-        <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/atexit.py">
+      <file leaf-file-name="pydevd.py" pinned="false" current-in-tab="false">
+        <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="235">
-              <caret line="46" column="0" selection-start-line="46" selection-start-column="0" selection-end-line="46" selection-end-column="0" />
+            <state relative-caret-position="289">
+              <caret line="1579" column="0" selection-start-line="1579" selection-start-column="0" selection-end-line="1579" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="monitor.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_controller/utils/monitor.py">
+      <file leaf-file-name="graph.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/main_controller/utils/graph.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5344">
-              <caret line="341" column="0" selection-start-line="341" selection-start-column="0" selection-end-line="341" selection-end-column="0" />
-              <folding />
+            <state relative-caret-position="16">
+              <caret line="48" column="0" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
+              <folding>
+                <element signature="e#18#41#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="graph.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/old_tests/BMIT_Spectrum_App/src/graph.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="16">
+              <caret line="196" column="0" selection-start-line="152" selection-start-column="0" selection-end-line="196" selection-end-column="0" />
+              <folding>
+                <element signature="e#18#41#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="gui.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/main_controller/utils/gui.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="188">
+              <caret line="22" column="10" selection-start-line="22" selection-start-column="6" selection-end-line="22" selection-end-column="10" />
+              <folding>
+                <element signature="e#625#719#0" expanded="false" />
+                <element signature="e#765#1170#0" expanded="false" />
+                <element signature="e#1218#1668#0" expanded="false" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -213,16 +256,17 @@
         <option value="$PROJECT_DIR$/main_controller/utils/server.py" />
         <option value="$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecScan_toki.py" />
         <option value="$PROJECT_DIR$/main_controller/utils/graph.py" />
-        <option value="$PROJECT_DIR$/main_controller/core.py" />
         <option value="$PROJECT_DIR$/main_controller/run.py" />
+        <option value="$PROJECT_DIR$/main_controller/utils/local_save.py" />
         <option value="$PROJECT_DIR$/main_controller/windows/main_window.py" />
+        <option value="$PROJECT_DIR$/main_controller/core.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="855" />
+    <option name="x" value="886" />
     <option name="y" value="25" />
-    <option name="width" value="1064" />
+    <option name="width" value="1033" />
     <option name="height" value="1030" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
@@ -266,6 +310,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -298,9 +343,26 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="HXMA_Python_Gui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="HXMA_Python_Gui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main_controller" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="utils" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
       <pane id="Scratches" />
     </panes>
   </component>
@@ -578,19 +640,19 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="855" y="25" width="1064" height="1030" extended-state="0" />
-    <editor active="true" />
+    <frame x="886" y="25" width="1033" height="1030" extended-state="0" />
+    <editor active="false" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15749526" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15933529" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3072805" sideWeight="0.5113852" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.27534685" sideWeight="0.5037175" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31590182" sideWeight="0.72583646" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3072805" sideWeight="0.4886148" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.43361884" sideWeight="0.72583646" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2901499" sideWeight="0.49628252" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.29336187" sideWeight="0.670778" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.44325483" sideWeight="0.82100236" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -610,7 +672,7 @@
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31590182" sideWeight="0.72583646" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2901499" sideWeight="0.49628252" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15470643" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15520833" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -663,6 +725,11 @@
           <line>75</line>
           <option name="timeStamp" value="74" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file://$PROJECT_DIR$/main_controller/core.py</url>
+          <line>393</line>
+          <option name="timeStamp" value="175" />
+        </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
@@ -671,13 +738,11 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="151" />
+      <option name="time" value="178" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/spec_tools/SpecClient/Spec.py" />
-    <entry file="file://$PROJECT_DIR$/spec_tools/SpecClient/SpecMotor.py" />
     <entry file="file://$PROJECT_DIR$/template_sandbox/TemplateApp/src/utils/emitter.py" />
     <entry file="file://$PROJECT_DIR$/spec_tools/SpecClient/__init__.py" />
     <entry file="file://$PROJECT_DIR$/template_sandbox/TemplateApp/src/utils/monitor.py" />
@@ -695,13 +760,6 @@
     <entry file="file://$PROJECT_DIR$/template_sandbox/program/TemplateApp/src/utils/server.py" />
     <entry file="file://$PROJECT_DIR$/template_sandbox/program/TemplateApp/src/windows/main_window.py" />
     <entry file="file://$PROJECT_DIR$/template_sandbox/program/TemplateApp/src/run.py" />
-    <entry file="file://$PROJECT_DIR$/main_controller/settings.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="80">
-          <caret line="5" column="21" selection-start-line="5" selection-start-column="21" selection-end-line="5" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.PyCharm2016.2/system/python_stubs/1532373065/PyQt4/QtGui/QWidget.py" />
     <entry file="file://$PROJECT_DIR$/old_tests/template_og/TemplateApp/src/utils/monitor.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -721,13 +779,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/old_tests/test_client.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="706">
-          <caret line="123" column="30" selection-start-line="123" selection-start-column="30" selection-end-line="123" selection-end-column="30" />
         </state>
       </provider>
     </entry>
@@ -767,34 +818,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/old_tests/BMIT_Spectrum_App/src/windows/main_window.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="148">
-          <caret line="1684" column="61" selection-start-line="1684" selection-start-column="61" selection-end-line="1684" selection-end-column="61" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/old_tests/BMIT_Spectrum_App/src/spectrum.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3094">
-          <caret line="190" column="34" selection-start-line="190" selection-start-column="34" selection-end-line="190" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecMotor.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="726">
-          <caret line="559" column="0" selection-start-line="559" selection-start-column="0" selection-end-line="559" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main_controller/utils/server.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="508">
-          <caret line="47" column="0" selection-start-line="47" selection-start-column="0" selection-end-line="47" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecConnection.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="150">
@@ -806,20 +829,26 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="656">
           <caret line="50" column="13" selection-start-line="50" selection-start-column="13" selection-end-line="50" selection-end-column="13" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/site-packages/numpy/core/numeric.py" />
     <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/traceback.py" />
-    <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/threading.py" />
-    <entry file="file://$PROJECT_DIR$/main_controller/utils/emitter.py">
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecScan_toki.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="42">
-          <caret line="43" column="0" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+        <state relative-caret-position="457">
+          <caret line="374" column="0" selection-start-line="374" selection-start-column="0" selection-end-line="379" selection-end-column="27" />
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/run.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="688">
+          <caret line="51" column="28" selection-start-line="51" selection-start-column="28" selection-end-line="51" selection-end-column="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/atexit.py" />
     <entry file="file://$PROJECT_DIR$/main_controller/utils/monitor.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="5344">
@@ -828,120 +857,211 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main_controller/utils/gui.py">
+    <entry file="file://$PROJECT_DIR$/old_tests/BMIT_Spectrum_App/src/spectrum.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1856">
-          <caret line="126" column="0" selection-start-line="126" selection-start-column="0" selection-end-line="126" selection-end-column="0" />
+        <state relative-caret-position="221">
+          <caret line="163" column="0" selection-start-line="163" selection-start-column="0" selection-end-line="163" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/asyncore.py" />
-    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecScan_toki.py">
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecMotor.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="457">
-          <caret line="374" column="0" selection-start-line="374" selection-start-column="0" selection-end-line="379" selection-end-column="27" />
+        <state relative-caret-position="726">
+          <caret line="559" column="0" selection-start-line="559" selection-start-column="0" selection-end-line="559" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/old_tests/test_client.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="706">
+          <caret line="123" column="30" selection-start-line="123" selection-start-column="30" selection-end-line="123" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/old_tests/BMIT_Spectrum_App/src/windows/main_window.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="148">
+          <caret line="1684" column="61" selection-start-line="1684" selection-start-column="61" selection-end-line="1684" selection-end-column="61" />
+          <folding>
+            <element signature="e#17#34#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/old_tests/BMIT_Spectrum_App/src/graph.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-291">
+        <state relative-caret-position="16">
           <caret line="196" column="0" selection-start-line="152" selection-start-column="0" selection-end-line="196" selection-end-column="0" />
+          <folding>
+            <element signature="e#18#41#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/gui.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="188">
+          <caret line="22" column="10" selection-start-line="22" selection-start-column="6" selection-end-line="22" selection-end-column="10" />
+          <folding>
+            <element signature="e#625#719#0" expanded="false" />
+            <element signature="e#765#1170#0" expanded="false" />
+            <element signature="e#1218#1668#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/main_controller/utils/graph.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
+        <state relative-caret-position="16">
           <caret line="48" column="0" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
+          <folding>
+            <element signature="e#18#41#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/settings.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="544">
+          <caret line="34" column="34" selection-start-line="34" selection-start-column="34" selection-end-line="34" selection-end-column="34" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/server.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="336">
+          <caret line="21" column="0" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/emitter.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="42">
+          <caret line="43" column="0" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/asyncore.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="117">
+          <caret line="151" column="0" selection-start-line="151" selection-start-column="0" selection-end-line="151" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/spec_tools/SpecClient/SpecChannel.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="405">
+          <caret line="201" column="0" selection-start-line="201" selection-start-column="0" selection-end-line="201" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/utils/local_save.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="508">
+          <caret line="111" column="42" selection-start-line="111" selection-start-column="42" selection-end-line="111" selection-end-column="42" />
+          <folding>
+            <element signature="e#0#20#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/threading.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="523" column="0" selection-start-line="523" selection-start-column="0" selection-end-line="523" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_controller/windows/main_window.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="276">
+          <caret line="414" column="31" selection-start-line="414" selection-start-column="31" selection-end-line="414" selection-end-column="31" />
+          <folding>
+            <element signature="e#17#34#0" expanded="true" />
+            <element signature="e#1773#1806#0" expanded="false" />
+            <element signature="e#2872#4066#0" expanded="false" />
+            <element signature="e#9379#9469#0" expanded="false" />
+            <element signature="e#9592#9749#0" expanded="false" />
+            <element signature="e#9864#10025#0" expanded="false" />
+            <element signature="e#10132#10205#0" expanded="false" />
+            <element signature="e#10263#10420#0" expanded="false" />
+            <element signature="e#10462#13369#0" expanded="false" />
+            <element signature="e#13408#14315#0" expanded="false" />
+            <element signature="e#14429#14607#0" expanded="false" />
+            <element signature="e#14664#14789#0" expanded="false" />
+            <element signature="e#14848#15831#0" expanded="false" />
+            <element signature="e#15866#16080#0" expanded="false" />
+            <element signature="e#16132#16470#0" expanded="false" />
+            <element signature="e#16512#16590#0" expanded="false" />
+            <element signature="e#16641#16645#0" expanded="false" />
+            <element signature="e#16687#16907#0" expanded="false" />
+            <element signature="e#16972#17114#0" expanded="false" />
+            <element signature="e#17173#17288#0" expanded="false" />
+            <element signature="e#17326#19672#0" expanded="false" />
+            <element signature="e#19719#19749#0" expanded="false" />
+            <element signature="e#19805#19863#0" expanded="false" />
+            <element signature="e#19909#20260#0" expanded="false" />
+            <element signature="e#20308#20704#0" expanded="false" />
+            <element signature="e#20753#21160#0" expanded="false" />
+            <element signature="e#21210#21232#0" expanded="false" />
+            <element signature="e#21288#21355#0" expanded="false" />
+            <element signature="e#21399#22418#0" expanded="false" />
+            <element signature="e#22458#23158#0" expanded="false" />
+            <element signature="e#23198#23841#0" expanded="false" />
+            <marker date="1474570839666" expanded="true" signature="4246:7980" ph="..." />
+            <marker date="1474570839666" expanded="true" signature="19000:19026" ph="..." />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="721">
+        <state relative-caret-position="289">
           <caret line="1579" column="0" selection-start-line="1579" selection-start-column="0" selection-end-line="1579" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main_controller/run.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="688">
-          <caret line="51" column="28" selection-start-line="51" selection-start-column="28" selection-end-line="51" selection-end-column="28" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///home/beamline/tools/py2.7-X86_64/lib/python2.7/atexit.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="235">
-          <caret line="46" column="0" selection-start-line="46" selection-start-column="0" selection-end-line="46" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/main_controller/core.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="659">
-          <caret line="447" column="0" selection-start-line="447" selection-start-column="0" selection-end-line="447" selection-end-column="0" />
+        <state relative-caret-position="156">
+          <caret line="243" column="0" selection-start-line="243" selection-start-column="0" selection-end-line="243" selection-end-column="0" />
           <folding>
             <element signature="e#17#30#0" expanded="true" />
-            <element signature="e#2848#3774#0" expanded="false" />
-            <element signature="e#3817#4085#0" expanded="false" />
-            <element signature="e#4148#4923#0" expanded="false" />
-            <element signature="e#4974#5302#0" expanded="false" />
-            <element signature="e#5365#6606#0" expanded="false" />
-            <element signature="e#6656#6800#0" expanded="false" />
-            <element signature="e#6845#6972#0" expanded="false" />
-            <element signature="e#7032#7998#0" expanded="false" />
-            <element signature="e#8062#8280#0" expanded="false" />
-            <element signature="e#8352#9019#0" expanded="false" />
-            <element signature="e#9126#10384#0" expanded="false" />
-            <element signature="e#10421#12203#0" expanded="false" />
-            <element signature="e#12238#12384#0" expanded="false" />
-            <element signature="e#12482#12859#0" expanded="false" />
-            <element signature="e#12940#13368#0" expanded="false" />
-            <element signature="e#13436#13956#0" expanded="false" />
-            <element signature="e#14008#14246#0" expanded="false" />
-            <element signature="e#14295#14734#0" expanded="false" />
-            <element signature="e#14807#14976#0" expanded="false" />
-            <element signature="e#15011#15178#0" expanded="false" />
-            <element signature="e#15226#15273#0" expanded="false" />
-            <element signature="e#15309#15745#0" expanded="false" />
-            <element signature="e#15780#16361#0" expanded="false" />
-            <element signature="e#16402#16703#0" expanded="false" />
-            <element signature="e#16764#16787#0" expanded="false" />
-            <element signature="e#16823#16948#0" expanded="false" />
-            <element signature="e#16979#17035#0" expanded="false" />
-            <element signature="e#17073#17185#0" expanded="false" />
-            <element signature="e#17220#17649#0" expanded="false" />
-            <element signature="e#17773#17851#0" expanded="false" />
-            <element signature="e#17880#17993#0" expanded="false" />
-            <element signature="e#18027#18502#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main_controller/windows/main_window.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="301">
-          <caret line="252" column="76" selection-start-line="252" selection-start-column="76" selection-end-line="252" selection-end-column="76" />
-          <folding>
-            <element signature="e#17#34#0" expanded="true" />
-            <element signature="e#10074#12981#0" expanded="false" />
-            <element signature="e#13020#13927#0" expanded="false" />
-            <element signature="e#14041#14219#0" expanded="false" />
-            <element signature="e#14276#14401#0" expanded="false" />
-            <element signature="e#15744#16082#0" expanded="false" />
-            <element signature="e#16124#16208#0" expanded="false" />
-            <element signature="e#16682#19028#0" expanded="false" />
-            <element signature="e#19265#19616#0" expanded="false" />
-            <element signature="e#19664#20060#0" expanded="false" />
-            <element signature="e#20109#20516#0" expanded="false" />
-            <element signature="e#20755#21743#0" expanded="false" />
-            <element signature="e#21783#22483#0" expanded="false" />
-            <element signature="e#22523#23166#0" expanded="false" />
+            <element signature="e#2897#3823#0" expanded="false" />
+            <element signature="e#3866#4266#0" expanded="false" />
+            <element signature="e#4329#5104#0" expanded="false" />
+            <element signature="e#5155#5483#0" expanded="false" />
+            <element signature="e#5546#6787#0" expanded="false" />
+            <element signature="e#6837#6981#0" expanded="false" />
+            <element signature="e#7026#7153#0" expanded="false" />
+            <element signature="e#7213#8179#0" expanded="false" />
+            <element signature="e#8243#8461#0" expanded="false" />
+            <element signature="e#9332#10590#0" expanded="false" />
+            <element signature="e#10627#12409#0" expanded="false" />
+            <element signature="e#12444#12590#0" expanded="false" />
+            <element signature="e#12688#13065#0" expanded="false" />
+            <element signature="e#13146#13574#0" expanded="false" />
+            <element signature="e#13636#14176#0" expanded="false" />
+            <element signature="e#14228#14466#0" expanded="false" />
+            <element signature="e#14515#14954#0" expanded="false" />
+            <element signature="e#15016#16214#0" expanded="false" />
+            <element signature="e#17796#17963#0" expanded="false" />
+            <element signature="e#18011#18058#0" expanded="false" />
+            <element signature="e#18094#18530#0" expanded="false" />
+            <element signature="e#18565#19116#0" expanded="false" />
+            <element signature="e#19157#19458#0" expanded="false" />
+            <element signature="e#19485#21257#0" expanded="false" />
+            <marker date="1474572778876" expanded="false" signature="17487:17520" ph="..." />
           </folding>
         </state>
       </provider>

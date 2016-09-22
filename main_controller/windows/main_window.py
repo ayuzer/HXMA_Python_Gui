@@ -23,7 +23,8 @@ from utils.gui import dialog_info
 from utils.gui import decorator_dialog_error
 from utils.gui import decorator_busy_cursor
 
-from utils.server import ServMixin
+from utils.local_save import ServMixin
+from utils.local_save import ScanMixin
 
 from utils import Constant
 from utils import to_rad
@@ -154,7 +155,7 @@ class LabelFormatter(object):
         self.data_dict[label] = kwargs
 
 
-class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
+class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin):
 
     SIGNAL_DIALOG_INFO = QtCore.pyqtSignal(unicode)
 
@@ -231,6 +232,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
         self.init_motor_slots()
         self.update_motors()
 
+        self.handle_comboBox_scan_motor()
+        self.update_scan_cols()
+
+        self.set_scan_props()
+        self.core.update_scan_filepath(str(self.lineEdit_scan_select_file.text()))
+
         self.pushButton_motor_1_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_1))
         self.pushButton_motor_2_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_2))
         self.pushButton_motor_3_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_3))
@@ -241,8 +248,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
         self.checkBox_motor_all_checkpos.stateChanged.connect(self.handle_checkBox_motor_all_checkpos)
 
         self.pushButton_scan_start_stop.setText(self.scan_button_text())
-
+        self.pushButton_scan_save.clicked.connect(self.handle_save_scan)
         self.pushButton_scan_select_file.clicked.connect(partial(self.select_file, self.lineEdit_scan_select_file))
+
+        self.lineEdit_scan_select_file.textChanged.connect(partial(self.core.update_scan_filepath, str(self.lineEdit_scan_select_file.text())))
 
         self.comboBox_scan_motor.currentIndexChanged.connect(self.handle_comboBox_scan_motor)
         self.comboBox_scan_data_x.activated.connect(self.handle_comboBox_scan_data)
@@ -256,14 +265,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
 
         self.handle_pushButton_motor_all_checkpos(False)  # just checking position at init, False is a dummy var
 
-        self.handle_comboBox_scan_motor()
-        self.update_scan_cols()
-
-        #An attempt to get the picture displaying
-        pic= QtGui.QLabel(self.label_motor_picture)
+        # An attempt to get the picture displaying
+        pic = QtGui.QLabel(self.label_motor_picture)
         pixmap = QtGui.QPixmap('/staff/hamelm/Documents/stage_background.png')
         pic.setPixmap(pixmap.scaled(500, 500, QtCore.Qt.KeepAspectRatio))
         pic.show()
+
 
     """MOTOR"""
     @decorator_busy_cursor
@@ -406,10 +413,16 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
                                 )
 
     def update_scan_cols(self):
-        self.core.update_scan_counters(self.comboBox_scan_data_x, self.comboBox_scan_data_y)
+        self.core.update_scan_CB(self.comboBox_scan_data_x, self.comboBox_scan_data_y)
 
     def handle_comboBox_scan_data(self):
         pass
+
+    def handle_save_scan(self):
+        self.core.save_scan_curr(str(self.lineEdit_scan_filename.text()),
+                                 self.comboBox_scan_data_x,
+                                 self.comboBox_scan_data_y,
+                                 )
 
     """RANDOM"""
     def select_file(self, line_edit):
@@ -545,6 +558,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin):
         self.save_window_position()
 
         self.save_server_address()
+        self.save_scan_props()
 
         self.core.terminate()
 

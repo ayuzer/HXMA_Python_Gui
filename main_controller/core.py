@@ -5,6 +5,9 @@ import threading
 import time
 import json
 import operator
+import csv
+import time
+import os
 
 import numpy as np
 
@@ -96,7 +99,7 @@ class Core(object):
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
-        self.scan_array = self.old_x = self.old_y = []
+        self.scan_array = self.old_x = self.old_y = self.old_array= []
 
 
     """ MOTOR """
@@ -123,9 +126,11 @@ class Core(object):
 
     def motor_stop(self, motor):
         if motor.Enabled:
-            self.checkpos_motor(motor)  # This sets the motor to the correct Mne as well
-            SpecMotor.stop(self.SpecMotor_sess)
-            print motor.Name + " has been stopped"
+            if self.checkpos_motor(motor)['moved']:  # This sets the motor to the correct Mne as well as checking if its moving
+                SpecMotor.stop(self.SpecMotor_sess)
+                print motor.Name + " has been stopped"
+            else:
+                print motor.Name + " does not appear to be moving"
         else:
             print "Cannot stop a disabled motor"
 
@@ -233,9 +238,10 @@ class Core(object):
         self.SpecScan_sess.scanning = SpecScan.isScanning(self.SpecScan_sess)
         if self.SpecScan_sess.scanning:
             button.setText('Stop')
-            self.update_scan_counters(self.x_data_CB, self.y_data_CB)
+            self.update_scan_CB(self.x_data_CB, self.y_data_CB)
         else:
             button.setText('Start')
+            self.backup_scan()
             #self.scan_event.clear() # stops the scanning thread when the scan isn't running
         return self.SpecScan_sess.scanning
 
@@ -329,17 +335,17 @@ class Core(object):
         #print "Scanning Thread is sleeping for " + repr(sleep_time)
         time.sleep(sleep_time)
 
-    def update_scan_counters(self, x_data_CB, y_data_CB):
+    def update_scan_CB(self, x_data_CB, y_data_CB):
         self.x_data_CB = x_data_CB
         self.y_data_CB = y_data_CB
-        scanner_names = self.get_var('SCAN_COLS')
+        self.scanner_names = self.get_var('SCAN_COLS')
         i=0
         (x_index, y_index) = x_data_CB.currentIndex(), y_data_CB.currentIndex()
         x_data_CB.clear()
         y_data_CB.clear()
-        for i in range(len(scanner_names)):
-            x_data_CB.addItem(scanner_names[str(i)])
-            y_data_CB.addItem(scanner_names[str(i)])
+        for i in range(len(self.scanner_names)):
+            x_data_CB.addItem(self.scanner_names[str(i)])
+            y_data_CB.addItem(self.scanner_names[str(i)])
         #print scanner_names
         x_data_CB.setCurrentIndex(x_index)
         y_data_CB.setCurrentIndex(y_index)
@@ -362,8 +368,56 @@ class Core(object):
             self.monitor.update(VAR.SCAN_CENTROID, calc.Centroid())
         (self.old_x, self.old_y) = x, y
 
-    """ RANDOM UTILITIES """
+    def save_scan_curr(self, filename, x_CB, y_CB):
+        filedir = self.scan_dir
+        go, x, y = self.get_data(x_CB.currentIndex(), y_CB.currentIndex())
+        if go:
+            curr_time = time.strftime("%b_%d_%Y_%H-%M-%S")  # getting time also so we wont have name conflicts
+            with open(filedir+'/'+filename+'_'+curr_time+".csv", 'wb') as csvfile:
+                header = [str(x_CB.currentText()), str(y_CB.currentText())]
+                writer = csv.writer(csvfile)
+                writer.writerow(header)
+                for i in range(len(x)):
+                    writer.writerow([x[i], y[i]])
+                writer.writerow(["Max Y", "FWHM", "CWHM", "COM", "Centroid"])
+                writer.writerow([self.monitor.get_value(VAR.SCAN_MAX_Y),
+                                 self.monitor.get_value(VAR.SCAN_FWHM),
+                                 self.monitor.get_value(VAR.SCAN_CWHM),
+                                 self.monitor.get_value(VAR.SCAN_COM),
+                                 self.monitor.get_value(VAR.SCAN_CENTROID),
+                                 ])
+                print "Successfully saved " + filename+'_'+curr_time+".csv" + " In : " + filedir
+        else:
+            print "Cannot Write, No data acquired"
 
+    def backup_scan(self):
+        if not self.old_array == self.scan_array:
+            self.old_array = self.scan_array
+            back_dir = self.scan_dir+'/backup'
+            if not os.path.exists(back_dir):
+                os.makedirs(back_dir)
+                print "Backup directory in " + back_dir + "\nhas been created"
+            if self.scan_array and self.scanner_names:
+                curr_time = time.strftime("%b_%d_%Y_%H-%M-%S")  # getting time also so we wont have name conflicts
+                with open(back_dir + '/' + "BACKUP" + '_' + curr_time + ".csv", 'wb') as csvfile:
+                    writer = csv.writer(csvfile)
+                    header = []
+                    for k in range(len(self.scanner_names)):
+                        header.append(self.scanner_names[str(k)])
+                    writer.writerow(header)
+                    for i in range(len(self.scan_array)):
+                        scan_row = self.scan_array[i]
+                        row = []
+                        for j in range(len(scan_row)):
+                            row.append(scan_row[j])
+                        writer.writerow(row)
+                    print "Backup csv has been created in " + repr(csvfile)
+
+
+    def update_scan_filepath(self, filepath):
+        self.scan_dir = filepath
+
+    """ RANDOM UTILITIES """
     def get_var(self, var_name):
         """Return variable"""
         if self.Spec_sess.connection is not None:
@@ -396,7 +450,6 @@ class Core(object):
                            ]
         for sess in sess_list:
             self.term_sess(sess)
-        print repr(globals())
         self.count_event.set()  # allow any blocked threads to terminate
         self.move_event.set()
         self.scan_event.set()

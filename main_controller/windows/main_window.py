@@ -270,6 +270,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         pixmap = QtGui.QPixmap('/staff/hamelm/Documents/stage_background.png')
         pic.setPixmap(pixmap.scaled(500, 500, QtCore.Qt.KeepAspectRatio))
         pic.show()
+        self.old_x = self.old_y = []
 
 
     """MOTOR"""
@@ -400,9 +401,18 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
     def scan_plot(self):
         go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(), self.comboBox_scan_data_y.currentIndex())
-        if go:
+        if not self.old_x == x or not self.old_y == y and go:
             self.plot_id.new_plot(x, y)
             self.core.scan_calculations(x, y)
+            self.tableWidget_scan_data.setHorizontalHeaderLabels([self.comboBox_scan_data_x.currentText(),
+                                                                  self.comboBox_scan_data_y.currentText(),
+                                                                  ])
+            self.tableWidget_scan_data.setColumnCount(2)
+            self.tableWidget_scan_data.setRowCount(len(x))
+            for row in range(len(x)):
+                self.tableWidget_scan_data.setItem(row, 0, QtGui.QTableWidgetItem(QtCore.QString("%1").arg(x[row])))
+                self.tableWidget_scan_data.setItem(row, 1, QtGui.QTableWidgetItem(QtCore.QString("%1").arg(y[row])))
+        (self.old_x, self.old_y) = x, y
 
     def handle_comboBox_scan_motor(self):
         self.core.scan_settings(self.comboBox_scan_motor.currentText(),

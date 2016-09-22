@@ -99,7 +99,7 @@ class Core(object):
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
-        self.scan_array = self.old_x = self.old_y = self.old_array= []
+        self.scan_array = self.old_array = []
 
 
     """ MOTOR """
@@ -359,14 +359,12 @@ class Core(object):
             return True, x, y
 
     def scan_calculations(self, x, y):
-        if not self.old_x == x or not self.old_y == y:
-            calc = Calculation(x, y)
-            self.monitor.update(VAR.SCAN_MAX_Y, calc.y_max_string())
-            self.monitor.update(VAR.SCAN_FWHM, calc.FWHM())
-            self.monitor.update(VAR.SCAN_COM, calc.COM())
-            self.monitor.update(VAR.SCAN_CWHM, calc.CFWHM())
-            self.monitor.update(VAR.SCAN_CENTROID, calc.Centroid())
-        (self.old_x, self.old_y) = x, y
+        calc = Calculation(x, y)
+        self.monitor.update(VAR.SCAN_MAX_Y, calc.y_max_string())
+        self.monitor.update(VAR.SCAN_FWHM, calc.FWHM())
+        self.monitor.update(VAR.SCAN_COM, calc.COM())
+        self.monitor.update(VAR.SCAN_CWHM, calc.CFWHM())
+        self.monitor.update(VAR.SCAN_CENTROID, calc.Centroid())
 
     def save_scan_curr(self, filename, x_CB, y_CB):
         filedir = self.scan_dir

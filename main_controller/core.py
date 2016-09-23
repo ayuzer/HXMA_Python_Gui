@@ -87,30 +87,40 @@ class Core(object):
 
         self.move_event = threading.Event()
         self.move_event.set()
+        self.check_move_event = threading.Event()
+        self.check_move_event.set()
 
         self._scan_timer = threading.Timer(1, self.handle_scan)
         self._scan_timer.start()
         self.scan_event = threading.Event()
         self.scan_event.clear()
 
+        self._cent_timer = threading.Timer(1, self.handle_cent)
+        self._cent_timer.start()
+        self.cent_event = threading.Event()
+        self.cent_event.clear()
+        
         self.Spec_sess = Spec()
         self.SpecMotor_sess = SpecMotor()
         self.SpecScan_sess = SpecScan()
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
-        self.scan_array = self.old_array = []
-
+        self.scan_array = self.old_array =[]
+        self.moving_bool_dict = {}
+        self.cent_props = ('', '', 0, 0, 0, 0, 0, [], True)
 
     """ MOTOR """
-    def move_motor(self, motor):
+    def move_motor(self, motor, moveto=None, movetype=None):
+        if moveto == None:
+            moveto = motor.Moveto_SB.value()
+        if movetype == None:
+            movetype = motor.MoveType_CB.currentText()
         motor_name = motor.Mne
         self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor.Name)
         if motor.Enabled:
             motor_check = self.checkpos_motor(motor)  # This sets the motor to the correct Mne as well
             pos = motor_check['pos']
-            moveto = motor.Moveto_SB.value()
-            movetype = motor.MoveType_CB.currentText()
             if movetype == 'Relative':
                 SpecMotor.moveRelative(self.SpecMotor_sess, moveto)
                 print "Moving motor " + motor.Name + " to " + repr(moveto + pos)
@@ -166,22 +176,27 @@ class Core(object):
         while True:
             self.move_event.wait()
             if self._terminate_flag: break
+            self.check_move_event.wait()  # This stops the motors from updating each other's monitors
             if _SpecMotor_sess.specName == motor.Mne:
                 '''
                 moving = inst_self['state'] in [SpecMotor_module.MOVING, SpecMotor_module.MOVESTARTED]
                 if moving:  # this doesnt seem to work because it doesnt properly register when the motor is moving
                 # I believe this issue is with SpecClient and not with my code...
                 '''
+                self.check_move_event.clear()
                 motor_check = self.checkpos_motor(motor, False)
-                if moved:
-                    time.sleep(0.33)
-                    print motor.Name + " is moving"
-                else:
-                    time.sleep(1)
+                self.check_move_event.set()
                 moved = motor_check['moved']
                 pos = motor_check['pos']
                 if moved:
+                    time.sleep(0.33)
                     print motor.Name + " has moved to " + repr(pos)
+                else:
+                    time.sleep(1)
+                try:
+                    self.moving_bool_dict[motor.Name] = moved
+                except KeyError:
+                    self.moving_bool_dict.update({motor.name, moved})
             else:  # making sure we're looking at the right motor
                 time.sleep(1)
                 SpecMotor.connectToSpec(_SpecMotor_sess, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
@@ -195,6 +210,12 @@ class Core(object):
     def check_limits(self, motor):
         self.checkpos_motor(motor) # check where the motor is and assigning it.
         return SpecMotor.getLimits(self.SpecMotor_sess)
+
+    def is_moving(self, motor_name='none'):  # will return if all motors are moving or not unless motor is specified
+        if motor_name == 'none':
+            return not all(bool==False for bool in self.moving_bool_dict.values())
+        else:
+            return self.moving_bool_dict[motor_name]
 
     """ COUNTER """
     def handle_counter(self):
@@ -210,7 +231,7 @@ class Core(object):
             self.count_event.wait()
             if self._terminate_flag: break
             i = i + 1
-            print i
+            # print i
             count_time = SpecCounter.count(self.SpecCounter_sec, self.count_time_set_SB.value())
             self.monitor.update(VAR.COUNT_TIME, count_time)
             self.monitor.update(VAR.COUNTER_1_COUNT, SpecCounter.getValue(self.SpecCounter_ic2))
@@ -315,7 +336,7 @@ class Core(object):
         return False  # Saying the scan is stopped
 
     def scan_settings(self, motor_name, startpos_SB, stoppos_SB, Motors, wait_time_SB):
-        self.wait_time_SB = wait_time_SB
+        self.scan_wait_time_SB = wait_time_SB
         for i in range(len(Motors)):
             Motor_inst = Motors[i]
             if Motor_inst.Name == motor_name:
@@ -326,7 +347,7 @@ class Core(object):
 
     def scan_SB_sleeper(self, default_time=3.0, ratio=1.0, _min=True):
         try:  # Setting wait times to the interval time of the scan's spinbox if it isn't too small
-            if self.wait_time_SB.value() > 0.5 or not _min:
+            if self.scan_wait_time_SB.value() > 0.5 or not _min:
                 sleep_time = self.wait_time_SB.value() * ratio
             else:
                 sleep_time = default_time
@@ -411,9 +432,87 @@ class Core(object):
                         writer.writerow(row)
                     print "Backup csv has been created in " + repr(csvfile)
 
+    """ CENTER """
+    def cent_settings(self, scan_motor_name, angle_motor_name, relmax_SB, relmin_SB, center_SB, angle_pm_SB, angle_o_SB, Motors, wait_time_SB):
+        self.wait_time_SB = wait_time_SB
+        for i in range(len(Motors)):
+            Motor_inst = Motors[i]
+            if Motor_inst.Enabled:
+                (min_lim, max_lim) = self.check_limits(Motor_inst)
+                full_range = abs(min_lim) + abs(max_lim)
+                if Motor_inst.Name == scan_motor_name:
+                    center_SB.setRange(min_lim, max_lim)
+                    relmax_SB.setRange(-1 * full_range, full_range)
+                    relmin_SB.setRange(-1 * full_range, full_range)
+                elif Motor_inst.Name == angle_motor_name:
+                    angle_o_SB.setRange(min_lim, max_lim)
+                    angle_pm_SB.setRange(-1 * full_range/2, full_range/2)
 
-    def update_scan_filepath(self, filepath):
-        self.scan_dir = filepath
+    def is_centering(self, start_stop_PB):
+        self.start_stop_PB = start_stop_PB
+        return False
+
+    def cent_stop(self):
+        pass
+
+    def cent_start(self, scan_motor_name, angle_motor_name, relmax, relmin, center, angle_pm, angle_o, steps, waittime, Motors):
+        if self.is_centering(self.start_stop_PB):
+            self.cent_stop()
+        self.cent_props = (scan_motor_name, angle_motor_name, center + relmin, center + relmax,
+                            angle_o - angle_pm, angle_o, angle_o + angle_pm, steps, waittime, Motors, False)
+        self.cent_event.set()
+
+    def handle_cent(self):
+        while True:
+            if self._terminate_flag:break
+            self.cent_event.wait()
+            (scan_motor_name, angle_motor_name, cent_scan_start, cent_scan_stop,
+             cent_angle_m, cent_angle_o, cent_angle_p, steps, waittime, Motors, terminate) = self.cent_props
+            for i in range(len(Motors)):
+                motor_inst = Motors[i]
+                if scan_motor_name == motor_inst.Name:
+                    scan_motor = motor_inst
+                elif angle_motor_name == motor_inst.Name:
+                    angle_motor = motor_inst
+            if not terminate:
+                while self.is_moving():
+                    time.sleep(1)  # waiting until the move is over to begin our move
+                self.set_status("CENTERING: MOVING TO W-")
+                self.move_motor(angle_motor, cent_angle_m, "Absolute")
+                self.move_motor(scan_motor, cent_scan_start, "Absolute")
+                time.sleep(3)
+                while self.is_moving():
+                    time.sleep(1)  # waiting until the move is over to begin our scan
+                self.scan_start(False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors)
+                time.sleep(5)
+                while self.is_scanning():
+                    time.sleep(1)  # waiting until the scan is over
+                w_neg_array = self.scan_array
+                self.set_status("CENTERING: MOVING TO Wo")
+                self.move_motor(angle_motor, cent_angle_o, "Absolute")
+                self.move_motor(scan_motor, cent_scan_start, "Absolute")
+                time.sleep(3)
+                while self.is_moving():
+                    time.sleep(1)  # waiting until the move is over to begin our scan
+                self.scan_start(False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors)
+                time.sleep(3)
+                while self.is_scanning():
+                    time.sleep(1)  # waiting until the scan is over
+                w_naught_array = self.scan_array
+                self.set_status("CENTERING: MOVING TO W+")
+                self.move_motor(angle_motor, cent_angle_p, "Absolute")
+                self.move_motor(scan_motor, cent_scan_start, "Absolute")
+                time.sleep(3)
+                while self.is_moving():
+                    time.sleep(1)  # waiting until the move is over to begin our scan
+                self.scan_start(False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors)
+                time.sleep(5)
+                while self.is_scanning():
+                    time.sleep(1)  # waiting until the scan is over
+                w_pos_array = self.scan_array
+                break
+
+            time.sleep(1)
 
     """ RANDOM UTILITIES """
     def get_var(self, var_name):
@@ -425,6 +524,12 @@ class Core(object):
     def init_Spec(self):
         # starting up the Spec server, completed in main_window as monitor needs to load
         Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
+
+    def update_filepath(self, filepath, name):
+        if name == 'scan':
+            self.scan_dir = filepath
+        elif name == 'cent':
+            self.cent_dir = filepath
 
     def set_status(self, status_msg):
         self.monitor.update(VAR.STATUS_MSG, status_msg)

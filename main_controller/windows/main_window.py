@@ -188,26 +188,13 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         self._item_count = 0
 
-        self.plot_id = Plotter()
-        self.verticalLayout_scan_graph.addWidget(self.plot_id)
-        self.plot_id.set_title(PLOT_TITLE)
-        self.plot_id.set_axis_label_x(PLOT_LABEL_X)
-        self.plot_id.set_axis_label_y(PLOT_LABEL_Y)
-        # self.plot_id.set_mouse_position_callback(self.callback_mouse_pos_id)
-        self.plot_id.set_legend()
-        self.plot_id.timer = QtCore.QTimer()
-
-        # # Track mouse position while in graphics view
+        # Track mouse position while in graphics view
         # self.mouse_tracker = MouseTracker(self.graphicsView)
         # self.mouse_tracker.SIGNAL_MOVE.connect(self.handle_mouse_signal_move)
         # self.mouse_tracker.SIGNAL_PRESS.connect(self.handle_mouse_signal_press)
         # self.mouse_tracker.SIGNAL_RELEASE.connect(self.handle_mouse_signal_release)
 
         self.init_labels()
-
-        self.pushButton_motor_all_checkpos.clicked.connect(self.handle_pushButton_motor_all_checkpos)
-        self.pushButton_motor_all_move.clicked.connect(self.handle_pushButton_motor_all_move)
-        self.pushButton_motor_all_stop.clicked.connect(self.handle_pushButton_motor_all_stop)
 
         actions = {
             self.action_about       : self.handle_action_about,
@@ -222,6 +209,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.set_window_position()
         self.monitor.start()
 
+        """INIT SPEC"""
         if self.set_server_address():
             self.core.init_Spec()
         else:
@@ -229,15 +217,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             self.handle_action_set_server()
             self.core.init_Spec()
 
+        """MOTOR INIT"""
+        # INIT RUN ----Has to be first to init Motors for connecting buttons
         self.init_motor_slots()
         self.update_motors()
-
-        self.handle_comboBox_scan_motor()
-        self.update_scan_cols()
-
-        self.set_scan_props()
-        self.core.update_scan_filepath(str(self.lineEdit_scan_select_file.text()))
-
+        self.handle_pushButton_motor_all_checkpos(False)  # just checking position, False is a dummy var
+        # Connect Buttons
         self.pushButton_motor_1_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_1))
         self.pushButton_motor_2_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_2))
         self.pushButton_motor_3_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_3))
@@ -245,27 +230,72 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.pushButton_motor_5_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_5))
         self.pushButton_motor_6_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_6))
 
+        self.pushButton_motor_all_checkpos.clicked.connect(self.handle_pushButton_motor_all_checkpos)
+        self.pushButton_motor_all_move.clicked.connect(self.handle_pushButton_motor_all_move)
+        self.pushButton_motor_all_stop.clicked.connect(self.handle_pushButton_motor_all_stop)
+
         self.checkBox_motor_all_checkpos.stateChanged.connect(self.handle_checkBox_motor_all_checkpos)
 
-        self.pushButton_scan_start_stop.setText(self.scan_button_text())
+        """COUNTER INIT"""
+        # Connect Buttons
+        self.checkBox_count.stateChanged.connect(self.handle_checkBox_count)
+        # INIT RUN
+        self.handle_checkBox_count()  # handing down the count variables to core with this
+
+        """SCAN INIT"""
+        # Connect Buttons
+        self.pushButton_scan_start_stop.clicked.connect(self.handle_pushButton_scan_start_stop)
         self.pushButton_scan_save.clicked.connect(self.handle_save_scan)
         self.pushButton_scan_select_file.clicked.connect(partial(self.select_file, self.lineEdit_scan_select_file))
 
-        self.lineEdit_scan_select_file.textChanged.connect(partial(self.core.update_scan_filepath, str(self.lineEdit_scan_select_file.text())))
+        self.lineEdit_scan_select_file.textChanged.connect(
+            partial(self.core.update_filepath, str(self.lineEdit_scan_select_file.text()), 'scan'))
 
         self.comboBox_scan_motor.currentIndexChanged.connect(self.handle_comboBox_scan_motor)
         self.comboBox_scan_data_x.activated.connect(self.handle_comboBox_scan_data)
         self.comboBox_scan_data_y.activated.connect(self.handle_comboBox_scan_data)
 
-        self.pushButton_scan_start_stop.clicked.connect(self.handle_pushButton_scan_start_stop)
+        self.pushButton_scan_start_stop.setText(self.scan_button_text()) # This means the button says Start instead of START/STOP
+        # INIT RUN
+        self.handle_comboBox_scan_motor()
+        self.update_scan_cols()
+        self.set_scan_props() # updating variables from the saved file (last session)
+        self.core.update_filepath(str(self.lineEdit_scan_select_file.text()), 'scan')
+        # Plot
+        self.scan_plot_id = Plotter()
+        self.verticalLayout_scan_graph.addWidget(self.scan_plot_id)
+        self.scan_plot_id.set_title(PLOT_TITLE)
+        self.scan_plot_id.set_axis_label_x(PLOT_LABEL_X)
+        self.scan_plot_id.set_axis_label_y(PLOT_LABEL_Y)
+        # self.scan_plot_id.set_mouse_position_callback(self.callback_mouse_pos_id)
+        self.scan_plot_id.set_legend()
+        self.scan_plot_id.timer = QtCore.QTimer()
 
-        self.checkBox_count.stateChanged.connect(self.handle_checkBox_count)
+        """CENTER INIT"""
+        # Connect Buttons
+        self.pushButton_cent_start_stop.clicked.connect(self.handle_pushButton_cent_start_stop)
+        self.pushButton_cent_save.clicked.connect(self.handle_save_cent)
+        self.pushButton_cent_select_file.clicked.connect(partial(self.select_file, self.lineEdit_cent_select_file))
 
-        self.handle_checkBox_count()  # handing down the count variables to core with this
+        self.lineEdit_scan_select_file.textChanged.connect(
+            partial(self.core.update_filepath, str(self.lineEdit_scan_select_file.text()), 'cent'))
 
-        self.handle_pushButton_motor_all_checkpos(False)  # just checking position at init, False is a dummy var
+        self.comboBox_cent_motor_scan.currentIndexChanged.connect(self.handle_comboBox_cent_motor)
+        self.comboBox_cent_motor_angle.currentIndexChanged.connect(self.handle_comboBox_cent_motor)
+        # INIT RUN
+        self.handle_comboBox_cent_motor()
+        self.core.update_filepath(str(self.lineEdit_cent_select_file.text()), 'cent')
+        # Plot
+        self.cent_plot_id = Plotter()
+        self.verticalLayout_cent_graph.addWidget(self.cent_plot_id)
+        self.cent_plot_id.set_title(PLOT_TITLE)
+        self.cent_plot_id.set_axis_label_x(PLOT_LABEL_X)
+        self.cent_plot_id.set_axis_label_y(PLOT_LABEL_Y)
+        # self.cent_plot_id.set_mouse_position_callback(self.callback_mouse_pos_id)
+        self.cent_plot_id.set_legend()
+        self.cent_plot_id.timer = QtCore.QTimer()
 
-        # An attempt to get the picture displaying
+        """PICTURE"""
         pic = QtGui.QLabel(self.label_motor_picture)
         pixmap = QtGui.QPixmap('/staff/hamelm/Documents/stage_background.png')
         pic.setPixmap(pixmap.scaled(500, 500, QtCore.Qt.KeepAspectRatio))
@@ -276,7 +306,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
     """MOTOR"""
     @decorator_busy_cursor
     def handle_pushButton_motor_movego(self, motor, dummy):  # Will pass the ref to relevant motor
-        self.core.move_motor(motor)
+        if self.core.is_moving(motor.Name):
+            self.core.set_status(motor.Name + " is already moving")
+        else:
+            self.core.move_motor(motor)
         self.handle_pushButton_motor_all_checkpos(self.Motors)
 
     def handle_pushButton_motor_all_move(self, dummy): # this just calls the moving function if enabled for each
@@ -367,7 +400,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         for i in range(len(self.Motors)):
             Motor_inst = self.Motors[i]
             if Motor_inst.Enabled:
-                self.comboBox_scan_motor.addItem(Motor_inst.Name)
+                for CB in (self.comboBox_scan_motor, self.comboBox_cent_motor_scan, self.comboBox_cent_motor_angle):
+                    CB.addItem(Motor_inst.Name)
                 (min_lim, max_lim) = self.core.check_limits(Motor_inst)
                 Motor_inst.Moveto_SB.setRange(min_lim*2, max_lim*2)
 
@@ -384,7 +418,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             return 'Start'
 
     def handle_pushButton_scan_start_stop(self):
-        self.update_scan_cols()
+        # self.update_scan_cols()
         if self.core.is_scanning(self.pushButton_scan_start_stop):
             self.core.scan_stop()
         else:
@@ -396,13 +430,13 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                  self.doubleSpinBox_scan_waittime.value(),
                                  self.Motors  # We need to pass this so we can see which motor we are scanning with
                                  )
-            self.plot_id.timer.start(100.0)
-            self.connect(self.plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
+            self.scan_plot_id.timer.start(100.0)
+            self.connect(self.scan_plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
 
     def scan_plot(self):
         go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(), self.comboBox_scan_data_y.currentIndex())
         if not self.old_x == x or not self.old_y == y and go:
-            self.plot_id.new_plot(x, y)
+            self.scan_plot_id.new_plot(x, y)
             self.core.scan_calculations(x, y)
             self.tableWidget_scan_data.setHorizontalHeaderLabels([self.comboBox_scan_data_x.currentText(),
                                                                   self.comboBox_scan_data_y.currentText(),
@@ -433,6 +467,38 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                  self.comboBox_scan_data_x,
                                  self.comboBox_scan_data_y,
                                  )
+
+    """CENTER"""
+    def handle_comboBox_cent_motor(self):
+        self.core.cent_settings(self.comboBox_cent_motor_scan.currentText(),
+                                self.comboBox_cent_motor_angle.currentText(),
+                                self.doubleSpinBox_cent_relmax,
+                                self.doubleSpinBox_cent_relmin,
+                                self.doubleSpinBox_cent_center,
+                                self.doubleSpinBox_cent_angle_pm,
+                                self.doubleSpinBox_cent_angle_o,
+                                self.Motors,
+                                self.doubleSpinBox_cent_waittime
+                                )
+
+    def handle_pushButton_cent_start_stop(self):
+        if self.core.is_centering(self.pushButton_cent_start_stop):
+            self.core.cent_stop()
+        else:
+            self.core.cent_start(self.comboBox_cent_motor_scan.currentText(),
+                                 self.comboBox_cent_motor_angle.currentText(),
+                                 self.doubleSpinBox_cent_relmax.value(),
+                                 self.doubleSpinBox_cent_relmin.value(),
+                                 self.doubleSpinBox_cent_center.value(),
+                                 self.doubleSpinBox_cent_angle_pm.value(),
+                                 self.doubleSpinBox_cent_angle_o.value(),
+                                 self.doubleSpinBox_cent_steps.value(),
+                                 self.doubleSpinBox_cent_waittime.value(),
+                                 self.Motors,
+                                 )
+
+    def handle_save_cent(self):
+        pass
 
     """RANDOM"""
     def select_file(self, line_edit):

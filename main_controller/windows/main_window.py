@@ -25,6 +25,7 @@ from utils.gui import decorator_busy_cursor
 
 from utils.local_save import ServMixin
 from utils.local_save import ScanMixin
+from utils.local_save import CentMixin
 
 from utils import Constant
 from utils import to_rad
@@ -155,7 +156,7 @@ class LabelFormatter(object):
         self.data_dict[label] = kwargs
 
 
-class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin):
+class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin, CentMixin):
 
     SIGNAL_DIALOG_INFO = QtCore.pyqtSignal(unicode)
 
@@ -282,9 +283,14 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         self.comboBox_cent_motor_scan.currentIndexChanged.connect(self.handle_comboBox_cent_motor)
         self.comboBox_cent_motor_angle.currentIndexChanged.connect(self.handle_comboBox_cent_motor)
+        self.comboBox_cent_data_x.activated.connect(self.handle_comboBox_cent_data)
+        self.comboBox_cent_data_y.activated.connect(self.handle_comboBox_cent_data)
         # INIT RUN
         self.handle_comboBox_cent_motor()
+        self.update_cent_cols()
         self.core.update_filepath(str(self.lineEdit_cent_select_file.text()), 'cent')
+        self.core.is_centering(self.pushButton_cent_start_stop)
+        self.set_cent_props() # updating variables from the saved file (last session)
         # Plot
         self.cent_plot_id = Plotter()
         self.verticalLayout_cent_graph.addWidget(self.cent_plot_id)
@@ -300,8 +306,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         pixmap = QtGui.QPixmap('/staff/hamelm/Documents/stage_background.png')
         pic.setPixmap(pixmap.scaled(500, 500, QtCore.Qt.KeepAspectRatio))
         pic.show()
-        self.old_x = self.old_y = []
-
+        self.old_scan_x, self.old_scan_y = ([] for i in range(2))
 
     """MOTOR"""
     @decorator_busy_cursor
@@ -418,7 +423,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             return 'Start'
 
     def handle_pushButton_scan_start_stop(self):
-        # self.update_scan_cols()
         if self.core.is_scanning(self.pushButton_scan_start_stop):
             self.core.scan_stop()
         else:
@@ -430,12 +434,13 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                  self.doubleSpinBox_scan_waittime.value(),
                                  self.Motors  # We need to pass this so we can see which motor we are scanning with
                                  )
-            self.scan_plot_id.timer.start(100.0)
+            self.scan_plot_id.timer.start(250.0)
             self.connect(self.scan_plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
 
     def scan_plot(self):
-        go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(), self.comboBox_scan_data_y.currentIndex())
-        if not self.old_x == x or not self.old_y == y and go:
+        go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(),
+                                      self.comboBox_scan_data_y.currentIndex())
+        if not self.old_scan_x == x or not self.old_scan_y == y and go:
             self.scan_plot_id.new_plot(x, y)
             self.core.scan_calculations(x, y)
             self.tableWidget_scan_data.setHorizontalHeaderLabels([self.comboBox_scan_data_x.currentText(),
@@ -446,7 +451,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             for row in range(len(x)):
                 self.tableWidget_scan_data.setItem(row, 0, QtGui.QTableWidgetItem(QtCore.QString("%1").arg(x[row])))
                 self.tableWidget_scan_data.setItem(row, 1, QtGui.QTableWidgetItem(QtCore.QString("%1").arg(y[row])))
-        (self.old_x, self.old_y) = x, y
+        (self.old_scan_x, self.old_scan_y) = x, y
 
     def handle_comboBox_scan_motor(self):
         self.core.scan_settings(self.comboBox_scan_motor.currentText(),
@@ -457,7 +462,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                 )
 
     def update_scan_cols(self):
-        self.core.update_scan_CB(self.comboBox_scan_data_x, self.comboBox_scan_data_y)
+        self.core.update_CB(self.comboBox_scan_data_x, self.comboBox_scan_data_y, 'scan')
 
     def handle_comboBox_scan_data(self):
         pass
@@ -478,7 +483,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                 self.doubleSpinBox_cent_angle_pm,
                                 self.doubleSpinBox_cent_angle_o,
                                 self.Motors,
-                                self.doubleSpinBox_cent_waittime
+                                self.doubleSpinBox_cent_waittime,
+                                self.comboBox_cent_calc_choose,
                                 )
 
     def handle_pushButton_cent_start_stop(self):
@@ -496,9 +502,22 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                  self.doubleSpinBox_cent_waittime.value(),
                                  self.Motors,
                                  )
+            self.cent_plot_id.timer.start(250.0)
+            self.connect(self.cent_plot_id.timer,  QtCore.SIGNAL('timeout()'), self.cent_plot)
+
+    def cent_plot(self):
+        self.scan_plot()  # makes it so that the plot also displays on the scan tab
+        self.core.cent_plotting(self.cent_plot_id, self.tableWidget_cent_data,
+                                self.comboBox_cent_data_x, self.comboBox_cent_data_y, self.comboBox_cent_calc_choose)
 
     def handle_save_cent(self):
         pass
+
+    def handle_comboBox_cent_data(self):
+        pass
+
+    def update_cent_cols(self):
+        self.core.update_CB(self.comboBox_cent_data_x, self.comboBox_cent_data_y, 'cent')
 
     """RANDOM"""
     def select_file(self, line_edit):
@@ -531,6 +550,14 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             VAR.SCAN_COM:           (self.label_scan_COM,           '{:.2f}',   12, True),
             VAR.SCAN_CWHM:          (self.label_scan_CWHM,          '{:.2f}',   12, True),
             VAR.SCAN_CENTROID:      (self.label_scan_centroid,      '{:.2f}',   12, True),
+            VAR.CENT_NEG_MAXY:      (self.label_cent_maxint_m,      '{:.3f}',   12, True),
+            VAR.CENT_NEG_COM:       (self.label_cent_com_m,         '{:.3f}',   12, True),
+            VAR.CENT_NAU_MAXY:      (self.label_cent_maxint_o,      '{:.3f}',   12, True),
+            VAR.CENT_NAU_COM:       (self.label_cent_com_o,         '{:.3f}',   12, True),
+            VAR.CENT_POS_MAXY:      (self.label_cent_maxint_p,      '{:.3f}',   12, True),
+            VAR.CENT_POS_COM:       (self.label_cent_com_p,         '{:.3f}',   12, True),
+            VAR.CENT_CENTERED_X:    (self.label_cent_calc_cent_x,   '{:.3f}',   12, True),
+            VAR.CENT_CENTERED_Y:    (self.label_cent_calc_cent_y,   '{:.3f}',   12, True),
         }
 
         for pv_name, data in label_map.iteritems():
@@ -635,6 +662,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         self.save_server_address()
         self.save_scan_props()
+        self.save_cent_props()
 
         self.core.terminate()
 

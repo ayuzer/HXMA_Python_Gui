@@ -19,13 +19,28 @@ class Plotter(Qwt.QwtPlot):
         title.setFont(titleFont)
         self.setTitle(title)
 
-        # self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
-        self.curve = Qwt.QwtPlotCurve()
+        self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
 
         # self.curve.setStyle(Qwt.QwtPlotCurve.Sticks)
-
+        self.curve = Qwt.QwtPlotCurve('ongoing scan')
+        self.curve.setItemAttribute(Qwt.QwtPlotItem.Legend, False)
         self.curve.setPen(Qt.QPen(Qt.Qt.blue))
         self.curve.attach(self)
+
+        self.curve1 = Qwt.QwtPlotCurve('w-')
+        self.curve1.setItemAttribute(Qwt.QwtPlotItem.Legend, False)
+        self.curve1.setPen(Qt.QPen(Qt.Qt.red))
+        self.curve1.attach(self)
+
+        self.curve2 = Qwt.QwtPlotCurve('wo')
+        self.curve2.setItemAttribute(Qwt.QwtPlotItem.Legend, False)
+        self.curve2.setPen(Qt.QPen(Qt.Qt.darkGreen))
+        self.curve2.attach(self)
+
+        self.curve3 = Qwt.QwtPlotCurve('w+')
+        self.curve3.setItemAttribute(Qwt.QwtPlotItem.Legend, False)
+        self.curve3.setPen(Qt.QPen(Qt.Qt.magenta))
+        self.curve3.attach(self)
 
         mY = Qwt.QwtPlotMarker()
         mY.setLabelAlignment(Qt.Qt.AlignRight | Qt.Qt.AlignTop)
@@ -46,6 +61,18 @@ class Plotter(Qwt.QwtPlot):
     def new_plot(self, x, y):
         self.curve.setData(x, y)
         self.replot()
+
+    def multi_plot(self, x_arr, y_arr):
+        for i in range(len(x_arr)):
+            if i == 0:
+                curve = self.curve1
+            elif i == 1:
+                curve = self.curve2
+            else:
+                curve = self.curve3
+            curve.setData(x_arr[i], y_arr[i])
+        self.replot()
+        self.set_legend()
 
     def handle_mouse_position_signal(self, position):
 

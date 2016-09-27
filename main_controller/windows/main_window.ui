@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>913</width>
-    <height>849</height>
+    <width>897</width>
+    <height>858</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1638,26 +1638,6 @@ Subtraction (Linear) -NC</string>
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="9">
-                 <widget class="QLabel" name="label_cent_est_time_name">
-                  <property name="minimumSize">
-                   <size>
-                    <width>150</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Est Time Remaining</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="10">
-                 <widget class="QProgressBar" name="progressBar_cent_est_time">
-                  <property name="value">
-                   <number>24</number>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="1">
                  <widget class="QLabel" name="label_cent_angle_o_name">
                   <property name="minimumSize">
@@ -1706,6 +1686,12 @@ Subtraction (Linear) -NC</string>
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>400</width>
+                    <height>0</height>
+                   </size>
                   </property>
                  </widget>
                 </item>
@@ -2188,7 +2174,7 @@ Based On</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>913</width>
+     <width>897</width>
      <height>25</height>
     </rect>
    </property>

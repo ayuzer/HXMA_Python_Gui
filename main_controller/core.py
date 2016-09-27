@@ -26,6 +26,9 @@ from SpecClient.SpecClientError import SpecClientError
 
 from SpecClient.SpecScan_toki import SpecScanA as SpecScan
 
+from PyQt4.QtGui import QTableWidgetItem as tableItem
+from PyQt4.QtCore import QString as str2q
+
 from SpecDataConnection import SpecDataConnection
 
 import settings
@@ -33,8 +36,8 @@ import settings
 
 class PV(Constant):
 
-    SYSTEM_TIME             = 'WIG1405-01:systemTime'
-    CYCLES                  = 'TRG2400:cycles'
+    SYSTEM_TIME         = 'WIG1405-01:systemTime'
+    CYCLES              = 'TRG2400:cycles'
 
 class VAR(Constant):
     STATUS_MSG          = 'var:status_message'
@@ -52,6 +55,16 @@ class VAR(Constant):
     SCAN_COM            = 'var:scan_COM'
     SCAN_CWHM           = 'var:scan_CWHM'
     SCAN_CENTROID       = 'var:scan_centroid'
+
+    CENT_NEG_MAXY       = 'var:cent_neg_maxy'
+    CENT_NEG_COM        = 'var:cent_neg_com'
+    CENT_NAU_MAXY       = 'var:cent_nau_maxy'
+    CENT_NAU_COM        = 'var:cent_nau_com'
+    CENT_POS_MAXY       = 'var:cent_pos_maxy'
+    CENT_POS_COM        = 'var:cent_pos_com'
+
+    CENT_CENTERED_X     = 'var:cent_centered_x'
+    CENT_CENTERED_Y     = 'var:cent_centered_y'
 
     COUNTER_1_COUNT     = 'var:counter_1_count'
     COUNTER_2_COUNT     = 'var:counter_2_count'
@@ -99,6 +112,7 @@ class Core(object):
         self._cent_timer.start()
         self.cent_event = threading.Event()
         self.cent_event.clear()
+        self.centering = False
         
         self.Spec_sess = Spec()
         self.SpecMotor_sess = SpecMotor()
@@ -106,8 +120,8 @@ class Core(object):
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
-        self.scan_array = self.old_array =[]
         self.moving_bool_dict = {}
+        self.old_full_array, self.scan_array, self.old_array = ([] for i in range(3))
         self.cent_props = ('', '', 0, 0, 0, 0, 0, [], True)
 
     """ MOTOR """
@@ -259,7 +273,7 @@ class Core(object):
         self.SpecScan_sess.scanning = SpecScan.isScanning(self.SpecScan_sess)
         if self.SpecScan_sess.scanning:
             button.setText('Stop')
-            self.update_scan_CB(self.x_data_CB, self.y_data_CB)
+            self.update_CB(self.x_scan_data_CB, self.y_scan_data_CB, 'scan')
         else:
             button.setText('Start')
             self.backup_scan()
@@ -356,27 +370,13 @@ class Core(object):
         #print "Scanning Thread is sleeping for " + repr(sleep_time)
         time.sleep(sleep_time)
 
-    def update_scan_CB(self, x_data_CB, y_data_CB):
-        self.x_data_CB = x_data_CB
-        self.y_data_CB = y_data_CB
-        self.scanner_names = self.get_var('SCAN_COLS')
-        i=0
-        (x_index, y_index) = x_data_CB.currentIndex(), y_data_CB.currentIndex()
-        x_data_CB.clear()
-        y_data_CB.clear()
-        for i in range(len(self.scanner_names)):
-            x_data_CB.addItem(self.scanner_names[str(i)])
-            y_data_CB.addItem(self.scanner_names[str(i)])
-        #print scanner_names
-        x_data_CB.setCurrentIndex(x_index)
-        y_data_CB.setCurrentIndex(y_index)
-
-    def get_data(self, x_index, y_index):
-        data = self.monitor.get_value(VAR.SCAN_ARRAY)
-        if data is None:
+    def get_data(self, x_index, y_index, array='scan_array'):
+        if array == 'scan_array':  # if we have not provided an array
+            array = self.monitor.get_value(VAR.SCAN_ARRAY)
+        if array is None or not array:
             return False, [], []
         else:
-            (x,y) = [point[x_index] for point in data], [point[y_index] for point in data]
+            (x, y) = [point[x_index] for point in array], [point[y_index] for point in array]
             return True, x, y
 
     def scan_calculations(self, x, y):
@@ -433,8 +433,11 @@ class Core(object):
                     print "Backup csv has been created in " + repr(csvfile)
 
     """ CENTER """
-    def cent_settings(self, scan_motor_name, angle_motor_name, relmax_SB, relmin_SB, center_SB, angle_pm_SB, angle_o_SB, Motors, wait_time_SB):
+    def cent_settings(self, scan_motor_name, angle_motor_name, relmax_SB, relmin_SB, center_SB, angle_pm_SB, angle_o_SB, Motors, wait_time_SB, center_calc_CB):
         self.wait_time_SB = wait_time_SB
+        center_calc_CB.setMaxCount(2)    # At init we have to do some limit setting/setting up of UI elements
+        center_calc_CB.addItem('Max Y')  # we do it here because they are mostly calcs which rely on the motors chosen
+        center_calc_CB.addItem('COM')    # This combo box is not one of those though
         for i in range(len(Motors)):
             Motor_inst = Motors[i]
             if Motor_inst.Enabled:
@@ -449,23 +452,58 @@ class Core(object):
                     angle_pm_SB.setRange(-1 * full_range/2, full_range/2)
 
     def is_centering(self, start_stop_PB):
-        self.start_stop_PB = start_stop_PB
-        return False
+        if start_stop_PB == None:
+            try:
+                start_stop_PB = self.start_stop_PB
+            except UnboundLocalError:
+                pass
+        else:
+            self.start_stop_PB = start_stop_PB
+            # This property is checked, so functions here will work
+        if self.centering:
+            start_stop_PB.setText('Stop')
+            self.update_CB(self.x_cent_data_CB, self.y_cent_data_CB, 'cent')
+        else:
+            start_stop_PB.setText('Start')
+        return self.cent_event._Event__flag
 
     def cent_stop(self):
-        pass
+        self.cent_event.clear()
+        self._teminate_cent = True
+        if self.is_scanning():
+            self.scan_stop()
 
     def cent_start(self, scan_motor_name, angle_motor_name, relmax, relmin, center, angle_pm, angle_o, steps, waittime, Motors):
+        self.angle_pm=angle_pm
         if self.is_centering(self.start_stop_PB):
             self.cent_stop()
         self.cent_props = (scan_motor_name, angle_motor_name, center + relmin, center + relmax,
                             angle_o - angle_pm, angle_o, angle_o + angle_pm, steps, waittime, Motors, False)
+        self._teminate_cent = False
         self.cent_event.set()
+
+    def cent_command_buff(self, wait_condit, command, commandargs, message, command2=None, command2args=None, waitsleep=1, finalsleep=3):
+        while wait_condit():
+            time.sleep(waitsleep)
+        command(*commandargs)
+        if not command2 == None:
+            command2(*command2args)
+        self.set_status(message)
+        time.sleep(finalsleep)
+
+    def set_array(self,name,dummy):
+        if name == 'neg':
+            self.w_neg_array =self.scan_array
+        elif name == 'nau':
+            self.w_naught_array = self.scan_array
+        elif name == 'pos':
+            self.w_pos_array = self.scan_array
 
     def handle_cent(self):
         while True:
             if self._terminate_flag:break
             self.cent_event.wait()
+            self.w_neg_array, self.w_naught_array, self.w_pos_array = ([] for i in range(3))
             (scan_motor_name, angle_motor_name, cent_scan_start, cent_scan_stop,
              cent_angle_m, cent_angle_o, cent_angle_p, steps, waittime, Motors, terminate) = self.cent_props
             for i in range(len(Motors)):
@@ -475,46 +513,113 @@ class Core(object):
                 elif angle_motor_name == motor_inst.Name:
                     angle_motor = motor_inst
             if not terminate:
-                while self.is_moving():
-                    time.sleep(1)  # waiting until the move is over to begin our move
-                self.set_status("CENTERING: MOVING TO W-")
-                self.move_motor(angle_motor, cent_angle_m, "Absolute")
-                self.move_motor(scan_motor, cent_scan_start, "Absolute")
-                time.sleep(3)
-                while self.is_moving():
-                    time.sleep(1)  # waiting until the move is over to begin our scan
-                self.scan_start(False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors)
-                time.sleep(5)
-                while self.is_scanning():
-                    time.sleep(1)  # waiting until the scan is over
-                w_neg_array = self.scan_array
-                self.set_status("CENTERING: MOVING TO Wo")
-                self.move_motor(angle_motor, cent_angle_o, "Absolute")
-                self.move_motor(scan_motor, cent_scan_start, "Absolute")
-                time.sleep(3)
-                while self.is_moving():
-                    time.sleep(1)  # waiting until the move is over to begin our scan
-                self.scan_start(False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors)
-                time.sleep(3)
-                while self.is_scanning():
-                    time.sleep(1)  # waiting until the scan is over
-                w_naught_array = self.scan_array
-                self.set_status("CENTERING: MOVING TO W+")
-                self.move_motor(angle_motor, cent_angle_p, "Absolute")
-                self.move_motor(scan_motor, cent_scan_start, "Absolute")
-                time.sleep(3)
-                while self.is_moving():
-                    time.sleep(1)  # waiting until the move is over to begin our scan
-                self.scan_start(False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors)
-                time.sleep(5)
-                while self.is_scanning():
-                    time.sleep(1)  # waiting until the scan is over
-                w_pos_array = self.scan_array
-                break
+                # Each of these blocks are nearly identical, they just tell the motor to go to a position and then scan
+                self.cent_command_buff(self.is_moving, self.move_motor, (angle_motor, cent_angle_m, "Absolute"),
+                                       "CENTERING: MOVING TO W-", command2=self.move_motor,
+                                       command2args=(scan_motor, cent_scan_start, "Absolute"))
+                if self._terminate_flag: break
+                if self._teminate_cent: continue
+                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W-", finalsleep=5)
+                if self._terminate_flag: break
+                if self._teminate_cent: continue
+                self.cent_command_buff(self.is_scanning, self.set_array, ('neg', False), "W- Scan Successful")
+                if self._terminate_flag: break
+                if self._teminate_cent: continue
 
+                self.cent_command_buff(self.is_moving, self.move_motor, (angle_motor, cent_angle_o, "Absolute"),
+                                       "CENTERING: MOVING TO Wo", command2=self.move_motor,
+                                       command2args=(scan_motor, cent_scan_start, "Absolute"))
+                if self._terminate_flag: break
+                if self._teminate_cent: continue
+                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: Wo", finalsleep=5)
+                if self._terminate_flag: break
+                if self._teminate_cent: continue
+                self.cent_command_buff(self.is_scanning, self.set_array, ('nau',False), "Wo Scan Successful")
+                if self._terminate_flag: break
+                if self._teminate_cent: continue
+
+                self.cent_command_buff(self.is_moving, self.move_motor, (angle_motor, cent_angle_p, "Absolute"),
+                                       "CENTERING: MOVING TO W+", command2=self.move_motor,
+                                       command2args=(scan_motor, cent_scan_start, "Absolute"))
+                if self._terminate_flag: break
+                if self._teminate_cent: continue
+                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W+",finalsleep=5)
+                if self._terminate_flag: break
+                if self._teminate_cent: continue
+                self.cent_command_buff(self.is_scanning, self.set_array, ('pos', False), "W+ Scan Successful")
+                if self._terminate_flag: break
+                if self._teminate_cent: continue
+
+                self.cent_event.clear()
             time.sleep(1)
-
+            
+    def cent_plotting(self, plot, table, x_CB, y_CB, calc_CB):
+        full_array, go_bool_array, x_arr, y_arr = ([] for i in range(4))
+        real_name_arr = [x_CB.currentText()]
+        def data_add(x_i, y_i, arr = 'scan_array'):  # we want to grab the current scan's array if none is provided
+            go, x , y = self.get_data(x_i, y_i, arr)  # just grabbing x column and y column appropriate to what is defined in the combobox
+            if go:
+                full_array.append([x, y])
+            go_bool_array.append(go)
+        for arr in [self.w_neg_array, self.w_naught_array, self.w_pos_array, 'scan_array']:
+            data_add(x_CB.currentIndex(), y_CB.currentIndex(), arr) # we're just grabbing all the same columns
+        if any(go_bool_array) or not self.old_full_array == full_array:  # Should we regraph?
+            length = len(full_array)
+            if length == 4: length = 3 #Four columns means we have dup data, therefore cent scan = over
+            namearr = ['w neg', 'w naught', 'w pos']  #defining names and vars for the diff data sets
+            max_array = [VAR.CENT_NEG_MAXY, VAR.CENT_NAU_MAXY, VAR.CENT_POS_MAXY]
+            com_array = [VAR.CENT_NEG_COM, VAR.CENT_NAU_COM, VAR.CENT_POS_COM]
+            for i in range(length):
+                (x, y) = full_array[i][0], full_array[i][1]
+                x_arr.append(x) # grab the appropriate data if it exists and then do calc on them
+                y_arr.append(y)
+                calc = Calculation(x, y) # initializing the calculation class with each data set
+                real_name_arr.append(namearr[i])
+                self.monitor.update(max_array[i], calc.x_at_y_max())
+                self.monitor.update(com_array[i], calc.COM())
+                if i==2: # if we have enough data to calculate the center x,y we do it
+                    if str(calc_CB.currentText()) == 'Max Y':
+                        pos = self.monitor.get_value(VAR.CENT_POS_MAXY)
+                        neg = self.monitor.get_value(VAR.CENT_NEG_MAXY)
+                    elif str(calc_CB.currentText()) == 'COM':
+                        pos = self.monitor.get_value(VAR.CENT_POS_COM)
+                        neg = self.monitor.get_value(VAR.CENT_NEG_COM)  # these are center x/y calcs \/ J Synchrotron Rad 2009 16 83-96 sect eqn 7 + 8 -- http://journals.iucr.org/s/issues/2009/01/00/ie5024/ie5024.pdf
+                    self.monitor.update(VAR.CENT_CENTERED_X, (pos + neg)/(2*(1-np.cos(np.degrees(self.angle_pm)))))
+                    self.monitor.update(VAR.CENT_CENTERED_Y, (pos - neg) / (2 * (np.sin(np.degrees(self.angle_pm)))))
+            plot.multi_plot(x_arr, y_arr)
+            table.setHorizontalHeaderLabels(real_name_arr)
+            table.setColumnCount(length + 1)  # All of the y's plus one x
+            table.setRowCount(len(x_arr[0]))
+            for row in range(len(x_arr[0])):  # Just assigning table variables with their format
+                table.setItem(row, 0, tableItem(str2q("%1").arg(x_arr[0][row])))
+            for i in range(length):
+                for row in range(len(x_arr[0])):
+                    try:
+                        table.setItem(row, i + 1, tableItem(str2q("%1").arg(y_arr[i][row])))
+                    except IndexError: # If it's outside of range this means no entry, hence blank
+                        table.setItem(row, i + 1, tableItem(str2q("%1").arg('')))
+            self.old_full_array = full_array
+        
     """ RANDOM UTILITIES """
+    def update_CB(self, x_data_CB, y_data_CB, type):
+        if type == 'scan':
+            self.x_scan_data_CB = x_data_CB
+            self.y_scan_data_CB = y_data_CB
+        elif type == 'cent':
+            self.x_cent_data_CB = x_data_CB
+            self.y_cent_data_CB = y_data_CB
+        self.scanner_names = self.get_var('SCAN_COLS')
+        i=0
+        (x_index, y_index) = x_data_CB.currentIndex(), y_data_CB.currentIndex()
+        x_data_CB.clear()
+        y_data_CB.clear()
+        for i in range(len(self.scanner_names)):
+            x_data_CB.addItem(self.scanner_names[str(i)])
+            y_data_CB.addItem(self.scanner_names[str(i)])
+        #print scanner_names
+        x_data_CB.setCurrentIndex(x_index)
+        y_data_CB.setCurrentIndex(y_index)
+
     def get_var(self, var_name):
         """Return variable"""
         if self.Spec_sess.connection is not None:
@@ -583,6 +688,10 @@ class Calculation:
     def y_max(self):
         (y_max, unused) = self.y_max_full()
         return y_max
+
+    def x_at_y_max(self):
+        (unused, x_at_y_max) = self.y_max_full()
+        return x_at_y_max
 
     def y_max_string(self):
         (y_max, x_val) = self.y_max_full()

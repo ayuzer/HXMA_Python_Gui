@@ -110,3 +110,79 @@ class ScanMixin(object):
         scan_settings = self.settings.get(key, {})
         scan_settings[SCAN_KEY.SCAN] = scan_dict
         self.settings[key] = scan_settings
+
+
+class CENT_KEY(object):
+    CENT = '__cent_props__'
+    SAVEDIR = 'save_dir'
+    SAVENAME = 'save_name'
+    X_INDEX = 'x_index'
+    Y_INDEX = 'y_index'
+    OMEGA_DEL = 'omega_del'
+    OMEGA_NAU = 'omega_nau'
+    RELMAX = 'relmax'
+    RELMIN = 'relmin'
+    CENTER = 'center'
+    STEPS = 'steps'
+    WAITTIME = 'wait_time'
+    SCANMOTOR = 'scan_motor'
+    ANGLEMOTOR = 'angle_motor'
+
+
+class CentMixin(object):
+    """
+    This is a mixin which will allow saving and loading of scanning props from the main window to a .json file
+    """
+
+    def set_cent_props(self):
+        key = self.__class__.__name__
+
+        try:
+            cent_settings = self.settings.get(key)
+            cent_dict = cent_settings.get(CENT_KEY.CENT)
+
+            print "SETTING SCAN PROPERTY %s TO %s" % (key, cent_dict)
+
+            self.doubleSpinBox_cent_relmax.setValue(cent_dict[CENT_KEY.RELMAX])
+            self.doubleSpinBox_cent_relmin.setValue(cent_dict[CENT_KEY.RELMIN])
+            self.doubleSpinBox_cent_center.setValue(cent_dict[CENT_KEY.CENTER])
+            self.doubleSpinBox_cent_angle_pm.setValue(cent_dict[CENT_KEY.OMEGA_DEL])
+            self.doubleSpinBox_cent_angle_o.setValue(cent_dict[CENT_KEY.OMEGA_NAU])
+            self.doubleSpinBox_cent_steps.setValue(cent_dict[CENT_KEY.STEPS])
+            self.doubleSpinBox_cent_waittime.setValue(cent_dict[CENT_KEY.WAITTIME])
+            self.comboBox_cent_data_x.setCurrentIndex(cent_dict[CENT_KEY.X_INDEX])
+            self.comboBox_cent_data_y.setCurrentIndex(cent_dict[CENT_KEY.Y_INDEX])
+            self.lineEdit_cent_select_file.setText(cent_dict[CENT_KEY.SAVEDIR])
+            self.lineEdit_cent_filename.setText(cent_dict[CENT_KEY.SAVENAME])
+            self.comboBox_cent_motor_scan.setCurrentIndex(cent_dict[CENT_KEY.SCANMOTOR])
+            self.comboBox_cent_motor_angle.setCurrentIndex(cent_dict[CENT_KEY.ANGLEMOTOR])
+
+            return True
+        except:
+            return False
+
+    def save_cent_props(self):
+
+        key = self.__class__.__name__
+
+        cent_dict = {
+            CENT_KEY.RELMAX: self.doubleSpinBox_cent_relmax.value(),
+            CENT_KEY.RELMIN: self.doubleSpinBox_cent_relmin.value(),
+            CENT_KEY.CENTER: self.doubleSpinBox_cent_center.value(),
+            CENT_KEY.OMEGA_DEL: self.doubleSpinBox_cent_angle_pm.value(),
+            CENT_KEY.OMEGA_NAU: self.doubleSpinBox_cent_angle_o.value(),
+            CENT_KEY.STEPS: self.doubleSpinBox_cent_steps.value(),
+            CENT_KEY.WAITTIME: self.doubleSpinBox_cent_waittime.value(),
+            CENT_KEY.X_INDEX: self.comboBox_cent_data_x.currentIndex(),
+            CENT_KEY.Y_INDEX: self.comboBox_cent_data_y.currentIndex(),
+            CENT_KEY.SAVEDIR: str(self.lineEdit_cent_select_file.text()),
+            CENT_KEY.SAVENAME: str(self.lineEdit_cent_filename.text()),
+            CENT_KEY.SCANMOTOR: self.comboBox_cent_motor_scan.currentIndex(),
+            CENT_KEY.ANGLEMOTOR: self.comboBox_cent_motor_angle.currentIndex(),
+        }
+
+        print "SETTING CENT PROPERTY %s TO %s" % (key, cent_dict)
+
+        cent_settings = self.settings.get(key, {})
+        cent_settings[CENT_KEY.CENT] = cent_dict
+        self.settings[key] = cent_settings

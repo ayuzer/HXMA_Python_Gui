@@ -42,6 +42,8 @@ from windows.css import CSS_LABEL_PV_LOST
 from windows.pv_list_window import PvListWindow
 from windows.drag_text_mixin import DragTextMixin
 
+from windows.minor_windows import LoadPositions as LoadPositionsWindow
+
 from collections import namedtuple
 
 #from scene import MyScene
@@ -288,9 +290,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         # INIT RUN
         self.handle_comboBox_cent_motor()
         self.update_cent_cols()
+        self.set_cent_props()  # updating variables from the saved file (last session)
         self.core.update_filepath(str(self.lineEdit_cent_select_file.text()), 'cent')
         self.core.is_centering(self.pushButton_cent_start_stop)
-        self.set_cent_props() # updating variables from the saved file (last session)
+
         # Plot
         self.cent_plot_id = Plotter()
         self.verticalLayout_cent_graph.addWidget(self.cent_plot_id)
@@ -309,6 +312,14 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.old_scan_x, self.old_scan_y = ([] for i in range(2))
 
     """MOTOR"""
+
+    def handle_action_save_load(self):
+        window = LoadPositionsWindow(
+            monitor=self.monitor
+                    )
+        self.child_windows.append(window)
+        window.show()
+
     @decorator_busy_cursor
     def handle_pushButton_motor_movego(self, motor, dummy):  # Will pass the ref to relevant motor
         if self.core.is_moving(motor.Name):
@@ -511,7 +522,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                 self.comboBox_cent_data_x, self.comboBox_cent_data_y, self.comboBox_cent_calc_choose)
 
     def handle_save_cent(self):
-        pass
+        self.core.save_cent_curr(str(self.lineEdit_cent_filename.text()),
+                                 self.comboBox_cent_data_x,
+                                 self.comboBox_cent_data_y,
+                                 )
 
     def handle_comboBox_cent_data(self):
         pass

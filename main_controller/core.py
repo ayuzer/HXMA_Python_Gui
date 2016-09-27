@@ -121,7 +121,7 @@ class Core(object):
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
         self.moving_bool_dict = {}
-        self.old_full_array, self.scan_array, self.old_array = ([] for i in range(3))
+        self.old_full_array, self.scan_array, self.old_array, self.old_x, self.old_y = ([] for i in range(5))
         self.cent_props = ('', '', 0, 0, 0, 0, 0, [], True)
 
     """ MOTOR """
@@ -552,27 +552,33 @@ class Core(object):
 
                 self.cent_event.clear()
             time.sleep(1)
-            
-    def cent_plotting(self, plot, table, x_CB, y_CB, calc_CB):
-        full_array, go_bool_array, x_arr, y_arr = ([] for i in range(4))
-        real_name_arr = [x_CB.currentText()]
-        def data_add(x_i, y_i, arr = 'scan_array'):  # we want to grab the current scan's array if none is provided
-            go, x , y = self.get_data(x_i, y_i, arr)  # just grabbing x column and y column appropriate to what is defined in the combobox
+
+    def cent_grab_data(self, x_CB, y_CB):
+        full_array, go_bool_array,  x_arr, y_arr= ([] for i in range(4))
+        def data_add(x_i, y_i, arr='scan_array'):  # grab the current scan's array if none is provided
+            go, x, y = self.get_data(x_i, y_i, arr)  # grabbing x column and y column appropriate to what is defined in the combobox
             if go:
                 full_array.append([x, y])
             go_bool_array.append(go)
         for arr in [self.w_neg_array, self.w_naught_array, self.w_pos_array, 'scan_array']:
-            data_add(x_CB.currentIndex(), y_CB.currentIndex(), arr) # we're just grabbing all the same columns
-        if any(go_bool_array) or not self.old_full_array == full_array:  # Should we regraph?
-            length = len(full_array)
-            if length == 4: length = 3 #Four columns means we have dup data, therefore cent scan = over
+            data_add(x_CB.currentIndex(), y_CB.currentIndex(), arr)  # we're just grabbing all the same columns
+        length = len(full_array)
+        if length == 4: length = 3  # Four columns means we have dup data, therefore cent scan = over
+        for i in range(length):
+            (x, y) = full_array[i][0], full_array[i][1]
+            x_arr.append(x)  # grab the appropriate data if it exists
+            y_arr.append(y)
+        return any(go_bool_array), x_arr, y_arr, length
+
+    def cent_plotting(self, plot, table, x_CB, y_CB, calc_CB):
+        real_name_arr = [x_CB.currentText()]
+        (go, x_arr, y_arr, length) = self.cent_grab_data(x_CB, y_CB)
+        if go or not self.old_x == x_arr or not self.old_y == y_arr:  # Should we regraph?
             namearr = ['w neg', 'w naught', 'w pos']  #defining names and vars for the diff data sets
             max_array = [VAR.CENT_NEG_MAXY, VAR.CENT_NAU_MAXY, VAR.CENT_POS_MAXY]
             com_array = [VAR.CENT_NEG_COM, VAR.CENT_NAU_COM, VAR.CENT_POS_COM]
             for i in range(length):
-                (x, y) = full_array[i][0], full_array[i][1]
-                x_arr.append(x) # grab the appropriate data if it exists and then do calc on them
-                y_arr.append(y)
+                (x, y) = x_arr[i], y_arr[i]
                 calc = Calculation(x, y) # initializing the calculation class with each data set
                 real_name_arr.append(namearr[i])
                 self.monitor.update(max_array[i], calc.x_at_y_max())
@@ -598,7 +604,45 @@ class Core(object):
                         table.setItem(row, i + 1, tableItem(str2q("%1").arg(y_arr[i][row])))
                     except IndexError: # If it's outside of range this means no entry, hence blank
                         table.setItem(row, i + 1, tableItem(str2q("%1").arg('')))
-            self.old_full_array = full_array
+            (self.old_x, self.old_y) = x_arr, y_arr
+
+    def save_cent_curr(self, filename, x_CB, y_CB):
+        filedir = self.cent_dir
+        real_name_arr = [x_CB.currentText()]
+        namearr = ['w neg', 'w naught', 'w pos', 'omega '+repr(self.angle_pm)]
+        (go, x_arr, y_arr, length) = self.cent_grab_data(x_CB, y_CB)
+        if go:
+            curr_time = time.strftime("%b_%d_%Y_%H-%M-%S")  # getting time also so we wont have name conflicts
+            with open(filedir+'/'+filename+'_'+curr_time+".csv", 'wb') as csvfile:
+                writer = csv.writer(csvfile)
+                for i in range(length):
+                    real_name_arr.append(namearr[i])
+                real_name_arr.append(namearr[-1])
+                writer.writerow(real_name_arr)
+                for i in range(len(x_arr[0])):
+                    row = [x_arr[0][i]]
+                    for j in range(length):
+                        try:
+                            row.append(y_arr[j][i])
+                        except IndexError:  # No data to be shown
+                            row.append('')
+                    writer.writerow(row)
+                if length==3:
+                    writer.writerow(['w- Max Y', 'wo Max Y', 'w+ Max Y', 'Max Y Center X', 'Max Y Center Y'])
+                    pos = self.monitor.get_value(VAR.CENT_POS_MAXY)
+                    neg = self.monitor.get_value(VAR.CENT_NEG_MAXY)
+                    writer.writerow([neg, self.monitor.get_value(VAR.CENT_NAU_MAXY), pos,
+                                     (pos + neg) / (2 * (1 - np.cos(np.degrees(self.angle_pm)))),
+                                     (pos - neg) / (2 * (np.sin(np.degrees(self.angle_pm))))
+                                     ])
+                    writer.writerow(['w- COM', 'wo COM', 'w+ COM', 'COM Center X', 'COM Center Y'])
+                    pos = self.monitor.get_value(VAR.CENT_POS_COM)
+                    neg = self.monitor.get_value(VAR.CENT_NEG_COM)
+                    writer.writerow([neg, self.monitor.get_value(VAR.CENT_NAU_COM), pos,
+                                     (pos + neg) / (2 * (1 - np.cos(np.degrees(self.angle_pm)))),
+                                     (pos - neg) / (2 * (np.sin(np.degrees(self.angle_pm)))),
+                                     ])
+            print "Successfully saved " + filename + '_' + curr_time + ".csv" + " In : " + filedir
         
     """ RANDOM UTILITIES """
     def update_CB(self, x_data_CB, y_data_CB, type):

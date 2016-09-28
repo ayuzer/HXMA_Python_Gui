@@ -34,7 +34,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="tab_move">
            <attribute name="title">
@@ -1679,7 +1679,11 @@ Subtraction (Linear) -NC</string>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_cent_display">
               <item>
-               <layout class="QVBoxLayout" name="verticalLayout_cent_graph"/>
+               <layout class="QVBoxLayout" name="verticalLayout_cent_graph">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetNoConstraint</enum>
+                </property>
+               </layout>
               </item>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -2019,6 +2023,26 @@ Based On</string>
               </item>
               <item>
                <spacer name="horizontalSpacer_27">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_cent_single">
+                <property name="text">
+                 <string>Single Graph</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_28">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>

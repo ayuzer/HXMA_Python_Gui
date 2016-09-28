@@ -287,22 +287,20 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.comboBox_cent_motor_angle.currentIndexChanged.connect(self.handle_comboBox_cent_motor)
         self.comboBox_cent_data_x.activated.connect(self.handle_comboBox_cent_data)
         self.comboBox_cent_data_y.activated.connect(self.handle_comboBox_cent_data)
+        
+        self.checkBox_cent_single.stateChanged.connect(partial(self.cent_graph, self.checkBox_cent_single))
+        #Variables
+        (self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3) = Plotter(), Plotter(), Plotter()
+        self.plots = [self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3]
+        self.cent_plot_id = Plotter()
+        self.cent_timer = QtCore.QTimer()
         # INIT RUN
+        self.init_cent_graph(self.checkBox_cent_single.isChecked())
         self.handle_comboBox_cent_motor()
         self.update_cent_cols()
         self.set_cent_props()  # updating variables from the saved file (last session)
         self.core.update_filepath(str(self.lineEdit_cent_select_file.text()), 'cent')
         self.core.is_centering(self.pushButton_cent_start_stop)
-
-        # Plot
-        self.cent_plot_id = Plotter()
-        self.verticalLayout_cent_graph.addWidget(self.cent_plot_id)
-        self.cent_plot_id.set_title(PLOT_TITLE)
-        self.cent_plot_id.set_axis_label_x(PLOT_LABEL_X)
-        self.cent_plot_id.set_axis_label_y(PLOT_LABEL_Y)
-        # self.cent_plot_id.set_mouse_position_callback(self.callback_mouse_pos_id)
-        self.cent_plot_id.set_legend()
-        self.cent_plot_id.timer = QtCore.QTimer()
 
         """PICTURE"""
         pic = QtGui.QLabel(self.label_motor_picture)
@@ -311,15 +309,13 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         pic.show()
         self.old_scan_x, self.old_scan_y = ([] for i in range(2))
 
-    """MOTOR"""
-
     def handle_action_save_load(self):
-        window = LoadPositionsWindow(
-            monitor=self.monitor
-                    )
+        LoadPositionsWindow.__init__(self.Motors, self.monitor)
+        window = LoadPositionsWindow()
         self.child_windows.append(window)
         window.show()
 
+    """MOTOR"""
     @decorator_busy_cursor
     def handle_pushButton_motor_movego(self, motor, dummy):  # Will pass the ref to relevant motor
         if self.core.is_moving(motor.Name):
@@ -513,13 +509,18 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                  self.doubleSpinBox_cent_waittime.value(),
                                  self.Motors,
                                  )
-            self.cent_plot_id.timer.start(250.0)
-            self.connect(self.cent_plot_id.timer,  QtCore.SIGNAL('timeout()'), self.cent_plot)
+            self.cent_timer.start(250.0)
+            self.connect(self.cent_timer,  QtCore.SIGNAL('timeout()'), self.cent_plot)
 
     def cent_plot(self):
         self.scan_plot()  # makes it so that the plot also displays on the scan tab
-        self.core.cent_plotting(self.cent_plot_id, self.tableWidget_cent_data,
-                                self.comboBox_cent_data_x, self.comboBox_cent_data_y, self.comboBox_cent_calc_choose)
+        if self.checkBox_cent_single.isChecked():
+            plot = self.cent_plot_id
+        else:
+            plot = self.plots
+        self.core.cent_plotting(plot, self.tableWidget_cent_data,
+                                self.comboBox_cent_data_x, self.comboBox_cent_data_y, 
+                                self.comboBox_cent_calc_choose, self.checkBox_cent_single.isChecked())
 
     def handle_save_cent(self):
         self.core.save_cent_curr(str(self.lineEdit_cent_filename.text()),
@@ -532,6 +533,46 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
     def update_cent_cols(self):
         self.core.update_CB(self.comboBox_cent_data_x, self.comboBox_cent_data_y, 'cent')
+
+    def init_cent_graph(self, single):
+        self.verticalLayout_cent_graph.addWidget(self.cent_plot_id)
+        self.cent_plot_id.set_title(PLOT_TITLE)
+        self.cent_plot_id.set_axis_label_x(PLOT_LABEL_X)
+        self.cent_plot_id.set_axis_label_y(PLOT_LABEL_Y)
+        self.cent_plot_id.set_legend()
+        self.cent_plot_id.setSizePolicy(Qt.QSizePolicy.Ignored, Qt.QSizePolicy.Ignored)
+        i = 0
+        name = ['', 'w-', 'wo', 'w+']
+        for plot in self.plots:
+            self.verticalLayout_cent_graph.addWidget(plot)
+            plot.setSizePolicy(Qt.QSizePolicy.Ignored, Qt.QSizePolicy.Ignored)
+            if i == 0:
+                i = 1
+                plot.set_title(PLOT_TITLE)
+            elif i == 1:
+                i = 2
+            elif i == 2:
+                plot.set_axis_label_x(PLOT_LABEL_X)
+            plot.set_axis_label_y(PLOT_LABEL_Y + ' ' + name[i])
+        if single:
+            for plots in self.plots:
+                plots.hide()
+            self.cent_plot_id.show()
+        else:
+            for plot in self.plots:
+                plot.show()
+            self.cent_plot_id.hide()
+
+    def cent_graph(self, Check):
+        single = Check.isChecked()
+        if single:
+            for plot in self.plots:
+                plot.hide()
+            self.cent_plot_id.show()
+        else:
+            for plot in self.plots:
+                plot.show()
+            self.cent_plot_id.hide()
 
     """RANDOM"""
     def select_file(self, line_edit):

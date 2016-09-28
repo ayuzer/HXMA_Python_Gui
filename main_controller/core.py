@@ -581,7 +581,7 @@ class Core(object):
             length = length-1
         return any(go_bool_array), x_arr, y_arr, length
 
-    def cent_plotting(self, plot, table, x_CB, y_CB, calc_CB):
+    def cent_plotting(self, plot, table, x_CB, y_CB, calc_CB, single):
         real_name_arr = [x_CB.currentText()]
         (go, x_arr, y_arr, length) = self.cent_grab_data(x_CB, y_CB)
         if go or not self.old_x == x_arr or not self.old_y == y_arr:  # Should we regraph?
@@ -610,7 +610,14 @@ class Core(object):
                     self.monitor.update(com_array[i], None)
                 self.monitor.update(VAR.CENT_CENTERED_X, None)
                 self.monitor.update(VAR.CENT_CENTERED_Y, None)
-            plot.multi_plot(x_arr, y_arr)
+            if single:
+                plot.multi_plot(x_arr, y_arr)
+            else:
+                for i in range(len(plot)):
+                    try:
+                        plot[i].new_plot(x_arr[i], y_arr[i], name = i+1)
+                    except IndexError:
+                        pass
             table.setHorizontalHeaderLabels(real_name_arr)
             table.setColumnCount(length + 1)  # All of the y's plus one x
             table.setRowCount(len(x_arr[0]))

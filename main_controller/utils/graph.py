@@ -12,12 +12,12 @@ class Plotter(Qwt.QwtPlot):
 
         self.setCanvasBackground(Qt.Qt.white)
 
-        # Set the title
-        title = Qwt.QwtText("Title")
-        titleFont = QtGui.QFont('SansSerif', 10)
-        titleFont.setWeight(QtGui.QFont.Light)
-        title.setFont(titleFont)
-        self.setTitle(title)
+        # # Set the title
+        # title = Qwt.QwtText("Title")
+        # titleFont = QtGui.QFont('SansSerif', 10)
+        # titleFont.setWeight(QtGui.QFont.Light)
+        # title.setFont(titleFont)
+        # self.setTitle(title)
 
         self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
 
@@ -48,18 +48,25 @@ class Plotter(Qwt.QwtPlot):
         mY.setYValue(0.0)
         mY.attach(self)
 
-        # Set the title
-        xAxisLabel = Qwt.QwtText("X Value")
-        xAxisLabel.setFont(titleFont)
+        # # Set the title
+        # xAxisLabel = Qwt.QwtText("X Value")
+        # xAxisLabel.setFont(titleFont)
+        #
+        # yAxisLabel = Qwt.QwtText("Y Value")
+        # yAxisLabel.setFont(titleFont)
+        #
+        # self.setAxisTitle(Qwt.QwtPlot.xBottom, xAxisLabel)
+        # self.setAxisTitle(Qwt.QwtPlot.yLeft, yAxisLabel)
 
-        yAxisLabel = Qwt.QwtText("Y Value")
-        yAxisLabel.setFont(titleFont)
-
-        self.setAxisTitle(Qwt.QwtPlot.xBottom, xAxisLabel)
-        self.setAxisTitle(Qwt.QwtPlot.yLeft, yAxisLabel)
-
-    def new_plot(self, x, y):
-        self.curve.setData(x, y)
+    def new_plot(self, x, y, name = None):
+        if name == None:
+            self.curve.setData(x, y)
+        elif name == 1:
+            self.curve1.setData(x, y)
+        elif name == 2:
+            self.curve2.setData(x, y)
+        elif name == 3:
+            self.curve3.setData(x, y)
         self.replot()
 
     def multi_plot(self, x_arr, y_arr):

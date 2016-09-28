@@ -140,25 +140,25 @@ class SpecScanA:
 
 
     def __connected(self):
-       # self.connection.registerChannel('status/ready', self.__statusReady,
-       #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       # self.connection.registerChannel('var/_SC_NEWSCAN', self.__newScan,
-       #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       # self.connection.registerChannel('var/_SC_NEWPLOTDATA',
-       #                              self.__newScanPoint,
-       #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       # self.connection.registerChannel('var/_SC_NEWSCANDATA',
-       #                              self.__newScanData,
-       #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       self.connection.registerChannel('var/SCAN_STATUS', self.__statusChange,
+        # self.connection.registerChannel('status/ready', self.__statusReady,
+        #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
+        # self.connection.registerChannel('var/_SC_NEWSCAN', self.__newScan,
+        #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
+        # self.connection.registerChannel('var/_SC_NEWPLOTDATA',
+        #                              self.__newScanPoint,
+        #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
+        # self.connection.registerChannel('var/_SC_NEWSCANDATA',
+        #                              self.__newScanData,
+        #                              dispatchMode=SpecEventsDispatcher.FIREEVENT)
+        self.connection.registerChannel('var/SCAN_STATUS', self.__statusChange,
                                        dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       self.connection.registerChannel('var/SCAN_PT', self.__newPT,
+        self.connection.registerChannel('var/SCAN_PT', self.__newPT,
                                        dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       # self.connection.registerChannel('var/SCAN_PLOTCONFIG', self.__plotconfigChange,
-       #                                 dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       self.connection.registerChannel('var/SCAN_META', self.__scanmetaChange,
-                                       dispatchMode=SpecEventsDispatcher.FIREEVENT)
-       self.connected()
+        # self.connection.registerChannel('var/SCAN_PLOTCONFIG', self.__plotconfigChange,
+        #                                 dispatchMode=SpecEventsDispatcher.FIREEVENT)
+        # self.connection.registerChannel('var/SCAN_META', self.__scanmetaChange,
+        #                                 dispatchMode=SpecEventsDispatcher.FIREEVENT)
+        self.connected()
 
     def __plotconfigChange(self, plotconfig):
         print "PLOT CONFIG " + repr(plotconfig)

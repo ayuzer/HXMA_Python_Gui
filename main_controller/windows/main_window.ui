@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>897</width>
-    <height>858</height>
+    <height>618</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>3</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab_move">
            <attribute name="title">
@@ -640,6 +640,17 @@
                <widget class="QLabel" name="label_motor_picture">
                 <property name="text">
                  <string>PIC</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <item>
+               <widget class="QPushButton" name="pushButton_open_pos_load">
+                <property name="text">
+                 <string>Open Sample Loading Popout</string>
                 </property>
                </widget>
               </item>

@@ -112,7 +112,6 @@ class Core(object):
         self._cent_timer.start()
         self.cent_event = threading.Event()
         self.cent_event.clear()
-        self.centering = False
         
         self.Spec_sess = Spec()
         self.SpecMotor_sess = SpecMotor()
@@ -123,6 +122,7 @@ class Core(object):
         self.moving_bool_dict = {}
         self.old_full_array, self.scan_array, self.old_array, self.old_x, self.old_y = ([] for i in range(5))
         self.cent_props = ('', '', 0, 0, 0, 0, 0, [], True)
+        self.CB_lock = threading.Lock()
 
     """ MOTOR """
     def move_motor(self, motor, moveto=None, movetype=None):
@@ -326,14 +326,15 @@ class Core(object):
                 #elif array_equal(old_data, self.scan_data):
                 if not old_point == self.scan_point: # here is where you would graph it/save it to the csv
                     # print self.scan_data
-                    if self.scan_point[0] > self.scan_array_counter:
+                    if self.scan_point[0] > self.scan_array_counter and self.scan_array_counter == 0: #Skips old point
                         print "Scan point ignored"
                     elif self.scan_point[0] == self.scan_array_counter:
                         self.scan_array.insert(self.scan_point[0], self.scan_point[1])
                         self.scan_array_counter = self.scan_array_counter + 1
-                        self.monitor.update(VAR.SCAN_ARRAY,self.scan_array)
+                        self.monitor.update(VAR.SCAN_ARRAY, self.scan_array)
                     else:
-                        print "Entering data into the scan array has not worked properly"
+                        print "Entering data into the scan array has not worked properly \n" \
+                              "Scan Counter: " + repr(self.scan_array_counter) + " Scan Point: " + repr(self.scan_point[0])
                     self.scan_SB_sleeper(ratio=0.75, _min=False)
                     pass
                 elif not self.is_scanning():
@@ -460,7 +461,7 @@ class Core(object):
         else:
             self.start_stop_PB = start_stop_PB
             # This property is checked, so functions here will work
-        if self.centering:
+        if self.cent_event._Event__flag:
             start_stop_PB.setText('Stop')
             self.update_CB(self.x_cent_data_CB, self.y_cent_data_CB, 'cent')
         else:
@@ -470,6 +471,7 @@ class Core(object):
     def cent_stop(self):
         self.cent_event.clear()
         self._teminate_cent = True
+        self.is_centering(None)
         if self.is_scanning():
             self.scan_stop()
 
@@ -480,6 +482,7 @@ class Core(object):
         self.cent_props = (scan_motor_name, angle_motor_name, center + relmin, center + relmax,
                             angle_o - angle_pm, angle_o, angle_o + angle_pm, steps, waittime, Motors, False)
         self._teminate_cent = False
+        self.cent_started = False
         self.cent_event.set()
 
     def cent_command_buff(self, wait_condit, command, commandargs, message, command2=None, command2args=None, waitsleep=1, finalsleep=3):
@@ -491,7 +494,7 @@ class Core(object):
         self.set_status(message)
         time.sleep(finalsleep)
 
-    def set_array(self,name,dummy):
+    def set_array(self, name, dummy):
         if name == 'neg':
             self.w_neg_array =self.scan_array
         elif name == 'nau':
@@ -513,6 +516,7 @@ class Core(object):
                 elif angle_motor_name == motor_inst.Name:
                     angle_motor = motor_inst
             if not terminate:
+                self.is_centering(None)
                 # Each of these blocks are nearly identical, they just tell the motor to go to a position and then scan
                 self.cent_command_buff(self.is_moving, self.move_motor, (angle_motor, cent_angle_m, "Absolute"),
                                        "CENTERING: MOVING TO W-", command2=self.move_motor,
@@ -522,7 +526,8 @@ class Core(object):
                 self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W-", finalsleep=5)
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_scanning, self.set_array, ('neg', False), "W- Scan Successful")
+                self.cent_started = self.is_centering(None)
+                self.cent_command_buff(self.is_scanning, self.set_array, ('neg', False), "W- Scan Successful", waitsleep=3)
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
 
@@ -534,7 +539,7 @@ class Core(object):
                 self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: Wo", finalsleep=5)
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_scanning, self.set_array, ('nau',False), "Wo Scan Successful")
+                self.cent_command_buff(self.is_scanning, self.set_array, ('nau',False), "Wo Scan Successful", waitsleep=3)
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
 
@@ -546,11 +551,11 @@ class Core(object):
                 self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W+",finalsleep=5)
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_scanning, self.set_array, ('pos', False), "W+ Scan Successful")
+                self.cent_command_buff(self.is_scanning, self.set_array, ('pos', False), "W+ Scan Successful", waitsleep=3)
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-
                 self.cent_event.clear()
+                self.is_centering(None)
             time.sleep(1)
 
     def cent_grab_data(self, x_CB, y_CB):
@@ -564,10 +569,16 @@ class Core(object):
             data_add(x_CB.currentIndex(), y_CB.currentIndex(), arr)  # we're just grabbing all the same columns
         length = len(full_array)
         if length == 4: length = 3  # Four columns means we have dup data, therefore cent scan = over
+        shorten = False
         for i in range(length):
             (x, y) = full_array[i][0], full_array[i][1]
-            x_arr.append(x)  # grab the appropriate data if it exists
-            y_arr.append(y)
+            if x == full_array[i-1][0] and y == full_array[i-1][1] and i>0:
+                shorten=True
+            else:
+                x_arr.append(x)  # grab the appropriate data if it exists
+                y_arr.append(y)
+        if shorten:
+            length = length-1
         return any(go_bool_array), x_arr, y_arr, length
 
     def cent_plotting(self, plot, table, x_CB, y_CB, calc_CB):
@@ -592,6 +603,13 @@ class Core(object):
                         neg = self.monitor.get_value(VAR.CENT_NEG_COM)  # these are center x/y calcs \/ J Synchrotron Rad 2009 16 83-96 sect eqn 7 + 8 -- http://journals.iucr.org/s/issues/2009/01/00/ie5024/ie5024.pdf
                     self.monitor.update(VAR.CENT_CENTERED_X, (pos + neg)/(2*(1-np.cos(np.degrees(self.angle_pm)))))
                     self.monitor.update(VAR.CENT_CENTERED_Y, (pos - neg) / (2 * (np.sin(np.degrees(self.angle_pm)))))
+            if not self.cent_started:
+                (x_arr, y_arr) = ([[], [], []], [[], [], []])  # Passing an empty variable if the centering has not begun to clear
+                for i in range(3):
+                    self.monitor.update(max_array[i], None)
+                    self.monitor.update(com_array[i], None)
+                self.monitor.update(VAR.CENT_CENTERED_X, None)
+                self.monitor.update(VAR.CENT_CENTERED_Y, None)
             plot.multi_plot(x_arr, y_arr)
             table.setHorizontalHeaderLabels(real_name_arr)
             table.setColumnCount(length + 1)  # All of the y's plus one x
@@ -646,23 +664,27 @@ class Core(object):
         
     """ RANDOM UTILITIES """
     def update_CB(self, x_data_CB, y_data_CB, type):
-        if type == 'scan':
-            self.x_scan_data_CB = x_data_CB
-            self.y_scan_data_CB = y_data_CB
-        elif type == 'cent':
-            self.x_cent_data_CB = x_data_CB
-            self.y_cent_data_CB = y_data_CB
-        self.scanner_names = self.get_var('SCAN_COLS')
-        i=0
-        (x_index, y_index) = x_data_CB.currentIndex(), y_data_CB.currentIndex()
-        x_data_CB.clear()
-        y_data_CB.clear()
-        for i in range(len(self.scanner_names)):
-            x_data_CB.addItem(self.scanner_names[str(i)])
-            y_data_CB.addItem(self.scanner_names[str(i)])
-        #print scanner_names
-        x_data_CB.setCurrentIndex(x_index)
-        y_data_CB.setCurrentIndex(y_index)
+        self.CB_lock.acquire()
+        try:
+            if type == 'scan':
+                self.x_scan_data_CB = x_data_CB
+                self.y_scan_data_CB = y_data_CB
+            elif type == 'cent':
+                self.x_cent_data_CB = x_data_CB
+                self.y_cent_data_CB = y_data_CB
+            self.scanner_names = self.get_var('SCAN_COLS')
+            i=0
+            (x_index, y_index) = x_data_CB.currentIndex(), y_data_CB.currentIndex()
+            x_data_CB.clear()
+            y_data_CB.clear()
+            for i in range(len(self.scanner_names)):
+                x_data_CB.addItem(self.scanner_names[str(i)])
+                y_data_CB.addItem(self.scanner_names[str(i)])
+            #print scanner_names
+            x_data_CB.setCurrentIndex(x_index)
+            y_data_CB.setCurrentIndex(y_index)
+        finally:
+            self.CB_lock.release()
 
     def get_var(self, var_name):
         """Return variable"""
@@ -717,7 +739,6 @@ class Core(object):
             connection.dispatcher.disconnect()
         else:
             print repr(connection) + " was not initialized and hence was not closed"
-
 
 class Calculation:
 
@@ -781,5 +802,3 @@ class Calculation:
             x_step.append(step*intes)
         step = np.average(steps)
         return (step*np.sum(x_y))/(np.sum(x_step))
-
-

@@ -102,6 +102,7 @@ class Core(object):
         self.move_event.set()
         self.check_move_event = threading.Event()
         self.check_move_event.set()
+        self._move_terminate_flag = False
 
         self._scan_timer = threading.Timer(1, self.handle_scan)
         self._scan_timer.start()
@@ -123,6 +124,7 @@ class Core(object):
         self.old_full_array, self.scan_array, self.old_array, self.old_x, self.old_y = ([] for i in range(5))
         self.cent_props = ('', '', 0, 0, 0, 0, 0, [], True)
         self.CB_lock = threading.Lock()
+
 
     """ MOTOR """
     def move_motor(self, motor, moveto=None, movetype=None):
@@ -189,6 +191,7 @@ class Core(object):
         _SpecMotor_sess = SpecMotor()
         while True:
             self.move_event.wait()
+            if self._move_terminate_flag: break
             if self._terminate_flag: break
             self.check_move_event.wait()  # This stops the motors from updating each other's monitors
             if _SpecMotor_sess.specName == motor.Mne:
@@ -230,6 +233,17 @@ class Core(object):
             return not all(bool==False for bool in self.moving_bool_dict.values())
         else:
             return self.moving_bool_dict[motor_name]
+
+    def update_motors(self, motor_names, Motors, CBs):
+        self._move_terminate_flag = False
+        for i in range(len(Motors)):
+            Motor_inst = Motors[i]
+            if Motor_inst.Enabled:
+                for CB in CBs:
+                    CB.addItem(Motor_inst.Name)
+                motor_names[i].setText(Motor_inst.Name)
+                (min_lim, max_lim) = self.check_limits(Motor_inst)
+                Motor_inst.Moveto_SB.setRange(min_lim * 2, max_lim * 2)
 
     """ COUNTER """
     def handle_counter(self):

@@ -34,7 +34,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>3</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab_move">
            <attribute name="title">
@@ -178,7 +178,7 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Phi</string>
+                 <string>Motor 1</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -199,7 +199,7 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Eta</string>
+                 <string>Motor 2</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -2233,8 +2233,15 @@ Based On</string>
     </property>
     <addaction name="action_set_server"/>
    </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="action_motor_slots"/>
+   </widget>
    <addaction name="menuHelp"/>
    <addaction name="menuSetup"/>
+   <addaction name="menuSettings"/>
   </widget>
   <action name="action_about">
    <property name="text">
@@ -2329,6 +2336,11 @@ Based On</string>
   <action name="action_set_motor">
    <property name="text">
     <string>Motor Reset</string>
+   </property>
+  </action>
+  <action name="action_motor_slots">
+   <property name="text">
+    <string>Motor Slots</string>
    </property>
   </action>
  </widget>

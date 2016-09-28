@@ -7,6 +7,54 @@ class MyEncoder(JSONEncoder):
 
 ERROR_MESSAGES = []
 
+class MOT_KEY(object):
+    MOT = '__motors__'
+    MOTOR_NAMES = 'motor_name'
+    MOTOR_MNES = 'motor_mne'
+    MOTOR_ENABLED = 'motor_enabled'
+
+class MotMixin(object):
+    """
+    This is a mixin which will allow saving and loading of motor props from the main window to a .json file
+    """
+
+    def set_motors(self):
+        key = self.__class__.__name__
+
+        try:
+            motor_settings = self.settings.get(key)
+            mot_dict = motor_settings.get(MOT_KEY.MOT)
+
+            print "SETTING MOTOR %s TO %s" % (key, mot_dict)
+
+            mot_props = [mot_dict[MOT_KEY.MOTOR_NAMES], mot_dict[MOT_KEY.MOTOR_MNES], mot_dict[MOT_KEY.MOTOR_ENABLED]]
+            return mot_props
+        except:
+            return False
+        
+    def save_motors(self, Motors):
+
+        key = self.__class__.__name__
+        motor_names=[]
+        motor_mne = []
+        motor_enabled = []
+        for Motor in Motors:
+            motor_names.append(str(Motor.Name))
+            motor_mne.append(Motor.Mne)
+            motor_enabled.append(Motor.Enabled)
+
+        mot_dict = {
+            MOT_KEY.MOTOR_NAMES: motor_names,
+            MOT_KEY.MOTOR_MNES: motor_mne,
+            MOT_KEY.MOTOR_ENABLED: motor_enabled,
+        }
+
+        print "SAVING MOTOR %s TO %s" % (key, mot_dict)
+
+        motor_settings = self.settings.get(key, {})
+        motor_settings[MOT_KEY.MOT] = mot_dict
+        self.settings[key] = motor_settings
+
 class SERV_KEY(object):
     SERV = '__server_address__'
     HOST = 'host'

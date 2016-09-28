@@ -2,6 +2,7 @@
 import simplejson
 import os
 from functools import partial
+import threading
 
 # Library imports
 from PyQt4 import Qt
@@ -26,6 +27,7 @@ from utils.gui import decorator_busy_cursor
 from utils.local_save import ServMixin
 from utils.local_save import ScanMixin
 from utils.local_save import CentMixin
+from utils.local_save import MotMixin
 
 from utils import Constant
 from utils import to_rad
@@ -43,6 +45,7 @@ from windows.pv_list_window import PvListWindow
 from windows.drag_text_mixin import DragTextMixin
 
 from windows.minor_windows import LoadPositions as LoadPositionsWindow
+from windows.minor_windows import SetMotorSlot as SetMotorSlotWindow
 
 from collections import namedtuple
 
@@ -158,7 +161,7 @@ class LabelFormatter(object):
         self.data_dict[label] = kwargs
 
 
-class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin, CentMixin):
+class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin, CentMixin, MotMixin):
 
     SIGNAL_DIALOG_INFO = QtCore.pyqtSignal(unicode)
 
@@ -200,10 +203,11 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.init_labels()
 
         actions = {
-            self.action_about       : self.handle_action_about,
-            self.action_pv_list     : self.handle_action_pv_list,
-            self.action_var_list    : self.handle_action_var_list,
-            self.action_set_server  : self.handle_action_set_server,
+            self.action_about: self.handle_action_about,
+            self.action_pv_list: self.handle_action_pv_list,
+            self.action_var_list: self.handle_action_var_list,
+            self.action_set_server: self.handle_action_set_server,
+            self.action_motor_slots: self.handle_action_motor_slots,
         }
 
         for action, handler in actions.iteritems():
@@ -223,7 +227,20 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         """MOTOR INIT"""
         # INIT RUN ----Has to be first to init Motors for connecting buttons
         self.init_motor_slots()
-        self.update_motors()
+        motor_props=self.set_motors()
+        self.motor_names = [
+            self.label_motor_1_name,
+            self.label_motor_2_name,
+            self.label_motor_3_name,
+            self.label_motor_4_name,
+            self.label_motor_5_name,
+            self.label_motor_6_name,
+        ]
+        self.Motors = [self.Motor_1, self.Motor_2, self.Motor_3, self.Motor_4, self.Motor_5, self.Motor_6]
+        if not motor_props==False:
+            for i in range(len(self.Motors)):
+                self.Motors[i] = self.Motors[i]._replace(Name=motor_props[0][i], Mne=motor_props[1][i], Enabled=motor_props[2][i])
+        self.update_motors(self.Motors)
         self.handle_pushButton_motor_all_checkpos(False)  # just checking position, False is a dummy var
         # Connect Buttons
         self.pushButton_motor_1_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_1))
@@ -238,7 +255,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.pushButton_motor_all_stop.clicked.connect(self.handle_pushButton_motor_all_stop)
 
         self.checkBox_motor_all_checkpos.stateChanged.connect(self.handle_checkBox_motor_all_checkpos)
-
         """COUNTER INIT"""
         # Connect Buttons
         self.checkBox_count.stateChanged.connect(self.handle_checkBox_count)
@@ -309,11 +325,27 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         pic.show()
         self.old_scan_x, self.old_scan_y = ([] for i in range(2))
 
+        """POPOUTS"""
+        self.pushButton_open_pos_load.clicked.connect(self.handle_action_save_load)
+
+    """POPUPS"""
     def handle_action_save_load(self):
-        LoadPositionsWindow.__init__(self.Motors, self.monitor)
-        window = LoadPositionsWindow()
+        center_point = self.geometry().center()
+        self.handle_action_popup(LoadPositionsWindow(monitor=self.monitor, center=center_point, motors=self.Motors))
+
+    def handle_action_motor_slots(self):
+        center_point = self.geometry().center()
+        window = SetMotorSlotWindow(monitor=self.monitor, center=center_point, motors=self.Motors)
+        window.apply_callback(self.update_motors)
+        self.handle_action_popup(window)
+
+    def handle_action_popup(self, window):
         self.child_windows.append(window)
+        window.set_close_callback(self.callback_window_closed)
         window.show()
+
+    def callback_window_closed(self, window):
+        self.child_windows = [w for w in self.child_windows if w != window]
 
     """MOTOR"""
     @decorator_busy_cursor
@@ -397,25 +429,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                   Enabled=False,
                                   )
 
-    def update_motors(self):
-        self.Motor_1 = self.Motor_1._replace(Name='Phi',
-                                             Mne='phi',
-                                             Enabled=True
-                                             )
-
-        self.Motor_2 = self.Motor_2._replace(Name='Eta',
-                                             Mne='eta',
-                                             Enabled=True
-                                             )
-        self.Motors = [self.Motor_1, self.Motor_2, self.Motor_3, self.Motor_4, self.Motor_5, self.Motor_6]
-        self.core.init_motor_thread(self.Motors)
-        for i in range(len(self.Motors)):
-            Motor_inst = self.Motors[i]
-            if Motor_inst.Enabled:
-                for CB in (self.comboBox_scan_motor, self.comboBox_cent_motor_scan, self.comboBox_cent_motor_angle):
-                    CB.addItem(Motor_inst.Name)
-                (min_lim, max_lim) = self.core.check_limits(Motor_inst)
-                Motor_inst.Moveto_SB.setRange(min_lim*2, max_lim*2)
+    def update_motors(self, Motors):
+        self._move_terminate_flag = True
+        t = threading.Timer(3.0,  self.core.update_motors(self.motor_names, Motors, (self.comboBox_scan_motor, self.comboBox_cent_motor_scan, self.comboBox_cent_motor_angle)))
+        self.Motors = Motors
 
     """COUNT"""
     def handle_checkBox_count(self):  #Also passes the reference to the count-time down
@@ -718,6 +735,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.save_server_address()
         self.save_scan_props()
         self.save_cent_props()
+        self.save_motors(self.Motors)
 
         self.core.terminate()
 

@@ -31,6 +31,7 @@ class LoadPositions(QtGui.QWidget, DragTextMixin, UiMixin):
         Motors =  kwargs['motors']
         del kwargs['motors']
 
+
         super(LoadPositions, self).__init__(*args, **kwargs)
 
         self.load_ui("windows/load_positions.ui")
@@ -45,7 +46,6 @@ class LoadPositions(QtGui.QWidget, DragTextMixin, UiMixin):
 
         self.core = Core(monitor=self.monitor)
 
-        self.init_labels()
         #self.monitor.start()
 
         label_list = [self.label_mne1_name,
@@ -113,41 +113,15 @@ class LoadPositions(QtGui.QWidget, DragTextMixin, UiMixin):
     def set_close_callback(self, callback):
         self._close_callback = callback
     
-    def init_labels(self):
-        css_normal = "QLabel { background-color : %s; color : %s; }" % \
-                     (CSS_COLOUR.GROUP_BOX, CSS_COLOUR.BLUE)
-
-        label_map = {
-            VAR.MOTOR_1_POS: (self.label_currpos_mne1, '{:,.3f}', 12, True),
-            VAR.MOTOR_2_POS: (self.label_currpos_mne2, '{:,.3f}', 12, True),
-            VAR.MOTOR_3_POS: (self.label_currpos_mne3, '{:,.3f}', 12, True),
-            VAR.MOTOR_4_POS: (self.label_currpos_mne4, '{:,.3f}', 12, True),
-            VAR.MOTOR_5_POS: (self.label_currpos_mne5, '{:,.3f}', 12, True),
-            VAR.MOTOR_6_POS: (self.label_currpos_mne6, '{:,.3f}', 12, True),
-        }
-
-        for pv_name, data in label_map.iteritems():
-            self.monitor.add(pv_name)
-
-            widget = data[0]
-            font = QtGui.QFont('Courier', data[2])
-            widget.setFont(font)
-            # widget.setText(EMPTY_STRING)
-
-            self.set_drag_text(widget, pv_name)
-
-            try:
-                if data[3]:
-                    font.setWeight(QtGui.QFont.Bold)
-            except:
-                pass
-
-            # self.formatter.add(pv_name, widget, format=data[1],
-            #     css_normal=css_normal,)
-            #     # css_lost=CSS_LABEL_PV_LOST)
-            #
-            # self.monitor.connect(pv_name, self.handle_label)
-
+    def pos_track(self):
+        curr_pos=[
+            self.label_currpos_mne1,
+            self.label_currpos_mne2,
+            self.label_currpos_mne3,
+            self.label_currpos_mne4,
+            self.label_currpos_mne5,
+            self.label_currpos_mne6,
+            ]
 
 class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
 
@@ -218,7 +192,7 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
     def handle_CB_ref(self, num):
         print num
 
-    def handle_pushButton_apply(self):
+    def handle_pushButton_apply(self): # Setting the chosen name to be a motor
         for i in range(len(self.Motors)):
             name = self.comboboxes[i].currentText()
             for j in range(len(self.motor_props[0])):
@@ -229,14 +203,6 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
                                                    Mne=mne,
                                                    Enabled=self.checkboxes[i].isChecked()
                                                    )
-        # self.core.init_motor_thread(self.Motors)
-        # for i in range(len(self.Motors)):
-        #     Motor_inst = self.Motors[i]
-        #     if Motor_inst.Enabled:
-        #         for CB in (self.comboBox_scan_motor, self.comboBox_cent_motor_scan, self.comboBox_cent_motor_angle):
-        #             CB.addItem(Motor_inst.Name)
-        #         (min_lim, max_lim) = self.core.check_limits(Motor_inst)
-        #         Motor_inst.Moveto_SB.setRange(min_lim * 2, max_lim * 2)
         self._apply_callback(self.Motors)
         self.close()
 

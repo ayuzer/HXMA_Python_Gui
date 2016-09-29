@@ -331,7 +331,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
     """POPUPS"""
     def handle_action_save_load(self):
         center_point = self.geometry().center()
-        self.handle_action_popup(LoadPositionsWindow(monitor=self.monitor, center=center_point, motors=self.Motors))
+        self.handle_action_popup(LoadPositionsWindow(monitor=self.monitor,
+                                                     center=center_point,
+                                                     motors=self.Motors,
+                                                     ))
 
     def handle_action_motor_slots(self):
         center_point = self.geometry().center()
@@ -343,9 +346,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.child_windows.append(window)
         window.set_close_callback(self.callback_window_closed)
         window.show()
-
-    def callback_window_closed(self, window):
-        self.child_windows = [w for w in self.child_windows if w != window]
 
     """MOTOR"""
     @decorator_busy_cursor
@@ -432,6 +432,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
     def update_motors(self, Motors):
         self._move_terminate_flag = True
         t = threading.Timer(3.0,  self.core.update_motors(self.motor_names, Motors, (self.comboBox_scan_motor, self.comboBox_cent_motor_scan, self.comboBox_cent_motor_angle)))
+        # t.start()
         self.Motors = Motors
 
     """COUNT"""
@@ -606,8 +607,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         label_map = {
             PV.SYSTEM_TIME:         (self.label_system_time,        '{:s}',     12, True),
+            PV.BEAM_STOP:           (self.label_beam_stop,          '{:g}',    12, True),
+            PV.PRE_OPTICS:          (self.label_pre_optics,         '{:g}',    12, True),
             VAR.STATUS_MSG:         (self.label_status_msg,         '{:s}',     12, True),
-            VAR.SERVER_ADDRESS:     (self.label_server_address,     '{:s}',     12, True),
             VAR.MOTOR_1_POS:        (self.label_motor_1_pos,        '{:,.3f}',  12, True),
             VAR.MOTOR_2_POS:        (self.label_motor_2_pos,        '{:,.3f}',  12, True),
             VAR.MOTOR_3_POS:        (self.label_motor_3_pos,        '{:,.3f}',  12, True),
@@ -630,6 +632,44 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             VAR.CENT_POS_COM:       (self.label_cent_com_p,         '{:.3f}',   12, True),
             VAR.CENT_CENTERED_X:    (self.label_cent_calc_cent_x,   '{:.3f}',   12, True),
             VAR.CENT_CENTERED_Y:    (self.label_cent_calc_cent_y,   '{:.3f}',   12, True),
+
+            PV.COND_TABLE_HOR_STATUS: (self.label_cond_table_hor_status, '{:g}',     12, True),
+            PV.COND_TABLE_HOR_GAP_POS: (self.label_cond_table_hor_gap_currpos, '{:,.2f}',     12, True),
+            PV.COND_TABLE_HOR_CENT_POS: (self.label_cond_table_hor_cent_currpos, '{:,.2f}', 12, True),
+            PV.COND_TABLE_HOR_MOT1_POS: (self.label_cond_table_hor_mot1_currpos, '{:,.2f}', 12, True),
+            PV.COND_TABLE_HOR_MOT2_POS: (self.label_cond_table_hor_mot2_currpos, '{:,.2f}', 12, True),
+
+            PV.COND_TABLE_VERT_STATUS: (self.label_cond_table_vert_status, '{:g}', 12, True),
+            PV.COND_TABLE_VERT_GAP_POS: (self.label_cond_table_vert_gap_currpos, '{:,.2f}', 12, True),
+            PV.COND_TABLE_VERT_CENT_POS: (self.label_cond_table_vert_cent_currpos, '{:,.2f}', 12, True),
+            PV.COND_TABLE_VERT_MOT1_POS: (self.label_cond_table_vert_mot1_currpos, '{:,.2f}', 12, True),
+            PV.COND_TABLE_VERT_MOT2_POS: (self.label_cond_table_vert_mot2_currpos, '{:,.2f}', 12, True),
+
+            PV.COND_DIFF_HOR_STATUS: (self.label_cond_diff_hor_status, '{:g}', 12, True),
+            PV.COND_DIFF_HOR_GAP_POS: (self.label_cond_diff_hor_gap_currpos, '{:,.2f}', 12, True),
+            PV.COND_DIFF_HOR_CENT_POS: (self.label_cond_diff_hor_cent_currpos, '{:,.2f}', 12, True),
+            PV.COND_DIFF_HOR_MOT1_POS: (self.label_cond_diff_hor_mot1_currpos, '{:,.2f}', 12, True),
+            PV.COND_DIFF_HOR_MOT2_POS: (self.label_cond_diff_hor_mot2_currpos, '{:,.2f}', 12, True),
+
+            PV.COND_DIFF_VERT_STATUS: (self.label_cond_diff_vert_status, '{:g}', 12, True),
+            PV.COND_DIFF_VERT_GAP_POS: (self.label_cond_diff_vert_gap_currpos, '{:,.2f}', 12, True),
+            PV.COND_DIFF_VERT_CENT_POS: (self.label_cond_diff_vert_cent_currpos, '{:,.2f}', 12, True),
+            PV.COND_DIFF_VERT_MOT1_POS: (self.label_cond_diff_vert_mot1_currpos, '{:,.2f}', 12, True),
+            PV.COND_DIFF_VERT_MOT2_POS: (self.label_cond_diff_vert_mot2_currpos, '{:,.2f}', 12, True),
+            
+            PV.COND_PB_APER_HOR_POS: (self.label_cond_pb_aper_hor_currpos, '{:,.2f}', 12, True),
+            PV.COND_PB_APER_VERT_POS : (self.label_cond_pb_aper_vert_currpos, '{:,.2f}', 12, True),
+            PV.COND_DAC_PIN_HOR_POS : (self.label_cond_dac_pin_hor_currpos, '{:,.2f}', 12, True),
+            PV.COND_DAC_PIN_VERT_POS : (self.label_cond_dac_pin_vert_currpos, '{:,.2f}', 12, True),
+            PV.COND_BEAM_STOP_HOR_POS : (self.label_cond_beam_stop_hor_currpos, '{:,.2f}', 12, True),
+            PV.COND_BEAM_STOP_VERT_POS : (self.label_cond_beam_stop_vert_currpos, '{:,.2f}', 12, True),
+
+            PV.COND_PB_APER_HOR_STATUS: (self.label_cond_pb_aper_hor_status, '{:g}', 12, True),
+            PV.COND_PB_APER_VERT_STATUS: (self.label_cond_pb_aper_vert_status, '{:g}', 12, True),
+            PV.COND_DAC_PIN_HOR_STATUS: (self.label_cond_dac_pin_hor_status, '{:g}', 12, True),
+            PV.COND_DAC_PIN_VERT_STATUS: (self.label_cond_dac_pin_vert_status, '{:g}', 12, True),
+            PV.COND_BEAM_STOP_HOR_STATUS: (self.label_cond_beam_stop_hor_status, '{:g}', 12, True),
+            PV.COND_BEAM_STOP_VERT_STATUS: (self.label_cond_beam_stop_vert_status, '{:g}', 12, True),
         }
 
         for pv_name, data in label_map.iteritems():

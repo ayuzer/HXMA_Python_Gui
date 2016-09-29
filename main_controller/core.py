@@ -38,6 +38,51 @@ class PV(Constant):
 
     SYSTEM_TIME         = 'WIG1405-01:systemTime'
     CYCLES              = 'TRG2400:cycles'
+    BEAM_STOP           = 'BL1606-ID1:mcs09:fbk'
+    PRE_OPTICS          = 'BL1606-ID1:mcs07:fbk'
+
+    COND_TABLE_HOR_STATUS = 'PSL16062I1024:status'
+    COND_TABLE_HOR_GAP_POS = 'PSL1606-2-I10-26:gap'
+    COND_TABLE_HOR_CENT_POS = 'PSL1606-2-I10-26:center'
+    COND_TABLE_HOR_MOT1_POS = 'SMTR16062I10100:mm'
+    COND_TABLE_HOR_MOT2_POS = 'SMTR16062I10101:mm'
+
+    COND_TABLE_VERT_STATUS = 'PSL16062I1023:status'
+    COND_TABLE_VERT_GAP_POS = 'PSL1606-2-I10-25:gap'
+    COND_TABLE_VERT_CENT_POS = 'PSL1606-2-I10-25:center'
+    COND_TABLE_VERT_MOT1_POS = 'SMTR16062I1098:mm'
+    COND_TABLE_VERT_MOT2_POS = 'SMTR16062I1099:mm'
+
+    COND_DIFF_HOR_STATUS = 'PSL1606-2-I10-26:status'
+    COND_DIFF_HOR_GAP_POS   = 'PSL16062I1024:gap'
+    COND_DIFF_HOR_CENT_POS  = 'PSL16062I1024:center'
+    COND_DIFF_HOR_MOT1_POS  = 'SMTR16062I1079:mm'
+    COND_DIFF_HOR_MOT2_POS  = 'SMTR16062I1078:mm'
+
+    COND_DIFF_VERT_STATUS = 'PSL1606-2-I10-25:status'
+    COND_DIFF_VERT_GAP_POS = 'PSL16062I1023:gap'
+    COND_DIFF_VERT_CENT_POS = 'PSL16062I1023:center'
+    COND_DIFF_VERT_MOT1_POS = 'SMTR16062I1076:mm'
+    COND_DIFF_VERT_MOT2_POS = 'SMTR16062I1077:mm'
+
+    COND_PB_APER_HOR_POS = 'SMTR16062I1085:mm:sp'
+    COND_PB_APER_VERT_POS = 'SMTR16062I1084:mm:sp'
+
+    COND_DAC_PIN_HOR_POS = 'SMTR16062I1087:mm:sp'
+    COND_DAC_PIN_VERT_POS = 'SMTR16062I1086:mm:sp'
+
+    COND_BEAM_STOP_HOR_POS = 'SMTR16062I10106:mm:sp'
+    COND_BEAM_STOP_VERT_POS = 'SMTR16062I10107:mm:sp'
+
+    COND_PB_APER_HOR_STATUS = 'SMTR16062I1085:status'
+    COND_PB_APER_VERT_STATUS = 'SMTR16062I1084:status'
+
+    COND_DAC_PIN_HOR_STATUS = 'SMTR16062I1087:status'
+    COND_DAC_PIN_VERT_STATUS = 'SMTR16062I1086:status'
+
+    COND_BEAM_STOP_HOR_STATUS = 'SMTR16062I10106:status'
+    COND_BEAM_STOP_VERT_STATUS = 'SMTR16062I10107:status'
+
 
 class VAR(Constant):
     STATUS_MSG          = 'var:status_message'
@@ -236,6 +281,8 @@ class Core(object):
 
     def update_motors(self, motor_names, Motors, CBs):
         self._move_terminate_flag = False
+        for CB in CBs:
+            CB.clear()
         for i in range(len(Motors)):
             Motor_inst = Motors[i]
             if Motor_inst.Enabled:
@@ -299,6 +346,8 @@ class Core(object):
             Motor_inst = Motors[i]
             if Motor_inst.Name == motor_name:
                 if Motor_inst.Enabled:
+                    self.scan_array_counter = 0
+                    self.scan_event.set()
                     SpecScan.connectToSpec(self.SpecScan_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
                     SpecScan.newScan(self.SpecScan_sess, True)
                     if scantype:
@@ -310,8 +359,6 @@ class Core(object):
                     else:
                         SpecScan.ascan(self.SpecScan_sess, Motor_inst.Mne, startpos, endpos, intervals, count_time)
                     self.scan_array = []  # starting/wiping an array for the scan data to push into
-                    self.scan_array_counter = 0
-                    self.scan_event.set()
                 else:
                     raise Exception('Scan cannot be started as the motor was not Enabled')
             else:
@@ -336,12 +383,13 @@ class Core(object):
                 try:
                     self.scan_point = json.JSONDecoder.decode(json.JSONDecoder(), SpecScan.get_SCAN_PT(self.SpecScan_sess))
                 except ValueError:
+                    print "Value Error: Scan Point"
                     pass
                 #elif array_equal(old_data, self.scan_data):
                 if not old_point == self.scan_point: # here is where you would graph it/save it to the csv
-                    # print self.scan_data
+                    print self.scan_point
                     if self.scan_point[0] > self.scan_array_counter and self.scan_array_counter == 0: #Skips old point
-                        print "Scan point ignored"
+                        print "Scan point ignored ScanPoint:" + repr(self.scan_point[0]) + " Counter: " +repr(self.scan_array_counter)
                     elif self.scan_point[0] == self.scan_array_counter:
                         self.scan_array.insert(self.scan_point[0], self.scan_point[1])
                         self.scan_array_counter = self.scan_array_counter + 1
@@ -499,7 +547,7 @@ class Core(object):
         self.cent_started = False
         self.cent_event.set()
 
-    def cent_command_buff(self, wait_condit, command, commandargs, message, command2=None, command2args=None, waitsleep=1, finalsleep=3):
+    def cent_command_buff(self, wait_condit, command, commandargs, message, command2=None, command2args=None, waitsleep=1, finalsleep=7.5):
         while wait_condit():
             time.sleep(waitsleep)
         command(*commandargs)
@@ -537,7 +585,7 @@ class Core(object):
                                        command2args=(scan_motor, cent_scan_start, "Absolute"))
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W-", finalsleep=5)
+                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W-")
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
                 self.cent_started = self.is_centering(None)
@@ -550,7 +598,7 @@ class Core(object):
                                        command2args=(scan_motor, cent_scan_start, "Absolute"))
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: Wo", finalsleep=5)
+                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: Wo")
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
                 self.cent_command_buff(self.is_scanning, self.set_array, ('nau',False), "Wo Scan Successful", waitsleep=3)
@@ -562,7 +610,7 @@ class Core(object):
                                        command2args=(scan_motor, cent_scan_start, "Absolute"))
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W+",finalsleep=5)
+                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W+")
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
                 self.cent_command_buff(self.is_scanning, self.set_array, ('pos', False), "W+ Scan Successful", waitsleep=3)
@@ -629,7 +677,7 @@ class Core(object):
             else:
                 for i in range(len(plot)):
                     try:
-                        plot[i].new_plot(x_arr[i], y_arr[i], name = i+1)
+                        plot[i].new_plot(x_arr[i], y_arr[i], i = i)
                     except IndexError:
                         pass
             table.setHorizontalHeaderLabels(real_name_arr)
@@ -822,4 +870,7 @@ class Calculation:
             steps.append(step)
             x_step.append(step*intes)
         step = np.average(steps)
-        return (step*np.sum(x_y))/(np.sum(x_step))
+        try:
+            return (step*np.sum(x_y))/(np.sum(x_step))
+        except RuntimeWarning:
+            return 0

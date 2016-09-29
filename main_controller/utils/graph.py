@@ -12,35 +12,32 @@ class Plotter(Qwt.QwtPlot):
 
         self.setCanvasBackground(Qt.Qt.white)
 
-        # # Set the title
-        # title = Qwt.QwtText("Title")
-        # titleFont = QtGui.QFont('SansSerif', 10)
-        # titleFont.setWeight(QtGui.QFont.Light)
-        # title.setFont(titleFont)
-        # self.setTitle(title)
-
-        self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.BottomLegend);
-
+        self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.RightLegend);
+        #
         # self.curve.setStyle(Qwt.QwtPlotCurve.Sticks)
-        self.curve = Qwt.QwtPlotCurve('ongoing scan')
-        self.curve.setItemAttribute(Qwt.QwtPlotItem.Legend, False)
-        self.curve.setPen(Qt.QPen(Qt.Qt.blue))
-        self.curve.attach(self)
+        self.curve = self.multi_curve1 = self.multi_curve2 = self.multi_curve3 = \
+            self.v_bar1 = self.v_bar2 = self.v_bar3 = None
+        #
+        solo_curve = [self.curve, 'ongoing scan', False, Qt.Qt.blue]
+        multi_curve_1 = [self.multi_curve1, 'w-', True, Qt.Qt.darkCyan]
+        multi_curve_2 = [self.multi_curve2, 'wo', True, Qt.Qt.green]
+        multi_curve_3 = [self.multi_curve3, 'w+', True, Qt.Qt.magenta]
+        vbar_1 = [self.v_bar1, '', False, Qt.Qt.red]
+        vbar_2 = [self.v_bar2, '', False, Qt.Qt.red]
+        vbar_3 = [self.v_bar3, '', False, Qt.Qt.red]
 
-        self.curve1 = Qwt.QwtPlotCurve('w-')
-        self.curve1.setItemAttribute(Qwt.QwtPlotItem.Legend, False)
-        self.curve1.setPen(Qt.QPen(Qt.Qt.red))
-        self.curve1.attach(self)
+        self.curves = [solo_curve, multi_curve_1, multi_curve_2, multi_curve_3, vbar_1]
+        for curve in self.curves:
+            curve[0] = Qwt.QwtPlotCurve(curve[1])
+            curve[0].setItemAttribute(Qwt.QwtPlotItem.Legend, curve[2])
+            curve[0].setPen(curve[3])
+            curve[0].attach(self)
 
-        self.curve2 = Qwt.QwtPlotCurve('wo')
-        self.curve2.setItemAttribute(Qwt.QwtPlotItem.Legend, False)
-        self.curve2.setPen(Qt.QPen(Qt.Qt.darkGreen))
-        self.curve2.attach(self)
+        self._dragBar = False
 
-        self.curve3 = Qwt.QwtPlotCurve('w+')
-        self.curve3.setItemAttribute(Qwt.QwtPlotItem.Legend, False)
-        self.curve3.setPen(Qt.QPen(Qt.Qt.magenta))
-        self.curve3.attach(self)
+        self.setMouseTracking(True)
+        #
+        # self.monitor.connect(VAR.VERT_BAR_POS_X, self.handle_vbar_position)
 
         mY = Qwt.QwtPlotMarker()
         mY.setLabelAlignment(Qt.Qt.AlignRight | Qt.Qt.AlignTop)
@@ -48,36 +45,13 @@ class Plotter(Qwt.QwtPlot):
         mY.setYValue(0.0)
         mY.attach(self)
 
-        # # Set the title
-        # xAxisLabel = Qwt.QwtText("X Value")
-        # xAxisLabel.setFont(titleFont)
-        #
-        # yAxisLabel = Qwt.QwtText("Y Value")
-        # yAxisLabel.setFont(titleFont)
-        #
-        # self.setAxisTitle(Qwt.QwtPlot.xBottom, xAxisLabel)
-        # self.setAxisTitle(Qwt.QwtPlot.yLeft, yAxisLabel)
-
-    def new_plot(self, x, y, name = None):
-        if name == None:
-            self.curve.setData(x, y)
-        elif name == 1:
-            self.curve1.setData(x, y)
-        elif name == 2:
-            self.curve2.setData(x, y)
-        elif name == 3:
-            self.curve3.setData(x, y)
+    def new_plot(self, x, y, i = 0):
+        self.curves[i+1][0].setData(x, y)
         self.replot()
 
     def multi_plot(self, x_arr, y_arr):
         for i in range(len(x_arr)):
-            if i == 0:
-                curve = self.curve1
-            elif i == 1:
-                curve = self.curve2
-            else:
-                curve = self.curve3
-            curve.setData(x_arr[i], y_arr[i])
+            self.curves[i+1][0].setData(x_arr[i], y_arr[i])
         self.replot()
         self.set_legend()
 

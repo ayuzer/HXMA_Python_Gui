@@ -41,29 +41,29 @@ class PV(Constant):
     BEAM_STOP           = 'BL1606-ID1:mcs09:fbk'
     PRE_OPTICS          = 'BL1606-ID1:mcs07:fbk'
 
-    COND_TABLE_HOR_STATUS = 'PSL16062I1024:status'
-    COND_TABLE_HOR_GAP_POS = 'PSL1606-2-I10-26:gap'
-    COND_TABLE_HOR_CENT_POS = 'PSL1606-2-I10-26:center'
-    COND_TABLE_HOR_MOT1_POS = 'SMTR16062I10100:mm'
-    COND_TABLE_HOR_MOT2_POS = 'SMTR16062I10101:mm'
-
-    COND_TABLE_VERT_STATUS = 'PSL16062I1023:status'
-    COND_TABLE_VERT_GAP_POS = 'PSL1606-2-I10-25:gap'
-    COND_TABLE_VERT_CENT_POS = 'PSL1606-2-I10-25:center'
-    COND_TABLE_VERT_MOT1_POS = 'SMTR16062I1098:mm'
-    COND_TABLE_VERT_MOT2_POS = 'SMTR16062I1099:mm'
-
     COND_DIFF_HOR_STATUS = 'PSL1606-2-I10-26:status'
-    COND_DIFF_HOR_GAP_POS   = 'PSL16062I1024:gap'
-    COND_DIFF_HOR_CENT_POS  = 'PSL16062I1024:center'
-    COND_DIFF_HOR_MOT1_POS  = 'SMTR16062I1079:mm'
-    COND_DIFF_HOR_MOT2_POS  = 'SMTR16062I1078:mm'
+    COND_DIFF_HOR_GAP_POS = 'PSL1606-2-I10-26:gap'
+    COND_DIFF_HOR_CENT_POS = 'PSL1606-2-I10-26:center'
+    COND_DIFF_HOR_MOT1_POS = 'SMTR16062I10100:mm'
+    COND_DIFF_HOR_MOT2_POS = 'SMTR16062I10101:mm'
 
     COND_DIFF_VERT_STATUS = 'PSL1606-2-I10-25:status'
-    COND_DIFF_VERT_GAP_POS = 'PSL16062I1023:gap'
-    COND_DIFF_VERT_CENT_POS = 'PSL16062I1023:center'
-    COND_DIFF_VERT_MOT1_POS = 'SMTR16062I1076:mm'
-    COND_DIFF_VERT_MOT2_POS = 'SMTR16062I1077:mm'
+    COND_DIFF_VERT_GAP_POS = 'PSL1606-2-I10-25:gap'
+    COND_DIFF_VERT_CENT_POS = 'PSL1606-2-I10-25:center'
+    COND_DIFF_VERT_MOT1_POS = 'SMTR16062I1098:mm'
+    COND_DIFF_VERT_MOT2_POS = 'SMTR16062I1099:mm'
+
+    COND_TABLE_HOR_STATUS = 'PSL16062I1024:status'
+    COND_TABLE_HOR_GAP_POS   = 'PSL16062I1024:gap:'
+    COND_TABLE_HOR_CENT_POS  = 'PSL16062I1024:center'
+    COND_TABLE_HOR_MOT1_POS  = 'SMTR16062I1079:mm'
+    COND_TABLE_HOR_MOT2_POS  = 'SMTR16062I1078:mm'
+
+    COND_TABLE_VERT_STATUS = 'PSL16062I1023:status'
+    COND_TABLE_VERT_GAP_POS = 'PSL16062I1023:gap'
+    COND_TABLE_VERT_CENT_POS = 'PSL16062I1023:center'
+    COND_TABLE_VERT_MOT1_POS = 'SMTR16062I1076:mm'
+    COND_TABLE_VERT_MOT2_POS = 'SMTR16062I1077:mm'
 
     COND_PB_APER_HOR_POS = 'SMTR16062I1085:mm:sp'
     COND_PB_APER_VERT_POS = 'SMTR16062I1084:mm:sp'
@@ -73,6 +73,15 @@ class PV(Constant):
 
     COND_BEAM_STOP_HOR_POS = 'SMTR16062I10106:mm:sp'
     COND_BEAM_STOP_VERT_POS = 'SMTR16062I10107:mm:sp'
+
+    COND_PB_APER_HOR_POS_PUSH = 'SMTR16062I1085:mm'
+    COND_PB_APER_VERT_POS_PUSH = 'SMTR16062I1084:mm'
+
+    COND_DAC_PIN_HOR_POS_PUSH = 'SMTR16062I1087:mm'
+    COND_DAC_PIN_VERT_POS_PUSH = 'SMTR16062I1086:mm'
+
+    COND_BEAM_STOP_HOR_POS_PUSH = 'SMTR16062I10106:mm'
+    COND_BEAM_STOP_VERT_POS_PUSH = 'SMTR16062I10107:mm'
 
     COND_PB_APER_HOR_STATUS = 'SMTR16062I1085:status'
     COND_PB_APER_VERT_STATUS = 'SMTR16062I1084:status'
@@ -100,6 +109,7 @@ class VAR(Constant):
     SCAN_COM            = 'var:scan_COM'
     SCAN_CWHM           = 'var:scan_CWHM'
     SCAN_CENTROID       = 'var:scan_centroid'
+    SCAN_MAX_Y_NUM      = 'var:scan_max_y_num'
 
     CENT_NEG_MAXY       = 'var:cent_neg_maxy'
     CENT_NEG_COM        = 'var:cent_neg_com'
@@ -118,6 +128,18 @@ class VAR(Constant):
     SERVER_ADDRESS      = 'var:server_address'
     SERVER_HOST         = 'var:server_host'
     SERVER_PORT         = 'var:server_port'
+
+    VERT_BAR_SCAN_POS   = 'var:bar_scan_pos'
+    VERT_BAR_MULTI_POS  = 'var:bar_multi_pos'
+    VERT_BAR_NEG_POS    = 'var:bar_neg_pos'
+    VERT_BAR_NAU_POS    = 'var:bar_nau_pos'
+    VERT_BAR_POS_POS    = 'var:bar_pos_pos'
+
+    VERT_BAR_SCAN_X = 'var:bar_scan_x'
+    VERT_BAR_MULTI_X = 'var:bar_multi_x'
+    VERT_BAR_NEG_X = 'var:bar_neg_x'
+    VERT_BAR_NAU_X = 'var:bar_nau_x'
+    VERT_BAR_POS_X = 'var:bar_x_x'
 
 class Core(object):
 
@@ -337,7 +359,10 @@ class Core(object):
             self.update_CB(self.x_scan_data_CB, self.y_scan_data_CB, 'scan')
         else:
             button.setText('Start')
-            self.backup_scan()
+            try:
+                self.backup_scan()
+            except OSError:
+                print "Backup Directory not specified, BACKUP NOT SAVED"
             #self.scan_event.clear() # stops the scanning thread when the scan isn't running
         return self.SpecScan_sess.scanning
 
@@ -387,7 +412,7 @@ class Core(object):
                     pass
                 #elif array_equal(old_data, self.scan_data):
                 if not old_point == self.scan_point: # here is where you would graph it/save it to the csv
-                    print self.scan_point
+                    # print self.scan_point
                     if self.scan_point[0] > self.scan_array_counter and self.scan_array_counter == 0: #Skips old point
                         print "Scan point ignored ScanPoint:" + repr(self.scan_point[0]) + " Counter: " +repr(self.scan_array_counter)
                     elif self.scan_point[0] == self.scan_array_counter:
@@ -445,10 +470,10 @@ class Core(object):
     def scan_calculations(self, x, y):
         calc = Calculation(x, y)
         self.monitor.update(VAR.SCAN_MAX_Y, calc.y_max_string())
+        self.monitor.update(VAR.SCAN_MAX_Y_NUM, calc.y_max())
         self.monitor.update(VAR.SCAN_FWHM, calc.FWHM())
         self.monitor.update(VAR.SCAN_COM, calc.COM())
         self.monitor.update(VAR.SCAN_CWHM, calc.CFWHM())
-        self.monitor.update(VAR.SCAN_CENTROID, calc.Centroid())
 
     def save_scan_curr(self, filename, x_CB, y_CB):
         filedir = self.scan_dir
@@ -498,9 +523,10 @@ class Core(object):
     """ CENTER """
     def cent_settings(self, scan_motor_name, angle_motor_name, relmax_SB, relmin_SB, center_SB, angle_pm_SB, angle_o_SB, Motors, wait_time_SB, center_calc_CB):
         self.wait_time_SB = wait_time_SB
-        center_calc_CB.setMaxCount(2)    # At init we have to do some limit setting/setting up of UI elements
+        center_calc_CB.setMaxCount(3)    # At init we have to do some limit setting/setting up of UI elements
         center_calc_CB.addItem('Max Y')  # we do it here because they are mostly calcs which rely on the motors chosen
         center_calc_CB.addItem('COM')    # This combo box is not one of those though
+        center_calc_CB.addItem('Curser')
         for i in range(len(Motors)):
             Motor_inst = Motors[i]
             if Motor_inst.Enabled:
@@ -650,10 +676,16 @@ class Core(object):
             namearr = ['w neg', 'w naught', 'w pos']  #defining names and vars for the diff data sets
             max_array = [VAR.CENT_NEG_MAXY, VAR.CENT_NAU_MAXY, VAR.CENT_POS_MAXY]
             com_array = [VAR.CENT_NEG_COM, VAR.CENT_NAU_COM, VAR.CENT_POS_COM]
+            bar_vars = [VAR.VERT_BAR_NEG_POS, VAR.VERT_BAR_NAU_POS, VAR.VERT_BAR_POS_POS, VAR.VERT_BAR_MULTI_POS]
             for i in range(length):
-                (x, y) = x_arr[i], y_arr[i]
+                try:
+                    (x, y) = x_arr[i], y_arr[i]
+                except IndexError:
+                    (x, y) = [0], [0]
                 calc = Calculation(x, y) # initializing the calculation class with each data set
                 real_name_arr.append(namearr[i])
+                self.update_bar_pos(bar_vars[i], x, y)
+                # self.update_bar_pos(bar_vars[3], max(x_arr), max(y_arr))
                 self.monitor.update(max_array[i], calc.x_at_y_max())
                 self.monitor.update(com_array[i], calc.COM())
                 if i==2: # if we have enough data to calculate the center x,y we do it
@@ -663,6 +695,9 @@ class Core(object):
                     elif str(calc_CB.currentText()) == 'COM':
                         pos = self.monitor.get_value(VAR.CENT_POS_COM)
                         neg = self.monitor.get_value(VAR.CENT_NEG_COM)  # these are center x/y calcs \/ J Synchrotron Rad 2009 16 83-96 sect eqn 7 + 8 -- http://journals.iucr.org/s/issues/2009/01/00/ie5024/ie5024.pdf
+                    elif str(calc_CB.currentText()) == 'Curser':
+                        pos = self.monitor.get_value(VAR.VERT_BAR_POS_X)
+                        neg = self.monitor.get_value(VAR.VERT_BAR_NEG_X)
                     self.monitor.update(VAR.CENT_CENTERED_X, (pos + neg)/(2*(1-np.cos(np.degrees(self.angle_pm)))))
                     self.monitor.update(VAR.CENT_CENTERED_Y, (pos - neg) / (2 * (np.sin(np.degrees(self.angle_pm)))))
             if not self.cent_started:
@@ -677,7 +712,7 @@ class Core(object):
             else:
                 for i in range(len(plot)):
                     try:
-                        plot[i].new_plot(x_arr[i], y_arr[i], i = i)
+                        plot[i].new_plot(x_arr[i], y_arr[i])
                     except IndexError:
                         pass
             table.setHorizontalHeaderLabels(real_name_arr)
@@ -730,8 +765,45 @@ class Core(object):
                                      (pos - neg) / (2 * (np.sin(np.degrees(self.angle_pm)))),
                                      ])
             print "Successfully saved " + filename + '_' + curr_time + ".csv" + " In : " + filedir
-        
+
+    """CONDITIONING"""
+    def cond_move(self, PV, to, movetype): #should add status check
+        currpos = self.monitor.get_value(PV)
+        if movetype == 'Relative':
+            to = currpos+to
+        if self.monitor.put(PV, to):
+            print "Moving " + repr(PV)+ " to " + repr(to)
+
     """ RANDOM UTILITIES """
+    def update_bar_pos(self, var, x, y):
+        var_dict={'var:bar_scan_pos' : VAR.VERT_BAR_SCAN_X,
+                  'var:bar_multi_pos': VAR.VERT_BAR_MULTI_X,
+                  'var:bar_neg_pos': VAR.VERT_BAR_NEG_X,
+                  'var:bar_nau_pos': VAR.VERT_BAR_NAU_X,
+                  'var:bar_pos_pos': VAR.VERT_BAR_POS_X,
+                  }
+        for key in var_dict:
+            if var == key:
+                x_var=var_dict[key]
+            else:
+                continue
+        pos = self.monitor.get_value(var)
+        if pos == None:
+            try:
+                v_bar_pos = [min(x) + (max(x) - min(x)) / 2.0, max(y), min(y)]
+            except ValueError:
+                return
+        else:
+            try:
+                v_bar_pos = [pos[0], max(y), min(y)]
+            except ValueError:
+                v_bar_pos = pos
+
+        self.monitor.update(x_var, v_bar_pos[0])
+        self.monitor.update(var, v_bar_pos)
+
+
+
     def update_CB(self, x_data_CB, y_data_CB, type):
         self.CB_lock.acquire()
         try:
@@ -855,22 +927,22 @@ class Calculation:
         except ZeroDivisionError:
             return 0
 
-    def Centroid(self):
-        x_y=[]
-        x_step=[]
-        steps=[]
-        for i in range(len(self.x)):
-            pos = self.x[i]
-            intes = self.y[i]
-            x_y.append(pos*intes)
-            try:
-                step = abs(self.x[i+1] - self.x[i])
-            except IndexError:
-                step = abs(self.x[i] - self.x[i-1])
-            steps.append(step)
-            x_step.append(step*intes)
-        step = np.average(steps)
-        try:
-            return (step*np.sum(x_y))/(np.sum(x_step))
-        except RuntimeWarning:
-            return 0
+    # def Centroid(self):
+    #     x_y=[]
+    #     x_step=[]
+    #     steps=[]
+    #     for i in range(len(self.x)):
+    #         pos = self.x[i]
+    #         intes = self.y[i]
+    #         x_y.append(pos*intes)
+    #         try:
+    #             step = abs(self.x[i+1] - self.x[i])
+    #         except IndexError:
+    #             step = abs(self.x[i] - self.x[i-1])
+    #         steps.append(step)
+    #         x_step.append(step*intes)
+    #     step = np.average(steps)
+    #     try:
+    #         return (step*np.sum(x_y))/(np.sum(x_step))
+    #     except RuntimeWarning:
+    #         return 0

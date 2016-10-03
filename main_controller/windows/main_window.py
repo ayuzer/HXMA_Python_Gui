@@ -281,7 +281,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.set_scan_props() # updating variables from the saved file (last session)
         self.core.update_filepath(str(self.lineEdit_scan_select_file.text()), 'scan')
         # Plot
-        self.scan_plot_id = Plotter()
+        self.scan_plot_id = Plotter(monitor=self.monitor, VAR=VAR, id='scan')
         self.verticalLayout_scan_graph.addWidget(self.scan_plot_id)
         self.scan_plot_id.set_title(PLOT_TITLE)
         self.scan_plot_id.set_axis_label_x(PLOT_LABEL_X)
@@ -303,12 +303,14 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.comboBox_cent_motor_angle.currentIndexChanged.connect(self.handle_comboBox_cent_motor)
         self.comboBox_cent_data_x.activated.connect(self.handle_comboBox_cent_data)
         self.comboBox_cent_data_y.activated.connect(self.handle_comboBox_cent_data)
-        
+
         self.checkBox_cent_single.stateChanged.connect(partial(self.cent_graph, self.checkBox_cent_single))
         #Variables
-        (self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3) = Plotter(), Plotter(), Plotter()
+        (self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3) = Plotter(monitor=self.monitor, VAR=VAR, id='neg'), \
+                                                                          Plotter(monitor=self.monitor, VAR=VAR, id='nau'), \
+                                                                          Plotter(monitor=self.monitor, VAR=VAR, id='pos')
         self.plots = [self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3]
-        self.cent_plot_id = Plotter()
+        self.cent_plot_id = Plotter(monitor=self.monitor, VAR=VAR, id='multi')
         self.cent_timer = QtCore.QTimer()
         # INIT RUN
         self.init_cent_graph(self.checkBox_cent_single.isChecked())
@@ -317,6 +319,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.set_cent_props()  # updating variables from the saved file (last session)
         self.core.update_filepath(str(self.lineEdit_cent_select_file.text()), 'cent')
         self.core.is_centering(self.pushButton_cent_start_stop)
+
+        """CONDITIONING"""
+        self.pushButton_cond_pb_aper_hor_movego.clicked.connect(partial(self.handle_cond_move, PV.COND_PB_APER_HOR_POS, self.doubleSpinBox_cond_pb_aper_hor_moveto, self.comboBox_cond_pb_aper_hor_movetype))
+
+        self.init_beam_cond()
+
 
         """PICTURE"""
         pic = QtGui.QLabel(self.label_motor_picture)
@@ -465,6 +473,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
     def scan_plot(self):
         go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(),
                                       self.comboBox_scan_data_y.currentIndex())
+        self.core.update_bar_pos(VAR.VERT_BAR_SCAN_POS, x, y)
+
         if not self.old_scan_x == x or not self.old_scan_y == y and go:
             self.scan_plot_id.new_plot(x, y)
             self.core.scan_calculations(x, y)
@@ -537,7 +547,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         else:
             plot = self.plots
         self.core.cent_plotting(plot, self.tableWidget_cent_data,
-                                self.comboBox_cent_data_x, self.comboBox_cent_data_y, 
+                                self.comboBox_cent_data_x, self.comboBox_cent_data_y,
                                 self.comboBox_cent_calc_choose, self.checkBox_cent_single.isChecked())
 
     def handle_save_cent(self):
@@ -592,6 +602,149 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                 plot.show()
             self.cent_plot_id.hide()
 
+    """CONDITIONING"""
+    def init_beam_cond(self):
+        Beam_Cond = namedtuple('Beam_Cond',
+                                ['PV', 'Moveto_SB', 'Move_PB', 'MoveType_CB'])
+        self.table_hor_gap = Beam_Cond(PV=PV.COND_TABLE_HOR_GAP_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_table_hor_gap,
+                                       MoveType_CB=self.comboBox_cond_table_hor_gap_movetype,
+                                       Move_PB=self.pushButton_cond_table_hor_gap_movego,
+                                       )
+        self.table_hor_cent = Beam_Cond(PV=PV.COND_TABLE_HOR_CENT_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_table_hor_cent,
+                                       MoveType_CB=self.comboBox_cond_table_hor_cent_movetype,
+                                       Move_PB=self.pushButton_cond_table_hor_cent_movego,
+                                       )
+        self.table_hor_mot1 = Beam_Cond(PV=PV.COND_TABLE_HOR_MOT1_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_table_hor_mot1,
+                                       MoveType_CB=self.comboBox_cond_table_hor_mot1_movetype,
+                                       Move_PB=self.pushButton_cond_table_hor_mot1_movego,
+                                       )
+        self.table_hor_mot2 = Beam_Cond(PV=PV.COND_TABLE_HOR_MOT2_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_table_hor_mot2,
+                                       MoveType_CB=self.comboBox_cond_table_hor_mot2_movetype,
+                                       Move_PB=self.pushButton_cond_table_hor_mot2_movego,
+                                       )
+        self.table_vert_gap = Beam_Cond(PV=PV.COND_TABLE_VERT_GAP_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_table_vert_gap,
+                                       MoveType_CB=self.comboBox_cond_table_vert_gap_movetype,
+                                       Move_PB=self.pushButton_cond_table_vert_gap_movego,
+                                       )
+        self.table_vert_cent = Beam_Cond(PV=PV.COND_TABLE_VERT_CENT_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_table_vert_cent,
+                                       MoveType_CB=self.comboBox_cond_table_vert_cent_movetype,
+                                       Move_PB=self.pushButton_cond_table_vert_cent_movego,
+                                       )
+        self.table_vert_mot1 = Beam_Cond(PV=PV.COND_TABLE_VERT_MOT1_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_table_vert_mot1,
+                                       MoveType_CB=self.comboBox_cond_table_vert_mot1_movetype,
+                                       Move_PB=self.pushButton_cond_table_vert_mot1_movego,
+                                       )
+        self.table_vert_mot2 = Beam_Cond(PV=PV.COND_TABLE_VERT_MOT2_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_table_vert_mot2,
+                                       MoveType_CB=self.comboBox_cond_table_vert_mot2_movetype,
+                                       Move_PB=self.pushButton_cond_table_vert_mot2_movego,
+                                       )
+        
+        
+        self.diff_hor_gap = Beam_Cond(PV=PV.COND_DIFF_HOR_GAP_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_diff_hor_gap,
+                                       MoveType_CB=self.comboBox_cond_diff_hor_gap_movetype,
+                                       Move_PB=self.pushButton_cond_diff_hor_gap_movego,
+                                       )
+        self.diff_hor_cent = Beam_Cond(PV=PV.COND_DIFF_HOR_CENT_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_diff_hor_cent,
+                                       MoveType_CB=self.comboBox_cond_diff_hor_cent_movetype,
+                                       Move_PB=self.pushButton_cond_diff_hor_cent_movego,
+                                       )
+        self.diff_hor_mot1 = Beam_Cond(PV=PV.COND_DIFF_HOR_MOT1_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_diff_hor_mot1,
+                                       MoveType_CB=self.comboBox_cond_diff_hor_mot1_movetype,
+                                       Move_PB=self.pushButton_cond_diff_hor_mot1_movego,
+                                       )
+        self.diff_hor_mot2 = Beam_Cond(PV=PV.COND_DIFF_HOR_MOT2_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_diff_hor_mot2,
+                                       MoveType_CB=self.comboBox_cond_diff_hor_mot2_movetype,
+                                       Move_PB=self.pushButton_cond_diff_hor_mot2_movego,
+                                       )
+        self.diff_vert_gap = Beam_Cond(PV=PV.COND_DIFF_VERT_GAP_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_diff_vert_gap,
+                                       MoveType_CB=self.comboBox_cond_diff_vert_gap_movetype,
+                                       Move_PB=self.pushButton_cond_diff_vert_gap_movego,
+                                       )
+        self.diff_vert_cent = Beam_Cond(PV=PV.COND_DIFF_VERT_CENT_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_diff_vert_cent,
+                                       MoveType_CB=self.comboBox_cond_diff_vert_cent_movetype,
+                                       Move_PB=self.pushButton_cond_diff_vert_cent_movego,
+                                       )
+        self.diff_vert_mot1 = Beam_Cond(PV=PV.COND_DIFF_VERT_MOT1_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_diff_vert_mot1,
+                                       MoveType_CB=self.comboBox_cond_diff_vert_mot1_movetype,
+                                       Move_PB=self.pushButton_cond_diff_vert_mot1_movego,
+                                       )
+        self.diff_vert_mot2 = Beam_Cond(PV=PV.COND_DIFF_VERT_MOT2_POS,
+                                       Moveto_SB=self.doubleSpinBox_cond_diff_vert_mot2,
+                                       MoveType_CB=self.comboBox_cond_diff_vert_mot2_movetype,
+                                       Move_PB=self.pushButton_cond_table_vert_mot2_movego,
+                                       )
+        
+
+        self.pb_aper_hor = Beam_Cond(PV=PV.COND_PB_APER_HOR_POS_PUSH,
+                                         Moveto_SB=self.doubleSpinBox_cond_pb_aper_hor_moveto,
+                                         MoveType_CB=self.comboBox_cond_pb_aper_hor_movetype,
+                                         Move_PB=self.pushButton_cond_pb_aper_hor_movego,
+                                         )
+
+        self.pb_aper_vert = Beam_Cond(PV=PV.COND_PB_APER_VERT_POS_PUSH,
+                                     Moveto_SB=self.doubleSpinBox_cond_pb_aper_vert_moveto,
+                                     MoveType_CB=self.comboBox_cond_pb_aper_vert_movetype,
+                                     Move_PB=self.pushButton_cond_pb_aper_vert_movego,
+                                     )
+        self.dac_pin_hor = Beam_Cond(PV=PV.COND_DAC_PIN_HOR_POS_PUSH,
+                                     Moveto_SB=self.doubleSpinBox_cond_dac_pin_hor_moveto,
+                                     MoveType_CB=self.comboBox_cond_dac_pin_hor_movetype,
+                                     Move_PB=self.pushButton_cond_dac_pin_hor_movego,
+                                     )
+
+        self.dac_pin_vert = Beam_Cond(PV=PV.COND_DAC_PIN_VERT_POS_PUSH,
+                                      Moveto_SB=self.doubleSpinBox_cond_dac_pin_vert_moveto,
+                                      MoveType_CB=self.comboBox_cond_dac_pin_vert_movetype,
+                                      Move_PB=self.pushButton_cond_dac_pin_vert_movego,
+                                      )
+
+        self.beam_stop_hor = Beam_Cond(PV=PV.COND_BEAM_STOP_HOR_POS_PUSH,
+                                     Moveto_SB=self.doubleSpinBox_cond_beam_stop_hor_moveto,
+                                     MoveType_CB=self.comboBox_cond_beam_stop_hor_movetype,
+                                     Move_PB=self.pushButton_cond_beam_stop_hor_movego,
+                                     )
+
+        self.beam_stop_vert = Beam_Cond(PV=PV.COND_BEAM_STOP_VERT_POS_PUSH,
+                                      Moveto_SB=self.doubleSpinBox_cond_beam_stop_vert_moveto,
+                                      MoveType_CB=self.comboBox_cond_beam_stop_vert_movetype,
+                                      Move_PB=self.pushButton_cond_beam_stop_vert_movego,
+                                      )
+
+        self.beam_cond =[
+            self.table_hor_gap, self.table_hor_cent, self.table_hor_mot1, self.table_hor_mot2,
+            self.table_vert_gap, self.table_vert_cent, self.table_vert_mot1, self.table_vert_mot2,
+            self.diff_hor_gap, self.diff_hor_cent, self.diff_hor_mot1, self.diff_hor_mot2,
+            self.diff_vert_gap, self.diff_vert_cent, self.diff_vert_mot1, self.diff_vert_mot2,
+            self.pb_aper_hor, self.pb_aper_vert, self.beam_stop_hor, self.beam_stop_vert,
+            self.dac_pin_hor, self.dac_pin_vert,
+        ]
+
+        for move in self.beam_cond:
+            move.MoveType_CB.addItems(['Relative', 'Absolute'])
+            if move.Move_PB == None:  # No pushbutton therefore commands go off of enter in box
+                # move.MoveType_CB.lineEdit().returnPressed.connect(partial(self.handle_cond_move, move.PV, move.Moveto_SB.value(), move.MoveType_CB.currentText()))
+                pass
+            else:
+                move.Move_PB.clicked.connect(partial(self.handle_cond_move, move.PV, move.Moveto_SB, move.MoveType_CB))
+
+    def handle_cond_move(self, PV, SB, CB):
+        self.core.cond_move(PV, SB.value(), CB.currentText())
+
     """RANDOM"""
     def select_file(self, line_edit):
         line_edit.setText(QtGui.QFileDialog.getExistingDirectory(None, 'Select a folder to save data :', os.getcwd(), QtGui.QFileDialog.ShowDirsOnly))
@@ -623,15 +776,19 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             VAR.SCAN_FWHM:          (self.label_scan_FWHM,          '{:.2f}',   12, True),
             VAR.SCAN_COM:           (self.label_scan_COM,           '{:.2f}',   12, True),
             VAR.SCAN_CWHM:          (self.label_scan_CWHM,          '{:.2f}',   12, True),
-            VAR.SCAN_CENTROID:      (self.label_scan_centroid,      '{:.2f}',   12, True),
             VAR.CENT_NEG_MAXY:      (self.label_cent_maxint_m,      '{:.3f}',   12, True),
-            VAR.CENT_NEG_COM:       (self.label_cent_com_m,         '{:.3f}',   12, True),
             VAR.CENT_NAU_MAXY:      (self.label_cent_maxint_o,      '{:.3f}',   12, True),
-            VAR.CENT_NAU_COM:       (self.label_cent_com_o,         '{:.3f}',   12, True),
             VAR.CENT_POS_MAXY:      (self.label_cent_maxint_p,      '{:.3f}',   12, True),
+            VAR.CENT_NEG_COM:       (self.label_cent_com_m,         '{:.3f}',   12, True),
+            VAR.CENT_NAU_COM:       (self.label_cent_com_o,         '{:.3f}',   12, True),
             VAR.CENT_POS_COM:       (self.label_cent_com_p,         '{:.3f}',   12, True),
+            VAR.VERT_BAR_NEG_X:   (self.label_cent_curs_m,        '{:.3f}',   12, True),
+            VAR.VERT_BAR_NAU_X:   (self.label_cent_curs_o,        '{:.3f}',   12, True),
+            VAR.VERT_BAR_POS_X:   (self.label_cent_curs_p,        '{:.3f}',   12, True),
+            VAR.VERT_BAR_SCAN_X:   (self.label_scan_curser,        '{:.3f}',   12, True),
             VAR.CENT_CENTERED_X:    (self.label_cent_calc_cent_x,   '{:.3f}',   12, True),
             VAR.CENT_CENTERED_Y:    (self.label_cent_calc_cent_y,   '{:.3f}',   12, True),
+
 
             PV.COND_TABLE_HOR_STATUS: (self.label_cond_table_hor_status, '{:g}',     12, True),
             PV.COND_TABLE_HOR_GAP_POS: (self.label_cond_table_hor_gap_currpos, '{:,.2f}',     12, True),
@@ -656,7 +813,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             PV.COND_DIFF_VERT_CENT_POS: (self.label_cond_diff_vert_cent_currpos, '{:,.2f}', 12, True),
             PV.COND_DIFF_VERT_MOT1_POS: (self.label_cond_diff_vert_mot1_currpos, '{:,.2f}', 12, True),
             PV.COND_DIFF_VERT_MOT2_POS: (self.label_cond_diff_vert_mot2_currpos, '{:,.2f}', 12, True),
-            
+
             PV.COND_PB_APER_HOR_POS: (self.label_cond_pb_aper_hor_currpos, '{:,.2f}', 12, True),
             PV.COND_PB_APER_VERT_POS : (self.label_cond_pb_aper_vert_currpos, '{:,.2f}', 12, True),
             PV.COND_DAC_PIN_HOR_POS : (self.label_cond_dac_pin_hor_currpos, '{:,.2f}', 12, True),
@@ -776,6 +933,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.save_scan_props()
         self.save_cent_props()
         self.save_motors(self.Motors)
+
+        self.scan_plot_id.terminate()
+        self.cent_plot_id.terminate()
+        self.cent_plot_id_1.terminate()
+        self.cent_plot_id_2.terminate()
+        self.cent_plot_id_3.terminate()
 
         self.core.terminate()
 

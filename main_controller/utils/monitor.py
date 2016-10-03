@@ -248,7 +248,6 @@ class EpicsMonitor(QtCore.QObject):
             if self.local_dict[name] == value:
                 # print "monitor: no need to update %s %s" % (name, repr(value))
                 return False
-
         self.local_dict[name] = value
         self.pv_connected[name] = True
 

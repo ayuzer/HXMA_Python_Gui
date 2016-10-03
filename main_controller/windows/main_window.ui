@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>789</width>
-    <height>829</height>
+    <width>803</width>
+    <height>745</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1163,7 +1163,7 @@ Subtraction (Linear) -NC</string>
                  </widget>
                 </item>
                 <item row="0" column="5">
-                 <widget class="QLabel" name="label_scan_centroid_name">
+                 <widget class="QLabel" name="label_scan_curser_name">
                   <property name="minimumSize">
                    <size>
                     <width>120</width>
@@ -1171,7 +1171,7 @@ Subtraction (Linear) -NC</string>
                    </size>
                   </property>
                   <property name="text">
-                   <string>Centroid</string>
+                   <string>Curser Pos</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
@@ -1179,7 +1179,7 @@ Subtraction (Linear) -NC</string>
                  </widget>
                 </item>
                 <item row="1" column="5">
-                 <widget class="QLabel" name="label_scan_centroid">
+                 <widget class="QLabel" name="label_scan_curser">
                   <property name="text">
                    <string>0</string>
                   </property>
@@ -1545,7 +1545,7 @@ Subtraction (Linear) -NC</string>
                   </property>
                   <property name="minimumSize">
                    <size>
-                    <width>350</width>
+                    <width>325</width>
                     <height>0</height>
                    </size>
                   </property>
@@ -1589,7 +1589,7 @@ Subtraction (Linear) -NC</string>
                  <widget class="QLabel" name="label_cent_maxint_m_name">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>200</horstretch>
+                    <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
@@ -1662,6 +1662,48 @@ Subtraction (Linear) -NC</string>
                 </item>
                 <item row="3" column="1">
                  <widget class="QLabel" name="label_cent_com_o">
+                  <property name="text">
+                   <string>0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="label_cent_curs_p_name">
+                  <property name="text">
+                   <string>Curser (+)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="0">
+                 <widget class="QLabel" name="label_cent_curs_p">
+                  <property name="text">
+                   <string>0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QLabel" name="label_cent_curs_o_name">
+                  <property name="text">
+                   <string>Curser (o)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="2">
+                 <widget class="QLabel" name="label_cent_curs_m_name">
+                  <property name="text">
+                   <string>Curser (-)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="1">
+                 <widget class="QLabel" name="label_cent_curs_o">
+                  <property name="text">
+                   <string>0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="2">
+                 <widget class="QLabel" name="label_cent_curs_m">
                   <property name="text">
                    <string>0</string>
                   </property>
@@ -1879,6 +1921,13 @@ Based On</string>
                <widget class="QCheckBox" name="checkBox_cent_single">
                 <property name="text">
                  <string>Single Graph</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_cent_graph_display_bars">
+                <property name="text">
+                 <string>Display Bars</string>
                 </property>
                </widget>
               </item>
@@ -2132,6 +2181,110 @@ Based On</string>
                       <item row="3" column="3">
                        <widget class="QComboBox" name="comboBox_cond_table_hor_mot2_movetype"/>
                       </item>
+                      <item row="0" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_table_hor_gap_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="1" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_table_hor_cent_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_table_hor_mot1_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="3" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_table_hor_mot2_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
                      </layout>
                     </item>
                     <item>
@@ -2276,6 +2429,110 @@ Based On</string>
                         </property>
                         <property name="text">
                          <string>Gap</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_table_vert_gap_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="3" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_table_vert_cent_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="4" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_table_vert_mot1_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="5" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_table_vert_mot2_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
                         </property>
                        </widget>
                       </item>
@@ -2501,6 +2758,110 @@ Based On</string>
                       <item row="3" column="3">
                        <widget class="QComboBox" name="comboBox_cond_diff_hor_mot2_movetype"/>
                       </item>
+                      <item row="0" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_diff_hor_gap_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="1" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_diff_hor_cent_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_diff_hor_mot1_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="3" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_diff_hor_mot2_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
                      </layout>
                     </item>
                     <item>
@@ -2638,6 +2999,110 @@ Based On</string>
                         </property>
                         <property name="text">
                          <string>Gap</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_diff_vert_gap_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="3" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_diff_vert_cent_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="4" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_diff_vert_mot1_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="5" column="4">
+                       <widget class="QPushButton" name="pushButton_cond_diff_vert_mot2_movego">
+                        <property name="maximumSize">
+                         <size>
+                          <width>40</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="baseSize">
+                         <size>
+                          <width>10</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>GO</string>
                         </property>
                        </widget>
                       </item>
@@ -2824,18 +3289,7 @@ Based On</string>
                      </widget>
                     </item>
                     <item row="1" column="3">
-                     <widget class="QComboBox" name="comboBox_cond_pb_aper_vert_movetype">
-                      <item>
-                       <property name="text">
-                        <string>Relative</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>Absolute</string>
-                       </property>
-                      </item>
-                     </widget>
+                     <widget class="QComboBox" name="comboBox_cond_pb_aper_vert_movetype"/>
                     </item>
                     <item row="0" column="3">
                      <widget class="QComboBox" name="comboBox_cond_pb_aper_hor_movetype">
@@ -2844,16 +3298,6 @@ Based On</string>
                         <pointsize>10</pointsize>
                        </font>
                       </property>
-                      <item>
-                       <property name="text">
-                        <string>Relative</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>Absolute</string>
-                       </property>
-                      </item>
                      </widget>
                     </item>
                     <item row="1" column="2">
@@ -3097,18 +3541,7 @@ Based On</string>
                      </widget>
                     </item>
                     <item row="1" column="3">
-                     <widget class="QComboBox" name="comboBox_cond_dac_pin_vert_movetype">
-                      <item>
-                       <property name="text">
-                        <string>Relative</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>Absolute</string>
-                       </property>
-                      </item>
-                     </widget>
+                     <widget class="QComboBox" name="comboBox_cond_dac_pin_vert_movetype"/>
                     </item>
                     <item row="0" column="3">
                      <widget class="QComboBox" name="comboBox_cond_dac_pin_hor_movetype">
@@ -3117,16 +3550,6 @@ Based On</string>
                         <pointsize>10</pointsize>
                        </font>
                       </property>
-                      <item>
-                       <property name="text">
-                        <string>Relative</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>Absolute</string>
-                       </property>
-                      </item>
                      </widget>
                     </item>
                     <item row="1" column="2">
@@ -3370,18 +3793,7 @@ Based On</string>
                      </widget>
                     </item>
                     <item row="1" column="3">
-                     <widget class="QComboBox" name="comboBox_cond_beam_stop_vert_movetype">
-                      <item>
-                       <property name="text">
-                        <string>Relative</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>Absolute</string>
-                       </property>
-                      </item>
-                     </widget>
+                     <widget class="QComboBox" name="comboBox_cond_beam_stop_vert_movetype"/>
                     </item>
                     <item row="0" column="3">
                      <widget class="QComboBox" name="comboBox_cond_beam_stop_hor_movetype">
@@ -3390,16 +3802,6 @@ Based On</string>
                         <pointsize>10</pointsize>
                        </font>
                       </property>
-                      <item>
-                       <property name="text">
-                        <string>Relative</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>Absolute</string>
-                       </property>
-                      </item>
                      </widget>
                     </item>
                     <item row="1" column="2">
@@ -3816,7 +4218,7 @@ Based On</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>789</width>
+     <width>803</width>
      <height>25</height>
     </rect>
    </property>

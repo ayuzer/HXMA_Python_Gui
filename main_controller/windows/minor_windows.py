@@ -211,3 +211,48 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
 
     def handle_pushButton_cancel(self):
         self.close()
+
+class SetServer(QtGui.QWidget, DragTextMixin, UiMixin):
+    def __init__(self, *args, **kwargs):
+
+        self.monitor = kwargs['monitor']
+        del kwargs['monitor']
+
+        center_point = kwargs['center']
+        del kwargs['center']
+
+        self.host = kwargs['host']
+        del kwargs['host']
+
+        self.port= kwargs['port']
+        del kwargs['port']
+
+        super(SetServer, self).__init__(*args, **kwargs)
+
+        self.load_ui("windows/set_server.ui")
+
+        self.setWindowTitle(settings.APP_NAME)
+
+        frame_geometry = self.frameGeometry()
+        frame_geometry.moveCenter(center_point)
+        self.move(frame_geometry.topLeft())
+
+        self.drag_text_mixin_initialize()
+
+        self.pushButton_apply.clicked.connect(self.handle_pushButton_apply)
+
+        self.lineEdit_host.setText(self.host)
+        self.lineEdit_port.setText(self.port)
+
+    def handle_pushButton_apply(self):
+        self._apply_callback(str(self.lineEdit_host.text()), str(self.lineEdit_port.text()))
+        self.close()
+
+    def apply_callback(self, callback):
+        self._apply_callback = callback
+
+    def handle_pushButton_cancel(self):
+        self.close()
+
+    def set_close_callback(self, callback):
+        self._close_callback = callback

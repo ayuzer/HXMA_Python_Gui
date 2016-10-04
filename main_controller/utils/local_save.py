@@ -234,3 +234,72 @@ class CentMixin(object):
         cent_settings = self.settings.get(key, {})
         cent_settings[CENT_KEY.CENT] = cent_dict
         self.settings[key] = cent_settings
+        
+        
+class ROCK_KEY(object):
+    ROCK = '__rock_props__'
+    SAVEDIR = 'save_dir'
+    SAVENAME = 'save_name'
+    X_INDEX = 'x_index'
+    Y_INDEX = 'y_index'
+    STARTPOS = 'start_pos'
+    STOPPOS = 'stop_pos'
+    STEPS = 'steps'
+    WAITTIME = 'wait_time'
+    CURRMOTOR = 'curr_motor'
+    TOTTIME = 'total_time'
+
+
+class RockMixin(object):
+    """
+    This is a mixin which will allow saving and loading of rockning props from the main window to a .json file
+    """
+
+    def set_rock_props(self):
+        key = self.__class__.__name__
+
+        try:
+            rock_settings = self.settings.get(key)
+            rock_dict = rock_settings.get(ROCK_KEY.ROCK)
+
+            print "SETTING ROCK PROPERTY %s TO %s" % (key, rock_dict)
+
+            self.doubleSpinBox_rock_startpos.setValue(rock_dict[ROCK_KEY.STARTPOS])
+            self.doubleSpinBox_rock_stoppos.setValue(rock_dict[ROCK_KEY.STOPPOS])
+            self.doubleSpinBox_rock_steps.setValue(rock_dict[ROCK_KEY.STEPS])
+            self.doubleSpinBox_rock_waittime.setValue(rock_dict[ROCK_KEY.WAITTIME])
+            self.comboBox_rock_data_x.setCurrentIndex(rock_dict[ROCK_KEY.X_INDEX])
+            self.comboBox_rock_data_y.setCurrentIndex(rock_dict[ROCK_KEY.Y_INDEX])
+            self.lineEdit_rock_select_file.setText(rock_dict[ROCK_KEY.SAVEDIR])
+            self.lineEdit_rock_filename.setText(rock_dict[ROCK_KEY.SAVENAME])
+            self.comboBox_rock_motor.setCurrentIndex(rock_dict[ROCK_KEY.CURRMOTOR])
+            self.doubleSpinBox_rock_time.setValue(rock_dict[ROCK_KEY.TOTTIME])
+
+            return True
+        except:
+            return False
+
+    def save_rock_props(self):
+
+        key = self.__class__.__name__
+
+        rock_dict = {
+            ROCK_KEY.STARTPOS:  self.doubleSpinBox_rock_startpos.value(),
+            ROCK_KEY.STOPPOS:   self.doubleSpinBox_rock_stoppos.value(),
+            ROCK_KEY.STEPS:     self.doubleSpinBox_rock_steps.value(),
+            ROCK_KEY.WAITTIME:  self.doubleSpinBox_rock_waittime.value(),
+            ROCK_KEY.X_INDEX:   self.comboBox_rock_data_x.currentIndex(),
+            ROCK_KEY.Y_INDEX:   self.comboBox_rock_data_y.currentIndex(),
+            ROCK_KEY.SAVEDIR:   str(self.lineEdit_rock_select_file.text()),
+            ROCK_KEY.SAVENAME:  str(self.lineEdit_rock_filename.text()),
+            ROCK_KEY.CURRMOTOR: self.comboBox_rock_motor.currentIndex(),
+            ROCK_KEY.TOTTIME: self.doubleSpinBox_rock_time.value(),
+        }
+
+        print "SETTING ROCK PROPERTY %s TO %s" % (key, rock_dict)
+
+        rock_settings = self.settings.get(key, {})
+        rock_settings[ROCK_KEY.ROCK] = rock_dict
+        self.settings[key] = rock_settings
+
+

@@ -54,7 +54,7 @@ class PV(Constant):
     COND_DIFF_VERT_MOT2_POS = 'SMTR16062I1099:mm'
 
     COND_TABLE_HOR_STATUS = 'PSL16062I1024:status'
-    COND_TABLE_HOR_GAP_POS   = 'PSL16062I1024:gap:'
+    COND_TABLE_HOR_GAP_POS   = 'PSL16062I1024:gap'
     COND_TABLE_HOR_CENT_POS  = 'PSL16062I1024:center'
     COND_TABLE_HOR_MOT1_POS  = 'SMTR16062I1079:mm'
     COND_TABLE_HOR_MOT2_POS  = 'SMTR16062I1078:mm'
@@ -180,6 +180,12 @@ class Core(object):
         self._cent_timer.start()
         self.cent_event = threading.Event()
         self.cent_event.clear()
+
+        self._rock_timer = threading.Timer(1, self.handle_rock)
+        self._rock_timer.start()
+        self.rock_event = threading.Event()
+        self.rock_event.clear()
+        self._teminate_rock = False
         
         self.Spec_sess = Spec()
         self.SpecMotor_sess = SpecMotor()
@@ -243,6 +249,7 @@ class Core(object):
         except SpecClientError as e:
             print repr(e) + ' unconfig = Motor Name: ' + motor.Name
             pos = 'None'
+            moved = False
         return {'pos': pos, 'moved': moved}
 
     def init_motor_thread(self, motors):
@@ -284,6 +291,7 @@ class Core(object):
             else:  # making sure we're looking at the right motor
                 time.sleep(1)
                 SpecMotor.connectToSpec(_SpecMotor_sess, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
+        print "Thread killed : " + motor.Name
 
     def motor_track_state(self, state):
         if state:  # If the checkbox is clicked
@@ -305,6 +313,7 @@ class Core(object):
         self._move_terminate_flag = False
         for CB in CBs:
             CB.clear()
+        self.init_motor_thread(Motors)
         for i in range(len(Motors)):
             Motor_inst = Motors[i]
             if Motor_inst.Enabled:
@@ -316,23 +325,24 @@ class Core(object):
 
     """ COUNTER """
     def handle_counter(self):
-        address = self.monitor.get_value(VAR.SERVER_ADDRESS) #Just initalizing the counter classes which we'll read
-        self.SpecCounter_ic2 = SpecCounter()
-        self.SpecCounter_pinf = SpecCounter()
-        self.SpecCounter_sec = SpecCounter()
-        SpecCounter.connectToSpec(self.SpecCounter_ic2, 'ic2', address)
-        SpecCounter.connectToSpec(self.SpecCounter_pinf, 'pinf', address)
-        SpecCounter.connectToSpec(self.SpecCounter_sec, 'sec', address)
-        i=0
-        while True:
-            self.count_event.wait()
-            if self._terminate_flag: break
-            i = i + 1
-            # print i
-            count_time = SpecCounter.count(self.SpecCounter_sec, self.count_time_set_SB.value())
-            self.monitor.update(VAR.COUNT_TIME, count_time)
-            self.monitor.update(VAR.COUNTER_1_COUNT, SpecCounter.getValue(self.SpecCounter_ic2))
-            self.monitor.update(VAR.COUNTER_2_COUNT, SpecCounter.getValue(self.SpecCounter_pinf))
+        pass
+        # address = self.monitor.get_value(VAR.SERVER_ADDRESS) #Just initalizing the counter classes which we'll read
+        # self.SpecCounter_ic2 = SpecCounter()
+        # self.SpecCounter_pinf = SpecCounter()
+        # self.SpecCounter_sec = SpecCounter()
+        # SpecCounter.connectToSpec(self.SpecCounter_ic2, 'ic2', address)
+        # SpecCounter.connectToSpec(self.SpecCounter_pinf, 'pinf', address)
+        # SpecCounter.connectToSpec(self.SpecCounter_sec, 'sec', address)
+        # i=0
+        # while True:
+        #     self.count_event.wait()
+        #     if self._terminate_flag: break
+        #     i = i + 1
+        #     # print i
+        #     count_time = SpecCounter.count(self.SpecCounter_sec, self.count_time_set_SB.value())
+        #     self.monitor.update(VAR.COUNT_TIME, count_time)
+        #     self.monitor.update(VAR.COUNTER_1_COUNT, SpecCounter.getValue(self.SpecCounter_ic2))
+        #     self.monitor.update(VAR.COUNTER_2_COUNT, SpecCounter.getValue(self.SpecCounter_pinf))
 
     def counting_state(self, state, spinBox_counter):
         self.count_time_set_SB = spinBox_counter
@@ -470,7 +480,7 @@ class Core(object):
     def scan_calculations(self, x, y):
         calc = Calculation(x, y)
         self.monitor.update(VAR.SCAN_MAX_Y, calc.y_max_string())
-        self.monitor.update(VAR.SCAN_MAX_Y_NUM, calc.y_max())
+        self.monitor.update(VAR.SCAN_MAX_Y_NUM, calc.x_at_y_max())
         self.monitor.update(VAR.SCAN_FWHM, calc.FWHM())
         self.monitor.update(VAR.SCAN_COM, calc.COM())
         self.monitor.update(VAR.SCAN_CWHM, calc.CFWHM())
@@ -765,6 +775,142 @@ class Core(object):
                                      (pos - neg) / (2 * (np.sin(np.degrees(self.angle_pm)))),
                                      ])
             print "Successfully saved " + filename + '_' + curr_time + ".csv" + " In : " + filedir
+            
+    """ROCKING"""
+    def save_rock_curr(self, filename, x_CB, y_CB):
+        pass
+
+    def handle_rock(self):
+        while True:
+            if self._terminate_flag:break
+            if self._teminate_rock:break
+            self.rock_event.wait()
+            (motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time) = self.rock_props
+            for i in range(len(Motors)):
+                motor_inst = Motors[i]
+                if motor_name == motor_inst.Name:
+                    motor = motor_inst
+            start_stop = sorted([startpos, endpos])
+            ## This block simply sorts the omitted regions into usable sets of values
+            omitted=[]
+            lows = [start_stop[0]]
+            highs = [start_stop[1]]
+            for region in omit:
+                lows.sort()
+                highs.sort()
+                ignore=False
+                region_sort = sorted(region)
+                if region_sort[0] < lows[0] or region_sort[1] > highs[-1]:
+                    print "The omitted region of " + repr(region) + " has been ignored as it is outside of the start/stop range"
+                    ignore = True
+                for regions in omitted:
+                    if regions[0] < region_sort[0] < regions[1]:
+                        print "The omitted region of " + repr(region) + " has been ignored as it is inside an omitted zone"
+                        ignore = True
+                if not ignore:
+                    omitted.append(region_sort)
+                    lows.append(region_sort[0])
+                    highs.append(region_sort[1])
+            full_list= sorted(lows+highs)
+            regions=[]
+            tot_size = 0
+            for i in range(len(full_list)/2):
+                if not full_list[i*2] == full_list[(i*2) +1]:
+                    regions.append([full_list[i*2], full_list[(i*2) +1]])
+                    tot_size = tot_size + abs(full_list[i*2] - full_list[(i*2) +1])
+            # This is the end of the omitted regions code, with the final regions list containing relevant pairs
+            while self.is_moving(motor.Name):
+                time.sleep(.25)
+            start = time.time()
+            while rock_time * 60 > time.time() - start:  # checking if all the time to rock has passed
+                print time.time() - start
+                dict = self.checkpos_motor(motor, False)
+                curr = dict['pos']
+                found = False
+                while not found:  # looping so we can check what the index is and move if its not an end position
+                    for index in range(len(start_stop)):
+                        if abs(curr) == start_stop[index]:  # where are we?
+                            found = True
+                            break
+                    if not found:
+                        self.move_motor(motor, min(start_stop, key=lambda x: abs(x - curr)), 'Absolute')  # Moving to closest point
+                        time.sleep(3)
+                        while self.is_moving(motor.Name):
+                            time.sleep(.25)
+                regions_meta = []
+                used_pts = 0
+                percent_start = 0
+                (start, stop, size, percent_size, percent_stop, points, dist) = ([] for v in range(7))
+                for i in range(len(regions)):
+                    start.append(regions[i][index])
+                    stop.append(regions[i][index - 1])
+                    size.append(abs(start[i] - stop[i]))
+                    percent_size.append(size[i] / tot_size)
+                    percent_stop.append(percent_start + percent_size[i])
+                    percent_start = (percent_size[i] + percent_start)
+                    points.append(math.floor(intervals * percent_size[i]))
+                    used_pts = (used_pts + points[i])
+                    dist.append(abs(curr - start[i]))
+                regions_meta = [start, stop, size, [m - n for m, n in zip(percent_stop, percent_size)], percent_stop, points, dist]
+                unused_pts = intervals - used_pts
+                for i in range(int(
+                        unused_pts)):  # distributing all of the unused points randomly based off of the distributions
+                    num = np.random.random()
+                    for j in range(len(regions_meta[0])):
+                        if regions_meta[4][j] > num > regions_meta[3][j]:
+                            regions_meta[5][j] = regions_meta[5][j] + 1
+                            used_pts = used_pts + 1
+                regions_meta[:].sort(key=lambda t: regions_meta[6])
+                self.rock_roll(motor, regions_meta[0], regions_meta[1], regions_meta[5], count_time)
+            self.rock_event.clear()
+            # self.is_rocking()
+
+    def rock_stop(self):
+        self.rock_event.clear()
+        self._teminate_rock = True
+        self.is_rocking()
+        # if self.is_scanning():
+        #     self.scan_stop()
+
+    def rock_roll(self, motor, startlist, stoplist, intervallist, count_time):
+        """Here is where we should start the rocking and then push it to the plot"""
+        pass
+
+    
+    def rock_start(self, motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time):
+        if self.is_rocking(self.start_stop_PB):
+            self.rock_stop()
+        self.rock_props = (motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time)
+        self._teminate_rock = False
+        self.rock_started = False
+        self.rock_event.set()
+
+
+    def is_rocking(self, start_stop_PB=None):
+        if start_stop_PB == None:
+            try:
+                start_stop_PB = self.start_stop_PB # Make this specific to rocking
+            except UnboundLocalError:
+                pass
+        else:
+            self.start_stop_PB = start_stop_PB
+            # This property is checked, so functions here will work
+        if self.rock_event._Event__flag:
+            start_stop_PB.setText('Stop')
+            self.update_CB(self.x_rock_data_CB, self.y_rock_data_CB, 'rock')
+        else:
+            start_stop_PB.setText('Start')
+        return self.rock_event._Event__flag
+
+    def rock_settings(self, motor_name, startpos_SB, stoppos_SB, Motors, wait_time_SB):
+        self.rock_wait_time_SB = wait_time_SB
+        for i in range(len(Motors)):
+            Motor_inst = Motors[i]
+            if Motor_inst.Name == motor_name:
+                if Motor_inst.Enabled:
+                    (min_lim, max_lim) = self.check_limits(Motor_inst)
+                    startpos_SB.setRange(min_lim, max_lim)
+                    stoppos_SB.setRange(min_lim, max_lim)
 
     """CONDITIONING"""
     def cond_move(self, PV, to, movetype): #should add status check
@@ -802,8 +948,6 @@ class Core(object):
         self.monitor.update(x_var, v_bar_pos[0])
         self.monitor.update(var, v_bar_pos)
 
-
-
     def update_CB(self, x_data_CB, y_data_CB, type):
         self.CB_lock.acquire()
         try:
@@ -813,6 +957,9 @@ class Core(object):
             elif type == 'cent':
                 self.x_cent_data_CB = x_data_CB
                 self.y_cent_data_CB = y_data_CB
+            elif type == 'rock':
+                self.x_rock_data_CB = x_data_CB
+                self.y_rock_data_CB = y_data_CB
             self.scanner_names = self.get_var('SCAN_COLS')
             i=0
             (x_index, y_index) = x_data_CB.currentIndex(), y_data_CB.currentIndex()
@@ -842,24 +989,26 @@ class Core(object):
             self.scan_dir = filepath
         elif name == 'cent':
             self.cent_dir = filepath
+        elif name == 'rock':
+            self.rock_dir = filepath
 
     def set_status(self, status_msg):
         self.monitor.update(VAR.STATUS_MSG, status_msg)
 
-    def set_server(self):
+    def set_server(self, host='10.52.36.1', port='8585'):
         """Right now this is simply a placeholder function for an interactive set server
         This is awful -----------------------------RECODE THIS!!!!-------------------
         """
-        self.monitor.update(VAR.SERVER_HOST, '10.52.36.1')
-        self.monitor.update(VAR.SERVER_PORT, '8585')
+        self.monitor.update(VAR.SERVER_HOST, host)
+        self.monitor.update(VAR.SERVER_PORT, port)
         self.monitor.update(VAR.SERVER_ADDRESS, ''.join((self.monitor.get_value(VAR.SERVER_HOST), ':', self.monitor.get_value(VAR.SERVER_PORT))))
 
     def terminate(self):
         self._terminate_flag = True
         print "core.terminate called"
         sess_list = [self.SpecMotor_sess,
-                           self.SpecCounter_ic2,
-                           self.SpecCounter_pinf,
+                           # self.SpecCounter_ic2,
+                           # self.SpecCounter_pinf,
                            self.SpecScan_sess,
                            self.SpecScan_sess,
                            ]

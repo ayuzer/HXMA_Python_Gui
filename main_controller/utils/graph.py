@@ -26,15 +26,17 @@ class Plotter(Qwt.QwtPlot):
 
         self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.RightLegend);
 
-        self.curve = self.multi_curve1 = self.multi_curve2 = self.multi_curve3 = None
+        self.rock_curve = self.curve = self.multi_curve1 = self.multi_curve2 = self.multi_curve3 = None
         scan_curve = [self.curve, 'ongoing scan', True, Qt.Qt.blue]
+        rock_curve = [self.rock_curve, 'rocking', True, Qt.Qt.blue]
         multi_curve_1 = [self.multi_curve1, 'w-', True, Qt.Qt.darkCyan]
         multi_curve_2 = [self.multi_curve2, 'wo', True, Qt.Qt.green]
         multi_curve_3 = [self.multi_curve3, 'w+', True, Qt.Qt.magenta]
         curves = {'scan': scan_curve,
-                       'neg': multi_curve_1,
-                       'nau': multi_curve_2,
-                       'pos': multi_curve_3,
+                  'neg': multi_curve_1,
+                  'nau': multi_curve_2,
+                  'pos': multi_curve_3,
+                  'rock': rock_curve,
                   }
         self.curves =[]
         for key in curves:
@@ -50,60 +52,64 @@ class Plotter(Qwt.QwtPlot):
                 curve[0].setPen(curve[3])
                 curve[0].attach(self)
                 self.curves.append(curve[0])
+            if self.id == 'multi':
+                break
 
-        #
-        # self.curve.setStyle(Qwt.QwtPlotCurve.Sticks)
-        self.vbar_curser = Qwt.QwtPlotCurve('Curser')
-        self.vbar_curser.setItemAttribute(Qwt.QwtPlotItem.Legend, True)
-        self.vbar_curser.setPen(Qt.Qt.red)
-        self.vbar_curser.attach(self)
+        self.bars = not (self.id == 'multi' or self.id == 'rock')
 
-        self.vbar_max = Qwt.QwtPlotCurve('Max')
-        self.vbar_max.setItemAttribute(Qwt.QwtPlotItem.Legend, True)
-        self.vbar_max.setPen(Qt.Qt.yellow)
-        self.vbar_max.attach(self)
+        if self.bars:
+            # self.curve.setStyle(Qwt.QwtPlotCurve.Sticks)
+            self.vbar_curser = Qwt.QwtPlotCurve('Curser')
+            self.vbar_curser.setItemAttribute(Qwt.QwtPlotItem.Legend, True)
+            self.vbar_curser.setPen(Qt.Qt.red)
+            self.vbar_curser.attach(self)
 
-        self.vbar_com = Qwt.QwtPlotCurve('COM')
-        self.vbar_com.setItemAttribute(Qwt.QwtPlotItem.Legend, True)
-        self.vbar_com.setPen(Qt.Qt.blue)
-        self.vbar_com.attach(self)
+            self.vbar_max = Qwt.QwtPlotCurve('Max')
+            self.vbar_max.setItemAttribute(Qwt.QwtPlotItem.Legend, True)
+            self.vbar_max.setPen(Qt.Qt.yellow)
+            self.vbar_max.attach(self)
 
-        self._dragBar = False
+            self.vbar_com = Qwt.QwtPlotCurve('COM')
+            self.vbar_com.setItemAttribute(Qwt.QwtPlotItem.Legend, True)
+            self.vbar_com.setPen(Qt.Qt.blue)
+            self.vbar_com.attach(self)
 
-        self.setMouseTracking(True)
+            self._dragBar = False
 
-        self.curser_pos_list = {'scan': self.VAR.VERT_BAR_SCAN_POS,
-                       'neg': self.VAR.VERT_BAR_NEG_POS,
-                       'nau': self.VAR.VERT_BAR_NAU_POS,
-                       'pos': self.VAR.VERT_BAR_POS_POS,
-                       }
+            self.setMouseTracking(True)
 
-        self.max_pos_list = {'scan': self.VAR.SCAN_MAX_Y_NUM,
-                            'neg': self.VAR.CENT_NEG_MAXY,
-                            'nau': self.VAR.CENT_NAU_MAXY,
-                            'pos': self.VAR.CENT_POS_MAXY,
-                            }
+            self.curser_pos_list = {'scan': self.VAR.VERT_BAR_SCAN_POS,
+                           'neg': self.VAR.VERT_BAR_NEG_POS,
+                           'nau': self.VAR.VERT_BAR_NAU_POS,
+                           'pos': self.VAR.VERT_BAR_POS_POS,
+                           }
 
-        self.com_pos_list = {'scan': self.VAR.SCAN_COM,
-                             'neg': self.VAR.CENT_NEG_COM,
-                             'nau': self.VAR.CENT_NAU_COM,
-                             'pos': self.VAR.CENT_POS_COM,
-                             }
+            self.max_pos_list = {'scan': self.VAR.SCAN_MAX_Y_NUM,
+                                'neg': self.VAR.CENT_NEG_MAXY,
+                                'nau': self.VAR.CENT_NAU_MAXY,
+                                'pos': self.VAR.CENT_POS_MAXY,
+                                }
 
-        for key in self.curser_pos_list:
-            if self.id == key:
-                self.pos = self.curser_pos_list[key]
-                self.monitor.connect(self.pos, self.handle_vbar_curser)
+            self.com_pos_list = {'scan': self.VAR.SCAN_COM,
+                                 'neg': self.VAR.CENT_NEG_COM,
+                                 'nau': self.VAR.CENT_NAU_COM,
+                                 'pos': self.VAR.CENT_POS_COM,
+                                 }
 
-        for key in self.max_pos_list:
-            if self.id == key:
-                self.max_pos = self.max_pos_list[key]
-                self.monitor.connect(self.max_pos, self.handle_vbar_max)
+            for key in self.curser_pos_list:
+                if self.id == key:
+                    self.pos = self.curser_pos_list[key]
+                    self.monitor.connect(self.pos, self.handle_vbar_curser)
 
-        for key in self.com_pos_list:
-            if self.id == key:
-                self.com_pos = self.com_pos_list[key]
-                self.monitor.connect(self.com_pos, self.handle_vbar_com)
+            for key in self.max_pos_list:
+                if self.id == key:
+                    self.max_pos = self.max_pos_list[key]
+                    self.monitor.connect(self.max_pos, self.handle_vbar_max)
+
+            for key in self.com_pos_list:
+                if self.id == key:
+                    self.com_pos = self.com_pos_list[key]
+                    self.monitor.connect(self.com_pos, self.handle_vbar_com)
 
         
         mY = Qwt.QwtPlotMarker()
@@ -157,12 +163,13 @@ class Plotter(Qwt.QwtPlot):
 
     def new_plot(self, x, y):
         self.curves[0].setData(x, y)
-        self.handle_vbar_curser(self.pos)
+        if self.bars:
+            self.handle_vbar_curser(self.pos)
         self.replot()
 
     def multi_plot(self, x_arr, y_arr):
         for i in range(len(x_arr)):
-            self.curves[i+1][0].setData(x_arr[i], y_arr[i])
+            self.curves[i].setData(x_arr[i], y_arr[i])
         self.replot()
         self.set_legend()
 

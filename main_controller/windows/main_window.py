@@ -28,6 +28,7 @@ from utils.local_save import ServMixin
 from utils.local_save import ScanMixin
 from utils.local_save import CentMixin
 from utils.local_save import MotMixin
+from utils.local_save import RockMixin
 
 from utils import Constant
 from utils import to_rad
@@ -46,6 +47,7 @@ from windows.drag_text_mixin import DragTextMixin
 
 from windows.minor_windows import LoadPositions as LoadPositionsWindow
 from windows.minor_windows import SetMotorSlot as SetMotorSlotWindow
+from windows.minor_windows import SetServer as SaveServerWindow
 
 from collections import namedtuple
 
@@ -161,7 +163,7 @@ class LabelFormatter(object):
         self.data_dict[label] = kwargs
 
 
-class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin, CentMixin, MotMixin):
+class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin, CentMixin, MotMixin, RockMixin):
 
     SIGNAL_DIALOG_INFO = QtCore.pyqtSignal(unicode)
 
@@ -206,7 +208,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             self.action_about: self.handle_action_about,
             self.action_pv_list: self.handle_action_pv_list,
             self.action_var_list: self.handle_action_var_list,
-            self.action_set_server: self.handle_action_set_server,
+            self.action_set_server: self.handle_action_set_server_wind,
             self.action_motor_slots: self.handle_action_motor_slots,
         }
 
@@ -243,12 +245,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.update_motors(self.Motors)
         self.handle_pushButton_motor_all_checkpos(False)  # just checking position, False is a dummy var
         # Connect Buttons
-        self.pushButton_motor_1_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_1))
-        self.pushButton_motor_2_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_2))
-        self.pushButton_motor_3_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_3))
-        self.pushButton_motor_4_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_4))
-        self.pushButton_motor_5_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_5))
-        self.pushButton_motor_6_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, self.Motor_6))
+        self.pushButton_motor_1_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 1))
+        self.pushButton_motor_2_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 2))
+        self.pushButton_motor_3_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 3))
+        self.pushButton_motor_4_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 4))
+        self.pushButton_motor_5_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 5))
+        self.pushButton_motor_6_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 6))
 
         self.pushButton_motor_all_checkpos.clicked.connect(self.handle_pushButton_motor_all_checkpos)
         self.pushButton_motor_all_move.clicked.connect(self.handle_pushButton_motor_all_move)
@@ -319,12 +321,41 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.set_cent_props()  # updating variables from the saved file (last session)
         self.core.update_filepath(str(self.lineEdit_cent_select_file.text()), 'cent')
         self.core.is_centering(self.pushButton_cent_start_stop)
+        
+        """ROCKING INIT"""
+        # Connect Buttons
+        self.pushButton_rock_start_stop.clicked.connect(self.handle_pushButton_rock_start_stop)
+        self.pushButton_rock_save.clicked.connect(self.handle_save_rock)
+        self.pushButton_rock_select_file.clicked.connect(partial(self.select_file, self.lineEdit_rock_select_file))
+
+        self.lineEdit_scan_select_file.textChanged.connect(
+            partial(self.core.update_filepath, str(self.lineEdit_scan_select_file.text()), 'rock'))
+
+        self.comboBox_rock_motor.currentIndexChanged.connect(self.handle_comboBox_rock_motor)
+        self.comboBox_rock_data_x.activated.connect(self.handle_comboBox_rock_data)
+        self.comboBox_rock_data_y.activated.connect(self.handle_comboBox_rock_data)
+        self.checkBox_rock_zone1.stateChanged.connect(self.omit_hide)
+        self.checkBox_rock_zone2.stateChanged.connect(self.omit_hide)
+        self.checkBox_rock_zone3.stateChanged.connect(self.omit_hide)
+        self.checkBox_rock_zone4.stateChanged.connect(self.omit_hide)
+        # INIT RUN
+        self.set_rock_props()  # updating variables from the saved file (last session)
+        self.handle_comboBox_rock_motor()
+        self.update_rock_cols()
+        self.core.update_filepath(str(self.lineEdit_rock_select_file.text()), 'rock')
+        self.omit_hide()
+        # Plot
+        self.rock_plot_id = Plotter(monitor=self.monitor, VAR=VAR, id='rock')
+        self.verticalLayout_rock_graph.addWidget(self.rock_plot_id)
+        self.rock_plot_id.set_title(PLOT_TITLE)
+        self.rock_plot_id.set_axis_label_x(PLOT_LABEL_X)
+        self.rock_plot_id.set_axis_label_y(PLOT_LABEL_Y)
+        # self.rock_plot_id.set_mouse_position_callback(self.callback_mouse_pos_id)
+        self.rock_plot_id.set_legend()
+        self.rock_plot_id.timer = QtCore.QTimer()
 
         """CONDITIONING"""
-        self.pushButton_cond_pb_aper_hor_movego.clicked.connect(partial(self.handle_cond_move, PV.COND_PB_APER_HOR_POS, self.doubleSpinBox_cond_pb_aper_hor_moveto, self.comboBox_cond_pb_aper_hor_movetype))
-
         self.init_beam_cond()
-
 
         """PICTURE"""
         pic = QtGui.QLabel(self.label_motor_picture)
@@ -350,6 +381,13 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         window.apply_callback(self.update_motors)
         self.handle_action_popup(window)
 
+    def handle_action_set_server_wind(self):
+        center_point = self.geometry().center()
+        window = SaveServerWindow(monitor=self.monitor, center=center_point, host=self.monitor.get_value(VAR.SERVER_HOST), port=self.monitor.get_value(VAR.SERVER_PORT))
+        window.apply_callback(self.core.set_server)
+        self.handle_action_popup(window)
+
+
     def handle_action_popup(self, window):
         self.child_windows.append(window)
         window.set_close_callback(self.callback_window_closed)
@@ -357,7 +395,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
     """MOTOR"""
     @decorator_busy_cursor
-    def handle_pushButton_motor_movego(self, motor, dummy):  # Will pass the ref to relevant motor
+    def handle_pushButton_motor_movego(self, num, dummy):  # Will pass the ref to relevant motor
+        motor = self.Motors[num-1]
         if self.core.is_moving(motor.Name):
             self.core.set_status(motor.Name + " is already moving")
         else:
@@ -438,9 +477,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                   )
 
     def update_motors(self, Motors):
-        self._move_terminate_flag = True
-        t = threading.Timer(3.0,  self.core.update_motors(self.motor_names, Motors, (self.comboBox_scan_motor, self.comboBox_cent_motor_scan, self.comboBox_cent_motor_angle)))
-        # t.start()
+        self.core._move_terminate_flag = True
+        t = threading.Timer(1.5,  self.core.update_motors, [self.motor_names, Motors, (self.comboBox_scan_motor, self.comboBox_cent_motor_scan, self.comboBox_cent_motor_angle, self.comboBox_rock_motor)])
+        t.start()
         self.Motors = Motors
 
     """COUNT"""
@@ -601,6 +640,72 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             for plot in self.plots:
                 plot.show()
             self.cent_plot_id.hide()
+            
+    """ROCKING"""
+    def handle_comboBox_rock_motor(self):
+        self.core.rock_settings(self.comboBox_rock_motor.currentText(),
+                                self.doubleSpinBox_rock_startpos,
+                                self.doubleSpinBox_rock_stoppos,
+                                self.Motors,
+                                self.doubleSpinBox_rock_waittime
+                                )
+
+    def check_omit(self, passback=False):
+        all_regions = [
+            [self.checkBox_rock_zone1.isChecked(), self.doubleSpinBox_rock_min_zone1, self.doubleSpinBox_rock_max_zone1],
+            [self.checkBox_rock_zone2.isChecked(), self.doubleSpinBox_rock_min_zone2, self.doubleSpinBox_rock_max_zone2],
+            [self.checkBox_rock_zone3.isChecked(), self.doubleSpinBox_rock_min_zone3, self.doubleSpinBox_rock_max_zone3],
+            [self.checkBox_rock_zone4.isChecked(), self.doubleSpinBox_rock_min_zone4, self.doubleSpinBox_rock_max_zone4],
+            ]
+        omit = []
+        for region in all_regions:
+            if region[0]:
+                omit.append([region[1].value(), region[2].value()],)
+        if passback:
+            return omit, all_regions
+        else:
+            return omit
+
+    def omit_hide(self):
+        (omit, all_regions) = self.check_omit(True)
+        for region in all_regions:
+            region[1].setEnabled(region[0])
+            region[2].setEnabled(region[0])
+
+
+    def handle_pushButton_rock_start_stop(self):
+        if self.core.is_rocking(self.pushButton_rock_start_stop):
+            self.core.rock_stop()
+        elif self.core.is_scanning() == True or self.core.is_centering == True:
+            print "Cannot rock, there is currently an operation ongoing (scanning or centering)"
+        else:
+            self.core.rock_start(self.comboBox_rock_motor.currentText(),  # Which Motor are we using? Passes NAME back
+                                 self.doubleSpinBox_rock_startpos.value(),  # the rest are just values
+                                 self.doubleSpinBox_rock_stoppos.value(),
+                                 self.doubleSpinBox_rock_steps.value(),
+                                 self.doubleSpinBox_rock_waittime.value(),
+                                 self.Motors,  # We need to pass this so we can see which motor we are rockning with
+                                 self.check_omit(),
+                                 self.doubleSpinBox_rock_time.value(),
+                                 )
+            self.rock_plot_id.timer.start(250.0)
+            self.connect(self.rock_plot_id.timer, QtCore.SIGNAL('timeout()'), self.rock_plot)
+
+    def rock_plot(self):
+        pass
+    
+    def update_rock_cols(self):
+        self.core.update_CB(self.comboBox_rock_data_x, self.comboBox_rock_data_y, 'rock')
+        
+    def handle_save_rock(self):
+        self.core.save_rock_curr(str(self.lineEdit_rock_filename.text()),
+                                 self.comboBox_rock_data_x,
+                                 self.comboBox_rock_data_y,
+                                 )
+
+    def handle_comboBox_rock_data(self):
+        pass
+    
 
     """CONDITIONING"""
     def init_beam_cond(self):
@@ -736,6 +841,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         for move in self.beam_cond:
             move.MoveType_CB.addItems(['Relative', 'Absolute'])
+            move.Moveto_SB.setDecimals(2)
+            move.Moveto_SB.setRange(-1000, 1000)
             if move.Move_PB == None:  # No pushbutton therefore commands go off of enter in box
                 # move.MoveType_CB.lineEdit().returnPressed.connect(partial(self.handle_cond_move, move.PV, move.Moveto_SB.value(), move.MoveType_CB.currentText()))
                 pass
@@ -931,6 +1038,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         self.save_server_address()
         self.save_scan_props()
+        self.save_rock_props()
         self.save_cent_props()
         self.save_motors(self.Motors)
 

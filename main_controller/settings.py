@@ -13,6 +13,7 @@ PROMPT_ON_QUIT              = False
 USE_SIMULATED_PVS           = True
 
 SETTINGS_FILE_NAME = ".HXMAguiXRay/settings.json"
+SETTINGS_POP_FILE_NAME = ".HXMAguiXRay/settings_pop.json"
 
 class KEY(object):
     X_MM_START      = 'x_start'

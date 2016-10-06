@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>810</width>
-    <height>808</height>
+    <width>869</width>
+    <height>815</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -370,13 +370,6 @@
                        </widget>
                       </item>
                      </layout>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="label">
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
                     </item>
                     <item>
                      <spacer name="horizontalSpacer_30">
@@ -3433,7 +3426,14 @@ Subtraction (Linear) -NC</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QComboBox" name="comboBox_cent_motor_scan"/>
+                 <widget class="QComboBox" name="comboBox_cent_motor_scan">
+                  <property name="minimumSize">
+                   <size>
+                    <width>125</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="label_cent_motor_angle_name">
@@ -3449,7 +3449,14 @@ Subtraction (Linear) -NC</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QComboBox" name="comboBox_cent_motor_angle"/>
+                 <widget class="QComboBox" name="comboBox_cent_motor_angle">
+                  <property name="minimumSize">
+                   <size>
+                    <width>125</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </widget>
                 </item>
                 <item>
                  <spacer name="horizontalSpacer_23">
@@ -4856,7 +4863,7 @@ Based On</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>810</width>
+     <width>869</width>
      <height>25</height>
     </rect>
    </property>

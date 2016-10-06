@@ -26,6 +26,7 @@ from SpecClient.SpecClientError import SpecClientError
 
 from SpecClient.SpecScan_toki import SpecScanA as SpecScan
 
+from PyQt4 import QtGui
 from PyQt4.QtGui import QTableWidgetItem as tableItem
 from PyQt4.QtCore import QString as str2q
 
@@ -912,6 +913,28 @@ class Core(object):
                     startpos_SB.setRange(min_lim, max_lim)
                     stoppos_SB.setRange(min_lim, max_lim)
 
+    """SAVE/LOAD"""
+
+    def save_table(self, filename, table, vert_head, hor_head):
+        filedir = self.pos_dir
+        curr_time = time.strftime("%b_%d_%Y_%H-%M-%S")
+        vert_head = [''] + vert_head
+        with open(filedir + '/' + filename + '_' + curr_time + ".csv", 'wb') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(vert_head)
+            for row in range(table.rowCount()):
+                rowdata = [hor_head[row]]
+                for column in range(table.columnCount()):
+                    item = table.item(row, column)
+                    if item is not None:
+                        rowdata.append(
+                            unicode(item.text()).encode('utf8'))
+                    else:
+                        rowdata.append('')
+                writer.writerow(rowdata)
+        print "Successfully saved " + filename + '_' + curr_time + ".csv" + " In : " + filedir
+        # print "Cannot Write, No data acquired"
+
     """CONDITIONING"""
     def cond_move(self, PV, to, movetype): #should add status check
         currpos = self.monitor.get_value(PV)
@@ -985,12 +1008,15 @@ class Core(object):
         Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
 
     def update_filepath(self, filepath, name):
+        filepath = str(filepath.text())
         if name == 'scan':
             self.scan_dir = filepath
         elif name == 'cent':
             self.cent_dir = filepath
         elif name == 'rock':
             self.rock_dir = filepath
+        elif name == 'pos':
+            self.pos_dir = filepath
 
     def set_status(self, status_msg):
         self.monitor.update(VAR.STATUS_MSG, status_msg)

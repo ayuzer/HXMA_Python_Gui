@@ -303,3 +303,49 @@ class RockMixin(object):
         self.settings[key] = rock_settings
 
 
+class POS_KEY(object):
+    POS = '__pos_props__'
+    SAVEDIR = 'save_dir'
+    SAVENAME = 'save_name'
+    SAVED_POS = 'saved_pos'
+
+class PosMixin(object):
+    """
+    This is a mixin which will allow saving and loading of posning props from the main window to a .json file
+    """
+
+    def set_pos_props(self):
+        key = self.__class__.__name__
+
+        try:
+            pos_settings = self.settings.get(key)
+            pos_dict = pos_settings.get(POS_KEY.POS)
+
+            print "SETTING POS PROPERTY %s TO %s" % (key, pos_dict)
+
+            self.lineEdit_filedir.setText(pos_dict[POS_KEY.SAVEDIR])
+            self.lineEdit_filename.setText(pos_dict[POS_KEY.SAVENAME])
+            self.saved_pos = pos_dict[POS_KEY.SAVED_POS]
+
+            return True
+        except:
+            return False
+
+    def save_pos_props(self):
+
+        key = self.__class__.__name__
+
+        pos_dict = {
+            POS_KEY.SAVEDIR:   str(self.lineEdit_filedir.text()),
+            POS_KEY.SAVENAME:  str(self.lineEdit_filename.text()),
+            POS_KEY.SAVED_POS: self.saved_pos,
+
+        }
+
+        print "SETTING POS PROPERTY %s TO %s" % (key, pos_dict)
+
+        pos_settings = self.settings.get(key, {})
+        pos_settings[POS_KEY.POS] = pos_dict
+        self.settings[key] = pos_settings
+
+

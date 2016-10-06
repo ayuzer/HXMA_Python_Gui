@@ -270,18 +270,18 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.pushButton_scan_select_file.clicked.connect(partial(self.select_file, self.lineEdit_scan_select_file))
 
         self.lineEdit_scan_select_file.textChanged.connect(
-            partial(self.core.update_filepath, str(self.lineEdit_scan_select_file.text()), 'scan'))
+            partial(self.core.update_filepath, self.lineEdit_scan_select_file, 'scan'))
 
         self.comboBox_scan_motor.currentIndexChanged.connect(self.handle_comboBox_scan_motor)
         self.comboBox_scan_data_x.activated.connect(self.handle_comboBox_scan_data)
         self.comboBox_scan_data_y.activated.connect(self.handle_comboBox_scan_data)
 
-        self.pushButton_scan_start_stop.setText(self.scan_button_text()) # This means the button says Start instead of START/STOP
+        self.pushButton_scan_start_stop.setText(self.scan_button_text())  # This means the button says Start instead of START/STOP
         # INIT RUN
         self.handle_comboBox_scan_motor()
         self.update_scan_cols()
         self.set_scan_props() # updating variables from the saved file (last session)
-        self.core.update_filepath(str(self.lineEdit_scan_select_file.text()), 'scan')
+        self.core.update_filepath(self.lineEdit_scan_select_file, 'scan')
         # Plot
         self.scan_plot_id = Plotter(monitor=self.monitor, VAR=VAR, id='scan')
         self.verticalLayout_scan_graph.addWidget(self.scan_plot_id)
@@ -299,7 +299,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.pushButton_cent_select_file.clicked.connect(partial(self.select_file, self.lineEdit_cent_select_file))
 
         self.lineEdit_scan_select_file.textChanged.connect(
-            partial(self.core.update_filepath, str(self.lineEdit_scan_select_file.text()), 'cent'))
+            partial(self.core.update_filepath, self.lineEdit_scan_select_file, 'cent'))
 
         self.comboBox_cent_motor_scan.currentIndexChanged.connect(self.handle_comboBox_cent_motor)
         self.comboBox_cent_motor_angle.currentIndexChanged.connect(self.handle_comboBox_cent_motor)
@@ -319,7 +319,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.handle_comboBox_cent_motor()
         self.update_cent_cols()
         self.set_cent_props()  # updating variables from the saved file (last session)
-        self.core.update_filepath(str(self.lineEdit_cent_select_file.text()), 'cent')
+        self.core.update_filepath(self.lineEdit_cent_select_file, 'cent')
         self.core.is_centering(self.pushButton_cent_start_stop)
         
         """ROCKING INIT"""
@@ -329,7 +329,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.pushButton_rock_select_file.clicked.connect(partial(self.select_file, self.lineEdit_rock_select_file))
 
         self.lineEdit_scan_select_file.textChanged.connect(
-            partial(self.core.update_filepath, str(self.lineEdit_scan_select_file.text()), 'rock'))
+            partial(self.core.update_filepath, self.lineEdit_scan_select_file, 'rock'))
 
         self.comboBox_rock_motor.currentIndexChanged.connect(self.handle_comboBox_rock_motor)
         self.comboBox_rock_data_x.activated.connect(self.handle_comboBox_rock_data)
@@ -342,7 +342,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.set_rock_props()  # updating variables from the saved file (last session)
         self.handle_comboBox_rock_motor()
         self.update_rock_cols()
-        self.core.update_filepath(str(self.lineEdit_rock_select_file.text()), 'rock')
+        self.core.update_filepath(self.lineEdit_rock_select_file, 'rock')
         self.omit_hide()
         # Plot
         self.rock_plot_id = Plotter(monitor=self.monitor, VAR=VAR, id='rock')
@@ -366,14 +366,19 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         """POPOUTS"""
         self.pushButton_open_pos_load.clicked.connect(self.handle_action_save_load)
+        self.saved_pos = []
 
     """POPUPS"""
     def handle_action_save_load(self):
         center_point = self.geometry().center()
-        self.handle_action_popup(LoadPositionsWindow(monitor=self.monitor,
-                                                     center=center_point,
-                                                     motors=self.Motors,
-                                                     ))
+        window = LoadPositionsWindow(monitor=self.monitor,
+                                     center=center_point,
+                                     motors=self.Motors,
+                                     formatter=self.formatter,
+                                     saved_pos=self.saved_pos,
+                                     )
+        window.update_callback(self.update_saved_pos)
+        self.handle_action_popup(window)
 
     def handle_action_motor_slots(self):
         center_point = self.geometry().center()
@@ -853,6 +858,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.core.cond_move(PV, SB.value(), CB.currentText())
 
     """RANDOM"""
+    def update_saved_pos(self, saved_pos):
+        self.saved_pos = saved_pos
+
     def select_file(self, line_edit):
         line_edit.setText(QtGui.QFileDialog.getExistingDirectory(None, 'Select a folder to save data :', os.getcwd(), QtGui.QFileDialog.ShowDirsOnly))
 
@@ -937,7 +945,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         }
 
         for pv_name, data in label_map.iteritems():
-            self.monitor.add(pv_name)
+            # self.monitor.add(pv_name)
 
             widget = data[0]
             font = QtGui.QFont('Courier', data[2])

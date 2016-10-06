@@ -50,13 +50,19 @@ class Plotter(Qwt.QwtPlot):
                 curve[0] = Qwt.QwtPlotCurve(curve[1])
                 curve[0].setItemAttribute(Qwt.QwtPlotItem.Legend, curve[2])
                 curve[0].setPen(curve[3])
+                if key == 'rock':
+                    curve[0].setStyle(Qwt.QwtPlotCurve.Dots)
+                    curve[0].setSymbol(Qwt.QwtSymbol(
+                        Qwt.QwtSymbol.Ellipse,
+                        Qt.QBrush(),
+                        Qt.QPen(Qt.Qt.red),
+                        Qt.QSize(5, 5)))
                 curve[0].attach(self)
                 self.curves.append(curve[0])
             if self.id == 'multi':
                 break
 
         self.bars = not (self.id == 'multi' or self.id == 'rock')
-
         if self.bars:
             # self.curve.setStyle(Qwt.QwtPlotCurve.Sticks)
             self.vbar_curser = Qwt.QwtPlotCurve('Curser')

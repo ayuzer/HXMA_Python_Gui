@@ -359,7 +359,23 @@ class SpecScanA:
             # self.SpecCommander = SpecCommand.SpecCommand(cmd, self.connection)
             # print (SpecCommand.SpecCommand.executeCommand(self.SpecCommander, cmd))
             self.connection.send_msg_cmd(cmd)
-            cmd = "prop_send var/SCAN_PT"
+            self.__status = 'scanning'
+            return True
+        else:
+            return False
+
+    def rocking(self, motorMne, start, stop, points, countTime):
+        if self.connection.isSpecConnected():
+            cmd = "rocking %s" % (motorMne)
+            try: # multiple regions
+                for index, startPos in enumerate(start):
+                    cmd = cmd + " %f %f %d" % (startPos, stop[index], points[index])
+            except ValueError:  # single entry
+                cmd = cmd + " %f %f %d" % (start, stop, points)
+            cmd = cmd + " %f" % (countTime)
+            self.connection.send_msg_cmd(cmd)
+            # self.SpecCommander = SpecCommand.SpecCommand(cmd, self.connection)
+            # SpecCommand.SpecCommand.executeCommand(self.SpecCommander, cmd)
             self.__status = 'scanning'
             return True
         else:

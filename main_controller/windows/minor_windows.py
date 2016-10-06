@@ -30,7 +30,7 @@ from PyQt4 import QtGui, QtCore
 import settings
 
 class LoadPositions(QtGui.QWidget, DragTextMixin, UiMixin, PosMixin):
-
+    # This works well but it is very jenky
     def __init__(self, *args, **kwargs):
 
         self.monitor = kwargs['monitor']
@@ -39,7 +39,7 @@ class LoadPositions(QtGui.QWidget, DragTextMixin, UiMixin, PosMixin):
         center_point = kwargs['center']
         del kwargs['center']
 
-        self.Motors =  kwargs['motors']
+        self.Motors = kwargs['motors']
         del kwargs['motors']
 
         self.formatter = kwargs['formatter']
@@ -90,10 +90,6 @@ class LoadPositions(QtGui.QWidget, DragTextMixin, UiMixin, PosMixin):
 
         self.pushButton_table_load.clicked.connect(self.load_table)
 
-        self.comboBox_load_1.activated.connect(partial(self.handle_load_motor, 1, self.comboBox_load_1))
-        self.comboBox_load_2.activated.connect(partial(self.handle_load_motor, 2, self.comboBox_load_2))
-        self.comboBox_load_3.activated.connect(partial(self.handle_load_motor, 3, self.comboBox_load_3))
-
         self.pushButton_move1.clicked.connect(partial(self.handle_move, 1))
         self.pushButton_move2.clicked.connect(partial(self.handle_move, 2))
         self.pushButton_move3.clicked.connect(partial(self.handle_move, 3))
@@ -143,18 +139,12 @@ class LoadPositions(QtGui.QWidget, DragTextMixin, UiMixin, PosMixin):
             self.doubleSpinBox_set_mne6,
         ]
 
-
     def handle_save_table(self):
         self.core.save_table(str(self.lineEdit_filename.text()),
                              self.tableWidget_positions,
                              self.vhead,
                              self.hhead,
                              )
-
-    def handle_load_motor(self, slot, CB):
-        pos_list = self.pos_label_list[slot-1]
-        # You would the take the current text, compare against array and print in appropriate values
-        print CB.currentText()
 
     def handle_move(self, slot):
         goto_list = self.pos_label_list[slot - 1]

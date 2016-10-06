@@ -201,7 +201,7 @@ class Core(object):
 
 
     """ MOTOR """
-    def move_motor(self, motor, moveto=None, movetype=None):
+    def move_motor(self, motor, moveto=None, movetype=None): # IF CALLING PROGRAMATICALLY, DECLARE MOVETO & MOVETYPE
         if moveto == None:
             moveto = motor.Moveto_SB.value()
         if movetype == None:
@@ -386,14 +386,16 @@ class Core(object):
                     self.scan_event.set()
                     SpecScan.connectToSpec(self.SpecScan_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
                     SpecScan.newScan(self.SpecScan_sess, True)
-                    if scantype:
+                    if scantype == 'Rel':
                         checkpos = self.checkpos_motor(Motor_inst, False)
                         pos = checkpos['pos']
                         relstartpos = startpos - pos
                         relendpos = endpos - pos
                         SpecScan.dscan(self.SpecScan_sess, Motor_inst.Mne, relstartpos, relendpos, intervals, count_time)
-                    else:
+                    elif scantype == 'Abs':
                         SpecScan.ascan(self.SpecScan_sess, Motor_inst.Mne, startpos, endpos, intervals, count_time)
+                    elif scantype == 'Rock':
+                        SpecScan.rocking(self.SpecScan_sess, Motor_inst.Mne, startpos, endpos, intervals, count_time)
                     self.scan_array = []  # starting/wiping an array for the scan data to push into
                 else:
                     raise Exception('Scan cannot be started as the motor was not Enabled')
@@ -418,8 +420,8 @@ class Core(object):
                 #self.scan_data = SpecScan.get_SCAN_D(self.SpecScan_sess)
                 try:
                     self.scan_point = json.JSONDecoder.decode(json.JSONDecoder(), SpecScan.get_SCAN_PT(self.SpecScan_sess))
-                except ValueError:
-                    print "Value Error: Scan Point"
+                except (ValueError, TypeError):
+                    print "Error: Scan Point"
                     pass
                 #elif array_equal(old_data, self.scan_data):
                 if not old_point == self.scan_point: # here is where you would graph it/save it to the csv
@@ -622,7 +624,7 @@ class Core(object):
                                        command2args=(scan_motor, cent_scan_start, "Absolute"))
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W-")
+                self.cent_command_buff(self.is_moving, self.scan_start, ('Abs', scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W-")
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
                 self.cent_started = self.is_centering(None)
@@ -635,7 +637,7 @@ class Core(object):
                                        command2args=(scan_motor, cent_scan_start, "Absolute"))
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: Wo")
+                self.cent_command_buff(self.is_moving, self.scan_start, ('Abs', scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: Wo")
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
                 self.cent_command_buff(self.is_scanning, self.set_array, ('nau',False), "Wo Scan Successful", waitsleep=3)
@@ -647,7 +649,7 @@ class Core(object):
                                        command2args=(scan_motor, cent_scan_start, "Absolute"))
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_moving, self.scan_start, (False, scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W+")
+                self.cent_command_buff(self.is_moving, self.scan_start, ('Abs', scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W+")
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
                 self.cent_command_buff(self.is_scanning, self.set_array, ('pos', False), "W+ Scan Successful", waitsleep=3)
@@ -681,7 +683,7 @@ class Core(object):
         return any(go_bool_array), x_arr, y_arr, length
 
     def cent_plotting(self, plot, table, x_CB, y_CB, calc_CB, single):
-        real_name_arr = [x_CB.currentText()]
+        real_name_arr = [x_CB.currentText()] # starting table headers
         (go, x_arr, y_arr, length) = self.cent_grab_data(x_CB, y_CB)
         if go or not self.old_x == x_arr or not self.old_y == y_arr:  # Should we regraph?
             namearr = ['w neg', 'w naught', 'w pos']  #defining names and vars for the diff data sets
@@ -820,15 +822,21 @@ class Core(object):
                     regions.append([full_list[i*2], full_list[(i*2) +1]])
                     tot_size = tot_size + abs(full_list[i*2] - full_list[(i*2) +1])
             # This is the end of the omitted regions code, with the final regions list containing relevant pairs
-            while self.is_moving(motor.Name):
-                time.sleep(.25)
-            start = time.time()
-            while rock_time * 60 > time.time() - start:  # checking if all the time to rock has passed
-                print time.time() - start
-                dict = self.checkpos_motor(motor, False)
-                curr = dict['pos']
+            try:
+                while self.is_moving(motor.Name):
+                    time.sleep(.25)
+            except UnboundLocalError:
+                self.rock_event.clear()
+                print "You have not assigned a motor. Aborting"
+                continue
+            start_time = time.time()
+            while rock_time * 60 > time.time() - start_time:  # checking if all the time to rock has passed
+                print time.time() - start_time
                 found = False
-                while not found:  # looping so we can check what the index is and move if its not an end position
+                while not found:
+                    dict = self.checkpos_motor(motor, False)
+                    curr = dict['pos']
+                    # looping so we can check what the index is and move if its not an end position
                     for index in range(len(start_stop)):
                         if abs(curr) == start_stop[index]:  # where are we?
                             found = True
@@ -861,31 +869,40 @@ class Core(object):
                         if regions_meta[4][j] > num > regions_meta[3][j]:
                             regions_meta[5][j] = regions_meta[5][j] + 1
                             used_pts = used_pts + 1
-                regions_meta[:].sort(key=lambda t: regions_meta[6])
-                self.rock_roll(motor, regions_meta[0], regions_meta[1], regions_meta[5], count_time)
+                def sort_by_dist(X, Y = regions_meta[6]):
+                    return [x for (y, x) in sorted(zip(Y, X))]
+                self.rock_roll(motor, sort_by_dist(regions_meta[0]), sort_by_dist(regions_meta[1]), sort_by_dist(regions_meta[5]), count_time, Motors)
             self.rock_event.clear()
-            # self.is_rocking()
+            #self.is_rocking()
 
     def rock_stop(self):
         self.rock_event.clear()
         self._teminate_rock = True
         self.is_rocking()
-        # if self.is_scanning():
-        #     self.scan_stop()
+        if self.is_scanning():
+            self.scan_stop()
 
-    def rock_roll(self, motor, startlist, stoplist, intervallist, count_time):
+    def rock_roll(self, motor, startlist, stoplist, intervallist, count_time, Motors):
         """Here is where we should start the rocking and then push it to the plot"""
+        self.scan_start('Rock', motor.Name, startlist, stoplist, intervallist, count_time, Motors)
+        time.sleep(3)
+        while True:
+            while self.is_moving() or self.is_scanning():
+                time.sleep(1)
+            if self.is_moving() or self.is_scanning():  #The check has to get two repeated checks that the motor is not scanning or moving, 1 sec apart
+                continue
+            else:
+                break
         pass
 
-    
     def rock_start(self, motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time):
         if self.is_rocking(self.start_stop_PB):
             self.rock_stop()
+        self.old_rock_x, self.old_rock_y, self.rock_array = ([] for i in range(3))
         self.rock_props = (motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time)
         self._teminate_rock = False
         self.rock_started = False
         self.rock_event.set()
-
 
     def is_rocking(self, start_stop_PB=None):
         if start_stop_PB == None:
@@ -913,6 +930,27 @@ class Core(object):
                     startpos_SB.setRange(min_lim, max_lim)
                     stoppos_SB.setRange(min_lim, max_lim)
 
+    def rock_plotting(self, plot, x_CB, y_CB):
+        (go, x, y) = self.rock_grab_data(x_CB, y_CB)
+        if not self.old_rock_x == x or not self.old_rock_y == y and go:
+            plot.new_plot(x, y)
+        (self.old_rock_x, self.old_rock_y) = x, y
+
+    def rock_grab_data(self, x_CB, y_CB):
+        try:
+            scan_array = self.monitor.get_value(VAR.SCAN_ARRAY)
+            # comb_list = self.rock_array + scan_array
+            for elem in scan_array:
+                if elem not in self.rock_array:
+                    self.rock_array.append(elem)
+        except TypeError, e:
+            # print e
+            pass
+        if self.rock_array is None or not self.rock_array:
+            return False, [], []
+        else:
+            (x, y) = [point[x_CB.currentIndex()] for point in self.rock_array], [point[y_CB.currentIndex()] for point in self.rock_array]
+            return True, x, y
     """SAVE/LOAD"""
 
     def save_table(self, filename, table, vert_head, hor_head):

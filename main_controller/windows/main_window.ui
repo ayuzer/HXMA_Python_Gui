@@ -40,7 +40,7 @@
            <enum>QTabWidget::North</enum>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="tab_count">
            <attribute name="title">
@@ -4033,13 +4033,6 @@ Based On</string>
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_cent_graph_display_bars">
-                <property name="text">
-                 <string>Display Bars</string>
-                </property>
-               </widget>
-              </item>
-              <item>
                <spacer name="horizontalSpacer_28">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
@@ -4082,6 +4075,26 @@ Based On</string>
               </item>
               <item>
                <widget class="QComboBox" name="comboBox_rock_motor"/>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_motor_currpos_name">
+                <property name="text">
+                 <string>Current Position</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_motor_currpos">
+                <property name="minimumSize">
+                 <size>
+                  <width>100</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>0</string>
+                </property>
+               </widget>
               </item>
               <item>
                <spacer name="horizontalSpacer_35">
@@ -4278,7 +4291,11 @@ Based On</string>
                <widget class="QDoubleSpinBox" name="doubleSpinBox_rock_steps"/>
               </item>
               <item row="2" column="6">
-               <widget class="QDoubleSpinBox" name="doubleSpinBox_rock_waittime"/>
+               <widget class="QDoubleSpinBox" name="doubleSpinBox_rock_waittime">
+                <property name="maximum">
+                 <double>10000.000000000000000</double>
+                </property>
+               </widget>
               </item>
               <item row="1" column="8">
                <widget class="QLabel" name="label_2">
@@ -5121,7 +5138,6 @@ Based On</string>
   <tabstop>comboBox_cent_calc_choose</tabstop>
   <tabstop>comboBox_cent_data_x</tabstop>
   <tabstop>checkBox_cent_single</tabstop>
-  <tabstop>checkBox_cent_graph_display_bars</tabstop>
   <tabstop>comboBox_cent_data_y</tabstop>
   <tabstop>comboBox_rock_motor</tabstop>
   <tabstop>pushButton_rock_start_stop</tabstop>

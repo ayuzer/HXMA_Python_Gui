@@ -503,7 +503,11 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         if self.core.is_scanning(self.pushButton_scan_start_stop):
             self.core.scan_stop()
         else:
-            self.core.scan_start(self.checkBox_scan_return_home.checkState(),  # What Mode True = dscan False = ascan
+            if self.checkBox_scan_return_home.checkState():# What Mode True = dscan False = ascan
+                type = 'Rel'
+            else :
+                type = 'Abs'
+            self.core.scan_start(type,
                                  self.comboBox_scan_motor.currentText(),  # Which Motor are we using? Passes NAME back
                                  self.doubleSpinBox_scan_startpos.value(),  # the rest are just values
                                  self.doubleSpinBox_scan_stoppos.value(),
@@ -697,7 +701,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             self.connect(self.rock_plot_id.timer, QtCore.SIGNAL('timeout()'), self.rock_plot)
 
     def rock_plot(self):
-        pass
+        self.scan_plot()  # makes it so that the plot also displays on the scan tab
+        self.core.rock_plotting(self.rock_plot_id, self.comboBox_rock_data_x, self.comboBox_rock_data_y)
     
     def update_rock_cols(self):
         self.core.update_CB(self.comboBox_rock_data_x, self.comboBox_rock_data_y, 'rock')

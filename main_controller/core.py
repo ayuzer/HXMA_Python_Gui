@@ -21,6 +21,7 @@ from utils import graph
 import SpecClient.SpecMotor as SpecMotor_module
 from SpecClient.SpecMotor import SpecMotorA as SpecMotor
 from SpecClient.Spec import Spec
+from SpecClient.Spec import SpecConnectionsManager
 from SpecClient.SpecCounter_toki import SpecCounter as SpecCounter
 from SpecClient.SpecClientError import SpecClientError
 
@@ -29,8 +30,6 @@ from SpecClient.SpecScan_toki import SpecScanA as SpecScan
 from PyQt4 import QtGui
 from PyQt4.QtGui import QTableWidgetItem as tableItem
 from PyQt4.QtCore import QString as str2q
-
-from SpecDataConnection import SpecDataConnection
 
 import settings
 
@@ -194,8 +193,10 @@ class Core(object):
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
+        self._SpecMotor_sess = [None]*6
+
         self.moving_bool_dict = {}
-        self.old_full_array, self.scan_array, self.old_array, self.old_x, self.old_y = ([] for i in range(5))
+        self.old_full_array, self.scan_array, self.old_array, self.old_x, self.old_y, = ([] for i in range(5))
         self.cent_props = ('', '', 0, 0, 0, 0, 0, [], True)
         self.CB_lock = threading.Lock()
 
@@ -234,14 +235,18 @@ class Core(object):
         else:
             print "Cannot stop a disabled motor"
 
-    def checkpos_motor(self, motor, print_val=True):
-        if self.SpecMotor_sess.specName == motor.Mne:
+    def checkpos_motor(self, motor, print_val=True, SpecMot=None):
+        if SpecMot == None:
+            SpecMot = self.SpecMotor_sess
+        self.check_move_event.wait()
+        self.check_move_event.clear()
+        if SpecMot.specName == motor.Mne:
             pass
         else:
-            SpecMotor.connectToSpec(self.SpecMotor_sess, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
+            SpecMotor.connectToSpec(SpecMot, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
         try:
             init_pos = self.monitor.get_value(motor.Pos_VAR)
-            pos = SpecMotor.getPosition(self.SpecMotor_sess)
+            pos = SpecMotor.getPosition(SpecMot)
             moved = not (init_pos == pos)
             if moved:  # this is where you can hook if motors are moving or not
                 self.monitor.update(motor.Pos_VAR, pos)
@@ -251,6 +256,7 @@ class Core(object):
             print repr(e) + ' unconfig = Motor Name: ' + motor.Name
             pos = 'None'
             moved = False
+        self.check_move_event.set()
         return {'pos': pos, 'moved': moved}
 
     def init_motor_thread(self, motors):
@@ -263,21 +269,21 @@ class Core(object):
 
     def handle_motor_moving_thread(self, motor, id):
         moved = False  # initializing variable which gets checked before assigned on first loop
-        _SpecMotor_sess = SpecMotor()
+        self._SpecMotor_sess[id] = SpecMotor()
         while True:
             self.move_event.wait()
             if self._move_terminate_flag: break
             if self._terminate_flag: break
-            self.check_move_event.wait()  # This stops the motors from updating each other's monitors
-            if _SpecMotor_sess.specName == motor.Mne:
+            if self._SpecMotor_sess[id].specName == motor.Mne:
                 '''
                 moving = inst_self['state'] in [SpecMotor_module.MOVING, SpecMotor_module.MOVESTARTED]
                 if moving:  # this doesnt seem to work because it doesnt properly register when the motor is moving
                 # I believe this issue is with SpecClient and not with my code...
                 '''
-                self.check_move_event.clear()
-                motor_check = self.checkpos_motor(motor, False)
-                self.check_move_event.set()
+                self.check_move_event.wait()  # This stops the motors from updating each other's monitors
+                # self.check_move_event.clear()
+                motor_check = self.checkpos_motor(motor, False, SpecMot=self._SpecMotor_sess[id])
+                # self.check_move_event.set()
                 moved = motor_check['moved']
                 pos = motor_check['pos']
                 if moved:
@@ -291,7 +297,7 @@ class Core(object):
                     self.moving_bool_dict.update({motor.name, moved})
             else:  # making sure we're looking at the right motor
                 time.sleep(1)
-                SpecMotor.connectToSpec(_SpecMotor_sess, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
+                SpecMotor.connectToSpec(self._SpecMotor_sess[id], motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
         print "Thread killed : " + motor.Name
 
     def motor_track_state(self, state):
@@ -410,6 +416,7 @@ class Core(object):
         self.scan_data = []  # Initalizing empty arrays
         self.scan_point = []
         while True:
+            if self._terminate_flag: break
             self.scan_event.wait()
             if self._terminate_flag: break
             # while self.is_scanning():
@@ -607,6 +614,7 @@ class Core(object):
         while True:
             if self._terminate_flag:break
             self.cent_event.wait()
+            if self._terminate_flag: break
             self.w_neg_array, self.w_naught_array, self.w_pos_array = ([] for i in range(3))
             (scan_motor_name, angle_motor_name, cent_scan_start, cent_scan_stop,
              cent_angle_m, cent_angle_o, cent_angle_p, steps, waittime, Motors, terminate) = self.cent_props
@@ -788,6 +796,8 @@ class Core(object):
             if self._terminate_flag:break
             if self._teminate_rock:break
             self.rock_event.wait()
+            if self._terminate_flag:break
+            if self._teminate_rock:break
             (motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time) = self.rock_props
             for i in range(len(Motors)):
                 motor_inst = Motors[i]
@@ -829,9 +839,11 @@ class Core(object):
                 self.rock_event.clear()
                 print "You have not assigned a motor. Aborting"
                 continue
-            start_time = time.time()
-            while rock_time * 60 > time.time() - start_time:  # checking if all the time to rock has passed
-                print time.time() - start_time
+            self.start_rock = time.time()
+            while rock_time * 60 > time.time() - self.start_rock:  # checking if all the time to rock has passed
+                self.rock_progress.setMaximum(int(rock_time*60))
+                self.rock_progress.setMinimum(0)
+                print time.time() - self.start_rock
                 found = False
                 while not found:
                     dict = self.checkpos_motor(motor, False)
@@ -873,6 +885,7 @@ class Core(object):
                     return [x for (y, x) in sorted(zip(Y, X))]
                 self.rock_roll(motor, sort_by_dist(regions_meta[0]), sort_by_dist(regions_meta[1]), sort_by_dist(regions_meta[5]), count_time, Motors)
             self.rock_event.clear()
+            self.rock_progress.setMaximum(0)
             #self.is_rocking()
 
     def rock_stop(self):
@@ -887,6 +900,8 @@ class Core(object):
         self.scan_start('Rock', motor.Name, startlist, stoplist, intervallist, count_time, Motors)
         time.sleep(3)
         while True:
+            self.label_motor_currpos.setText(self.monitor.get_value(motor.Pos_VAR))
+            self.rock_progress.setValue(int(time.time() - self.start_rock))
             while self.is_moving() or self.is_scanning():
                 time.sleep(1)
             if self.is_moving() or self.is_scanning():  #The check has to get two repeated checks that the motor is not scanning or moving, 1 sec apart
@@ -895,7 +910,9 @@ class Core(object):
                 break
         pass
 
-    def rock_start(self, motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time):
+    def rock_start(self, motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time, currpos_label, prog_bar):
+        self.label_motor_currpos = currpos_label
+        self.rock_progress = prog_bar
         if self.is_rocking(self.start_stop_PB):
             self.rock_stop()
         self.old_rock_x, self.old_rock_y, self.rock_array = ([] for i in range(3))
@@ -1043,7 +1060,8 @@ class Core(object):
 
     def init_Spec(self):
         # starting up the Spec server, completed in main_window as monitor needs to load
-        Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
+        self.Spec_man = Spec.connectToSpec(self.Spec_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
+        pass
 
     def update_filepath(self, filepath, name):
         filepath = str(filepath.text())
@@ -1070,18 +1088,22 @@ class Core(object):
     def terminate(self):
         self._terminate_flag = True
         print "core.terminate called"
-        sess_list = [self.SpecMotor_sess,
-                           # self.SpecCounter_ic2,
-                           # self.SpecCounter_pinf,
-                           self.SpecScan_sess,
-                           self.SpecScan_sess,
-                           ]
-        for sess in sess_list:
-            self.term_sess(sess)
-        self.count_event.set()  # allow any blocked threads to terminate
-        self.move_event.set()
-        self.scan_event.set()
+        for event in [self.count_event, self.move_event, self.scan_event, self.cent_event, self.rock_event]:
+            event.set() # allow any blocked threads to terminate
         self.scan_stop()
+        sess_list = [  # self.SpecCounter_ic2,
+            # self.SpecCounter_pinf,
+            self.SpecScan_sess,
+            self.SpecMotor_sess,
+            self.Spec_sess,
+        ]
+        for motor in self._SpecMotor_sess:
+            sess_list.insert(0, motor)
+        for sess in sess_list:
+            sess = self.term_sess(sess)
+            del sess
+        SpecConnectionsManager.SpecConnectionsManager().stop()
+
 
     def term_sess(self, sess):
         connection = sess.connection
@@ -1090,9 +1112,18 @@ class Core(object):
         except Exception, e:
             print repr(e)
         if connection is not None:
+            try:
+                for key, channel in connection.dispatcher.registeredChannels.iteritems():
+                    channel.unregister()
+                connection.abort()
+                pass
+            except SpecClientError:
+                print "Successfully disconnected " + repr(sess) + " ?"
             connection.dispatcher.disconnect()
+            # connection.disconnect()
         else:
             print repr(connection) + " was not initialized and hence was not closed"
+        return sess
 
 class Calculation:
 

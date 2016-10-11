@@ -1,8 +1,10 @@
 # System imports
 import simplejson
 import os
+import sys
 from functools import partial
 import threading
+import time
 
 # Library imports
 from PyQt4 import Qt
@@ -696,6 +698,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                  self.Motors,  # We need to pass this so we can see which motor we are rockning with
                                  self.check_omit(),
                                  self.doubleSpinBox_rock_time.value(),
+                                 self.label_motor_currpos,
+                                 self.progressBar_rock,
                                  )
             self.rock_plot_id.timer.start(250.0)
             self.connect(self.rock_plot_id.timer, QtCore.SIGNAL('timeout()'), self.rock_plot)

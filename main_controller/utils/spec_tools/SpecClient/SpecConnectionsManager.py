@@ -70,6 +70,8 @@ class _ThreadedSpecConnectionsManager(threading.Thread):
         self.connections = {}
         self.connectionDispatchers = {}
         self.stopEvent = threading.Event()
+        global stopEvent
+        stopEvent = self.stopEvent
         self.__started = False
         self.doEventsDispatching = dispatch_events
         self.setDaemon(True)

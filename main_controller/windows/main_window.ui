@@ -40,7 +40,7 @@
            <enum>QTabWidget::North</enum>
           </property>
           <property name="currentIndex">
-           <number>3</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="tab_count">
            <attribute name="title">
@@ -2315,7 +2315,7 @@
                  </size>
                 </property>
                 <property name="decimals">
-                 <number>0</number>
+                 <number>4</number>
                 </property>
                 <property name="minimum">
                  <double>-1000.000000000000000</double>
@@ -2490,7 +2490,7 @@
               <item row="2" column="2">
                <widget class="QDoubleSpinBox" name="doubleSpinBox_motor_3_moveto">
                 <property name="decimals">
-                 <number>0</number>
+                 <number>4</number>
                 </property>
                 <property name="minimum">
                  <double>-1000.000000000000000</double>
@@ -2503,7 +2503,7 @@
               <item row="3" column="2">
                <widget class="QDoubleSpinBox" name="doubleSpinBox_motor_4_moveto">
                 <property name="decimals">
-                 <number>0</number>
+                 <number>4</number>
                 </property>
                 <property name="minimum">
                  <double>-1000.000000000000000</double>
@@ -2516,7 +2516,7 @@
               <item row="4" column="2">
                <widget class="QDoubleSpinBox" name="doubleSpinBox_motor_5_moveto">
                 <property name="decimals">
-                 <number>0</number>
+                 <number>4</number>
                 </property>
                 <property name="minimum">
                  <double>-1000.000000000000000</double>
@@ -2529,7 +2529,7 @@
               <item row="5" column="2">
                <widget class="QDoubleSpinBox" name="doubleSpinBox_motor_6_moveto">
                 <property name="decimals">
-                 <number>0</number>
+                 <number>4</number>
                 </property>
                 <property name="minimum">
                  <double>-1000.000000000000000</double>
@@ -2679,7 +2679,7 @@
                  </size>
                 </property>
                 <property name="decimals">
-                 <number>0</number>
+                 <number>4</number>
                 </property>
                 <property name="minimum">
                  <double>-1000.000000000000000</double>

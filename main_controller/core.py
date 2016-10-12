@@ -10,6 +10,7 @@ import time
 import os
 
 import numpy as np
+import ctypes  # An included library with Python install.
 
 from functools import partial
 
@@ -113,10 +114,13 @@ class VAR(Constant):
 
     CENT_NEG_MAXY       = 'var:cent_neg_maxy'
     CENT_NEG_COM        = 'var:cent_neg_com'
+    CENT_NEG_CWHM       = 'var:cent_neg_cwhm'
     CENT_NAU_MAXY       = 'var:cent_nau_maxy'
     CENT_NAU_COM        = 'var:cent_nau_com'
+    CENT_NAU_CWHM       = 'var:cent_nau_cwhm'
     CENT_POS_MAXY       = 'var:cent_pos_maxy'
     CENT_POS_COM        = 'var:cent_pos_com'
+    CENT_POS_CWHM       = 'var:cent_pos_cwhm'
 
     CENT_CENTERED_X     = 'var:cent_centered_x'
     CENT_CENTERED_Y     = 'var:cent_centered_y'
@@ -212,16 +216,14 @@ class Core(object):
         if motor.Enabled:
             motor_check = self.checkpos_motor(motor)  # This sets the motor to the correct Mne as well
             pos = motor_check['pos']
+            (low, high)  = self.SpecMotor_sess.getLimits()
             if movetype == 'Relative':
-                SpecMotor.moveRelative(self.SpecMotor_sess, moveto)
-                print "Moving motor " + motor.Name + " to " + repr(moveto + pos)
-            elif movetype == 'Absolute':
+                moveto = pos+moveto
+            if low < moveto < high:
                 SpecMotor.move(self.SpecMotor_sess, moveto)
                 print "Moving motor " + motor_name + " to " + repr(moveto)
             else:
-                print "Move command FAILED:  INVESTIGATE"
-                print movetype
-                print moveto
+                print "The motor was asked to move to " + repr(moveto) + " which is outside of the accepted range of " + repr((low, high))
         else:
             print "Cannot Move non-enabled motor"
 
@@ -543,10 +545,10 @@ class Core(object):
     """ CENTER """
     def cent_settings(self, scan_motor_name, angle_motor_name, relmax_SB, relmin_SB, center_SB, angle_pm_SB, angle_o_SB, Motors, wait_time_SB, center_calc_CB):
         self.wait_time_SB = wait_time_SB
-        center_calc_CB.setMaxCount(3)    # At init we have to do some limit setting/setting up of UI elements
-        center_calc_CB.addItem('Max Y')  # we do it here because they are mostly calcs which rely on the motors chosen
-        center_calc_CB.addItem('COM')    # This combo box is not one of those though
-        center_calc_CB.addItem('Curser')
+        items = ['Max Y', 'COM', 'Curser', 'CWHM']
+        center_calc_CB.setMaxCount(len(items))    # At init we have to do some limit setting/setting up of UI elements
+        for item in items:  # we do it here because they are mostly calcs which rely on the motors chosen
+            center_calc_CB.addItem(item)  # This combo box is not one of those though
         for i in range(len(Motors)):
             Motor_inst = Motors[i]
             if Motor_inst.Enabled:
@@ -627,9 +629,13 @@ class Core(object):
             if not terminate:
                 self.is_centering(None)
                 # Each of these blocks are nearly identical, they just tell the motor to go to a position and then scan
-                self.cent_command_buff(self.is_moving, self.move_motor, (angle_motor, cent_angle_m, "Absolute"),
+                try:
+                    self.cent_command_buff(self.is_moving, self.move_motor, (angle_motor, cent_angle_m, "Absolute"),
                                        "CENTERING: MOVING TO W-", command2=self.move_motor,
                                        command2args=(scan_motor, cent_scan_start, "Absolute"))
+                except UnboundLocalError:
+                    print "No Motor Chosen \nWill Reset"
+                    self.cent_event.clear()
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
                 self.cent_command_buff(self.is_moving, self.scan_start, ('Abs', scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W-")
@@ -665,6 +671,7 @@ class Core(object):
                 if self._teminate_cent: continue
                 self.cent_event.clear()
                 self.is_centering(None)
+            print "Centering Complete"
             time.sleep(1)
 
     def cent_grab_data(self, x_CB, y_CB):
@@ -694,9 +701,10 @@ class Core(object):
         real_name_arr = [x_CB.currentText()] # starting table headers
         (go, x_arr, y_arr, length) = self.cent_grab_data(x_CB, y_CB)
         if go or not self.old_x == x_arr or not self.old_y == y_arr:  # Should we regraph?
-            namearr = ['w neg', 'w naught', 'w pos']  #defining names and vars for the diff data sets
+            namearr = ['  w-  ', '  wo  ', '  w+  ']  #defining names and vars for the diff data sets
             max_array = [VAR.CENT_NEG_MAXY, VAR.CENT_NAU_MAXY, VAR.CENT_POS_MAXY]
             com_array = [VAR.CENT_NEG_COM, VAR.CENT_NAU_COM, VAR.CENT_POS_COM]
+            cwhm_array = [VAR.CENT_NEG_CWHM, VAR.CENT_NAU_CWHM, VAR.CENT_POS_CWHM]
             bar_vars = [VAR.VERT_BAR_NEG_POS, VAR.VERT_BAR_NAU_POS, VAR.VERT_BAR_POS_POS, VAR.VERT_BAR_MULTI_POS]
             for i in range(length):
                 try:
@@ -709,6 +717,7 @@ class Core(object):
                 # self.update_bar_pos(bar_vars[3], max(x_arr), max(y_arr))
                 self.monitor.update(max_array[i], calc.x_at_y_max())
                 self.monitor.update(com_array[i], calc.COM())
+                self.monitor.update(cwhm_array[i], calc.CFWHM())
                 if i==2: # if we have enough data to calculate the center x,y we do it
                     if str(calc_CB.currentText()) == 'Max Y':
                         pos = self.monitor.get_value(VAR.CENT_POS_MAXY)
@@ -719,6 +728,9 @@ class Core(object):
                     elif str(calc_CB.currentText()) == 'Curser':
                         pos = self.monitor.get_value(VAR.VERT_BAR_POS_X)
                         neg = self.monitor.get_value(VAR.VERT_BAR_NEG_X)
+                    elif str(calc_CB.currentText()) == 'CWHM':
+                        pos = self.monitor.get_value(VAR.CENT_POS_CWHM)
+                        neg = self.monitor.get_value(VAR.CENT_NEG_CWHM)
                     self.monitor.update(VAR.CENT_CENTERED_X, (pos + neg)/(2*(1-np.cos(np.degrees(self.angle_pm)))))
                     self.monitor.update(VAR.CENT_CENTERED_Y, (pos - neg) / (2 * (np.sin(np.degrees(self.angle_pm)))))
             if not self.cent_started:
@@ -794,10 +806,9 @@ class Core(object):
     def handle_rock(self):
         while True:
             if self._terminate_flag:break
-            if self._teminate_rock:break
             self.rock_event.wait()
             if self._terminate_flag:break
-            if self._teminate_rock:break
+            if self._teminate_rock:continue
             (motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time) = self.rock_props
             for i in range(len(Motors)):
                 motor_inst = Motors[i]
@@ -825,7 +836,7 @@ class Core(object):
                     lows.append(region_sort[0])
                     highs.append(region_sort[1])
             full_list= sorted(lows+highs)
-            regions=[]
+            regions = []
             tot_size = 0
             for i in range(len(full_list)/2):
                 if not full_list[i*2] == full_list[(i*2) +1]:
@@ -841,6 +852,9 @@ class Core(object):
                 continue
             self.start_rock = time.time()
             while rock_time * 60 > time.time() - self.start_rock:  # checking if all the time to rock has passed
+                self.is_rocking()
+                if self._terminate_flag: break
+                if self._teminate_rock: break
                 self.rock_progress.setMaximum(int(rock_time*60))
                 self.rock_progress.setMinimum(0)
                 print time.time() - self.start_rock
@@ -885,25 +899,30 @@ class Core(object):
                     return [x for (y, x) in sorted(zip(Y, X))]
                 self.rock_roll(motor, sort_by_dist(regions_meta[0]), sort_by_dist(regions_meta[1]), sort_by_dist(regions_meta[5]), count_time, Motors)
             self.rock_event.clear()
-            self.rock_progress.setMaximum(0)
-            #self.is_rocking()
+            print "DONE ROCKING"
+            self.is_rocking()
 
-    def rock_stop(self):
+
+    def rock_stop(self, Motors):
         self.rock_event.clear()
         self._teminate_rock = True
         self.is_rocking()
         if self.is_scanning():
             self.scan_stop()
+        for i in range(len(Motors)):
+            Motor_inst = Motors[i]
+            if Motor_inst.Enabled:
+                self.motor_stop(Motor_inst)
 
     def rock_roll(self, motor, startlist, stoplist, intervallist, count_time, Motors):
         """Here is where we should start the rocking and then push it to the plot"""
         self.scan_start('Rock', motor.Name, startlist, stoplist, intervallist, count_time, Motors)
         time.sleep(3)
         while True:
-            self.label_motor_currpos.setText(self.monitor.get_value(motor.Pos_VAR))
-            self.rock_progress.setValue(int(time.time() - self.start_rock))
             while self.is_moving() or self.is_scanning():
-                time.sleep(1)
+                time.sleep(.25)
+                self.label_motor_currpos.setText(str(self.monitor.get_value(motor.Pos_VAR)))
+            time.sleep(1)
             if self.is_moving() or self.is_scanning():  #The check has to get two repeated checks that the motor is not scanning or moving, 1 sec apart
                 continue
             else:
@@ -913,8 +932,8 @@ class Core(object):
     def rock_start(self, motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time, currpos_label, prog_bar):
         self.label_motor_currpos = currpos_label
         self.rock_progress = prog_bar
-        if self.is_rocking(self.start_stop_PB):
-            self.rock_stop()
+        if self.is_rocking(self.start_stop_PB_rock):
+            self.rock_stop(Motors)
         self.old_rock_x, self.old_rock_y, self.rock_array = ([] for i in range(3))
         self.rock_props = (motor_name, startpos, endpos, intervals, count_time, Motors, omit, rock_time)
         self._teminate_rock = False
@@ -924,11 +943,11 @@ class Core(object):
     def is_rocking(self, start_stop_PB=None):
         if start_stop_PB == None:
             try:
-                start_stop_PB = self.start_stop_PB # Make this specific to rocking
+                start_stop_PB = self.start_stop_PB_rock # Make this specific to rocking
             except UnboundLocalError:
                 pass
         else:
-            self.start_stop_PB = start_stop_PB
+            self.start_stop_PB_rock = start_stop_PB
             # This property is checked, so functions here will work
         if self.rock_event._Event__flag:
             start_stop_PB.setText('Stop')
@@ -1125,6 +1144,10 @@ class Core(object):
             print repr(connection) + " was not initialized and hence was not closed"
         return sess
 
+    def error():
+        showerror("Answer", "Sorry, no answer available")
+
+
 class Calculation:
 
     def __init__(self, x, y):
@@ -1167,7 +1190,7 @@ class Calculation:
 
     def COM(self):
         try:
-            return np.average(self.x, weights=self.y)
+            return np.average(self.x, weights=(np.array(self.y)-min(self.y)))
         except ZeroDivisionError:
             return 0
 

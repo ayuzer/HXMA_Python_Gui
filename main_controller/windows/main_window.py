@@ -509,16 +509,19 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                 type = 'Rel'
             else :
                 type = 'Abs'
-            self.core.scan_start(type,
-                                 self.comboBox_scan_motor.currentText(),  # Which Motor are we using? Passes NAME back
-                                 self.doubleSpinBox_scan_startpos.value(),  # the rest are just values
-                                 self.doubleSpinBox_scan_stoppos.value(),
-                                 self.doubleSpinBox_scan_steps.value(),
-                                 self.doubleSpinBox_scan_waittime.value(),
-                                 self.Motors  # We need to pass this so we can see which motor we are scanning with
-                                 )
-            self.scan_plot_id.timer.start(250.0)
-            self.connect(self.scan_plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
+            if self.comboBox_scan_motor.currentIndex() == -1:
+                dialog_info(msg="Motor was not chosen, \nscanning cannot begin")
+            else:
+                self.core.scan_start(type,
+                                     self.comboBox_scan_motor.currentText(),  # Which Motor are we using? Passes NAME back
+                                     self.doubleSpinBox_scan_startpos.value(),  # the rest are just values
+                                     self.doubleSpinBox_scan_stoppos.value(),
+                                     self.doubleSpinBox_scan_steps.value(),
+                                     self.doubleSpinBox_scan_waittime.value(),
+                                     self.Motors  # We need to pass this so we can see which motor we are scanning with
+                                     )
+                self.scan_plot_id.timer.start(250.0)
+                self.connect(self.scan_plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
 
     def scan_plot(self):
         go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(),
@@ -533,6 +536,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                                                   ])
             self.tableWidget_scan_data.setColumnCount(2)
             self.tableWidget_scan_data.setRowCount(len(x))
+            self.tableWidget_scan_data.horizontalHeader().setResizeMode(Qt.QHeaderView.ResizeToContents)
+            self.tableWidget_scan_data.setFixedWidth(self.tableWidget_scan_data.horizontalHeader().length() + 50)
             for row in range(len(x)):
                 self.tableWidget_scan_data.setItem(row, 0, QtGui.QTableWidgetItem(QtCore.QString("%1").arg(x[row])))
                 self.tableWidget_scan_data.setItem(row, 1, QtGui.QTableWidgetItem(QtCore.QString("%1").arg(y[row])))
@@ -576,19 +581,22 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         if self.core.is_centering(self.pushButton_cent_start_stop):
             self.core.cent_stop()
         else:
-            self.core.cent_start(self.comboBox_cent_motor_scan.currentText(),
-                                 self.comboBox_cent_motor_angle.currentText(),
-                                 self.doubleSpinBox_cent_relmax.value(),
-                                 self.doubleSpinBox_cent_relmin.value(),
-                                 self.doubleSpinBox_cent_center.value(),
-                                 self.doubleSpinBox_cent_angle_pm.value(),
-                                 self.doubleSpinBox_cent_angle_o.value(),
-                                 self.doubleSpinBox_cent_steps.value(),
-                                 self.doubleSpinBox_cent_waittime.value(),
-                                 self.Motors,
-                                 )
-            self.cent_timer.start(250.0)
-            self.connect(self.cent_timer,  QtCore.SIGNAL('timeout()'), self.cent_plot)
+            if self.comboBox_cent_motor_scan.currentIndex() == -1 or self.comboBox_cent_motor_angle.currentIndex() == -1:
+                dialog_info(msg="One or more motors were not chosen, \ncentering cannot begin")
+            else:
+                self.core.cent_start(self.comboBox_cent_motor_scan.currentText(),
+                                     self.comboBox_cent_motor_angle.currentText(),
+                                     self.doubleSpinBox_cent_relmax.value(),
+                                     self.doubleSpinBox_cent_relmin.value(),
+                                     self.doubleSpinBox_cent_center.value(),
+                                     self.doubleSpinBox_cent_angle_pm.value(),
+                                     self.doubleSpinBox_cent_angle_o.value(),
+                                     self.doubleSpinBox_cent_steps.value(),
+                                     self.doubleSpinBox_cent_waittime.value(),
+                                     self.Motors,
+                                     )
+                self.cent_timer.start(250.0)
+                self.connect(self.cent_timer,  QtCore.SIGNAL('timeout()'), self.cent_plot)
 
     def cent_plot(self):
         self.scan_plot()  # makes it so that the plot also displays on the scan tab
@@ -599,6 +607,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.core.cent_plotting(plot, self.tableWidget_cent_data,
                                 self.comboBox_cent_data_x, self.comboBox_cent_data_y,
                                 self.comboBox_cent_calc_choose, self.checkBox_cent_single.isChecked())
+        self.tableWidget_cent_data.horizontalHeader().setResizeMode(Qt.QHeaderView.ResizeToContents)
+        self.tableWidget_cent_data.setFixedWidth(self.tableWidget_cent_data.horizontalHeader().length() + 50)
 
     def handle_save_cent(self):
         self.core.save_cent_curr(str(self.lineEdit_cent_filename.text()),
@@ -686,27 +696,33 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
     def handle_pushButton_rock_start_stop(self):
         if self.core.is_rocking(self.pushButton_rock_start_stop):
-            self.core.rock_stop()
+            self.core.rock_stop(self.Motors)
         elif self.core.is_scanning() == True or self.core.is_centering == True:
             print "Cannot rock, there is currently an operation ongoing (scanning or centering)"
         else:
-            self.core.rock_start(self.comboBox_rock_motor.currentText(),  # Which Motor are we using? Passes NAME back
-                                 self.doubleSpinBox_rock_startpos.value(),  # the rest are just values
-                                 self.doubleSpinBox_rock_stoppos.value(),
-                                 self.doubleSpinBox_rock_steps.value(),
-                                 self.doubleSpinBox_rock_waittime.value(),
-                                 self.Motors,  # We need to pass this so we can see which motor we are rockning with
-                                 self.check_omit(),
-                                 self.doubleSpinBox_rock_time.value(),
-                                 self.label_motor_currpos,
-                                 self.progressBar_rock,
-                                 )
-            self.rock_plot_id.timer.start(250.0)
-            self.connect(self.rock_plot_id.timer, QtCore.SIGNAL('timeout()'), self.rock_plot)
+            if self.comboBox_rock_motor.currentIndex() == -1 :
+                dialog_info(msg="The motor were not chosen, \nrocking cannot begin")
+            else:
+                self.core.rock_start(self.comboBox_rock_motor.currentText(),  # Which Motor are we using? Passes NAME back
+                                     self.doubleSpinBox_rock_startpos.value(),  # the rest are just values
+                                     self.doubleSpinBox_rock_stoppos.value(),
+                                     self.doubleSpinBox_rock_steps.value(),
+                                     self.doubleSpinBox_rock_waittime.value(),
+                                     self.Motors,  # We need to pass this so we can see which motor we are rockning with
+                                     self.check_omit(),
+                                     self.doubleSpinBox_rock_time.value(),
+                                     self.label_motor_currpos,
+                                     self.progressBar_rock,
+                                     )
+                self.rock_plot_id.timer.start(250.0)
+                self.connect(self.rock_plot_id.timer, QtCore.SIGNAL('timeout()'), self.rock_plot)
 
     def rock_plot(self):
         self.scan_plot()  # makes it so that the plot also displays on the scan tab
         self.core.rock_plotting(self.rock_plot_id, self.comboBox_rock_data_x, self.comboBox_rock_data_y)
+        self.progressBar_rock.setValue(int(time.time() - self.core.start_rock))
+        if not self.core.rock_event.isSet():
+            self.progressBar_rock.setMaximum(0)
     
     def update_rock_cols(self):
         self.core.update_CB(self.comboBox_rock_data_x, self.comboBox_rock_data_y, 'rock')
@@ -719,7 +735,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
     def handle_comboBox_rock_data(self):
         pass
-    
 
     """CONDITIONING"""
     def init_beam_cond(self):
@@ -900,16 +915,19 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             VAR.SCAN_FWHM:          (self.label_scan_FWHM,          '{:.2f}',   12, True),
             VAR.SCAN_COM:           (self.label_scan_COM,           '{:.2f}',   12, True),
             VAR.SCAN_CWHM:          (self.label_scan_CWHM,          '{:.2f}',   12, True),
-            VAR.CENT_NEG_MAXY:      (self.label_cent_maxint_m,      '{:.3f}',   12, True),
-            VAR.CENT_NAU_MAXY:      (self.label_cent_maxint_o,      '{:.3f}',   12, True),
-            VAR.CENT_POS_MAXY:      (self.label_cent_maxint_p,      '{:.3f}',   12, True),
-            VAR.CENT_NEG_COM:       (self.label_cent_com_m,         '{:.3f}',   12, True),
-            VAR.CENT_NAU_COM:       (self.label_cent_com_o,         '{:.3f}',   12, True),
-            VAR.CENT_POS_COM:       (self.label_cent_com_p,         '{:.3f}',   12, True),
-            VAR.VERT_BAR_NEG_X:   (self.label_cent_curs_m,        '{:.3f}',   12, True),
-            VAR.VERT_BAR_NAU_X:   (self.label_cent_curs_o,        '{:.3f}',   12, True),
-            VAR.VERT_BAR_POS_X:   (self.label_cent_curs_p,        '{:.3f}',   12, True),
-            VAR.VERT_BAR_SCAN_X:   (self.label_scan_curser,        '{:.3f}',   12, True),
+            VAR.CENT_NEG_MAXY:      (self.label_cent_maxint_m,      '{:.3f}',   10, False),
+            VAR.CENT_NAU_MAXY:      (self.label_cent_maxint_o,      '{:.3f}',   10, False),
+            VAR.CENT_POS_MAXY:      (self.label_cent_maxint_p,      '{:.3f}',   10, False),
+            VAR.CENT_NEG_COM:       (self.label_cent_com_m,         '{:.3f}',   10, False),
+            VAR.CENT_NAU_COM:       (self.label_cent_com_o,         '{:.3f}',   10, False),
+            VAR.CENT_POS_COM:       (self.label_cent_com_p,         '{:.3f}',   10, False),
+            VAR.CENT_NEG_CWHM:      (self.label_cent_cwhm_m,        '{:.3f}',   10, False),
+            VAR.CENT_NAU_CWHM:      (self.label_cent_cwhm_o,        '{:.3f}',   10, False),
+            VAR.CENT_POS_CWHM:      (self.label_cent_cwhm_p,        '{:.3f}',   10, False),
+            VAR.VERT_BAR_NEG_X:     (self.label_cent_curs_m,        '{:.3f}',   10, False),
+            VAR.VERT_BAR_NAU_X:     (self.label_cent_curs_o,        '{:.3f}',   10, False),
+            VAR.VERT_BAR_POS_X:     (self.label_cent_curs_p,        '{:.3f}',   10, False),
+            VAR.VERT_BAR_SCAN_X:    (self.label_scan_curser,        '{:.3f}',   10, False),
             VAR.CENT_CENTERED_X:    (self.label_cent_calc_cent_x,   '{:.3f}',   12, True),
             VAR.CENT_CENTERED_Y:    (self.label_cent_calc_cent_y,   '{:.3f}',   12, True),
 

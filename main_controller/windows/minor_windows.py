@@ -410,7 +410,7 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
         center_point = kwargs['center']
         del kwargs['center']
 
-        self.Motors =  kwargs['motors']
+        self.Motors = kwargs['motors']
         del kwargs['motors']
 
         super(SetMotorSlot, self).__init__(*args, **kwargs)
@@ -453,6 +453,13 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
         for i in range(len(self.comboboxes)):
             self.comboboxes[i].currentIndexChanged.connect(partial(self.handle_CB_ref, i+1))
 
+        for i, motor in enumerate(self.Motors):
+            if not motor.Name == '':
+                index = self.comboboxes[i].findText(motor.Name, QtCore.Qt.MatchFixedString)
+                if index >= 0 :
+                    self.comboboxes[i].setCurrentIndex(index)
+            self.checkboxes[i].setChecked(motor.Enabled)
+
     def set_close_callback(self, callback):
         self._close_callback = callback
 
@@ -467,7 +474,8 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
                 combo.addItem(self.motor_props[0][i])
 
     def handle_CB_ref(self, num):
-        print num
+        # print num
+        pass
 
     def handle_pushButton_apply(self): # Setting the chosen name to be a motor
         for i in range(len(self.Motors)):

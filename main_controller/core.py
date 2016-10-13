@@ -133,12 +133,6 @@ class VAR(Constant):
     SERVER_HOST         = 'var:server_host'
     SERVER_PORT         = 'var:server_port'
 
-    VERT_BAR_SCAN_POS   = 'var:bar_scan_pos'
-    VERT_BAR_MULTI_POS  = 'var:bar_multi_pos'
-    VERT_BAR_NEG_POS    = 'var:bar_neg_pos'
-    VERT_BAR_NAU_POS    = 'var:bar_nau_pos'
-    VERT_BAR_POS_POS    = 'var:bar_pos_pos'
-
     VERT_BAR_SCAN_X = 'var:bar_scan_x'
     VERT_BAR_MULTI_X = 'var:bar_multi_x'
     VERT_BAR_NEG_X = 'var:bar_neg_x'
@@ -434,9 +428,11 @@ class Core(object):
                     pass
                 #elif array_equal(old_data, self.scan_data):
                 if not old_point == self.scan_point: # here is where you would graph it/save it to the csv
-                    # print self.scan_point
+                    print "Scan point " + repr(self.scan_point[0]) + " Counter: " +repr(self.scan_array_counter)
+                    if self.scan_point[0] == 1 and self.scan_array_counter == 0:
+                        self.scan_array_counter = self.scan_array_counter + 1
                     if self.scan_point[0] > self.scan_array_counter and self.scan_array_counter == 0: #Skips old point
-                        print "Scan point ignored ScanPoint:" + repr(self.scan_point[0]) + " Counter: " +repr(self.scan_array_counter)
+                        print "Scan point ignored ScanPoint:" + repr(self.scan_point[0]) + " Counter: " + repr(self.scan_array_counter)
                     elif self.scan_point[0] == self.scan_array_counter:
                         self.scan_array.insert(self.scan_point[0], self.scan_point[1])
                         self.scan_array_counter = self.scan_array_counter + 1
@@ -705,7 +701,7 @@ class Core(object):
             max_array = [VAR.CENT_NEG_MAXY, VAR.CENT_NAU_MAXY, VAR.CENT_POS_MAXY]
             com_array = [VAR.CENT_NEG_COM, VAR.CENT_NAU_COM, VAR.CENT_POS_COM]
             cwhm_array = [VAR.CENT_NEG_CWHM, VAR.CENT_NAU_CWHM, VAR.CENT_POS_CWHM]
-            bar_vars = [VAR.VERT_BAR_NEG_POS, VAR.VERT_BAR_NAU_POS, VAR.VERT_BAR_POS_POS, VAR.VERT_BAR_MULTI_POS]
+            bar_vars = [VAR.VERT_BAR_NEG_X, VAR.VERT_BAR_NAU_X, VAR.VERT_BAR_POS_X, VAR.VERT_BAR_MULTI_X]
             for i in range(length):
                 try:
                     (x, y) = x_arr[i], y_arr[i]
@@ -713,8 +709,7 @@ class Core(object):
                     (x, y) = [0], [0]
                 calc = Calculation(x, y) # initializing the calculation class with each data set
                 real_name_arr.append(namearr[i])
-                self.update_bar_pos(bar_vars[i], x, y)
-                # self.update_bar_pos(bar_vars[3], max(x_arr), max(y_arr))
+                self.update_bar_pos(bar_vars[i], x)
                 self.monitor.update(max_array[i], calc.x_at_y_max())
                 self.monitor.update(com_array[i], calc.COM())
                 self.monitor.update(cwhm_array[i], calc.CFWHM())
@@ -1018,31 +1013,19 @@ class Core(object):
             print "Moving " + repr(PV)+ " to " + repr(to)
 
     """ RANDOM UTILITIES """
-    def update_bar_pos(self, var, x, y):
-        var_dict={'var:bar_scan_pos' : VAR.VERT_BAR_SCAN_X,
-                  'var:bar_multi_pos': VAR.VERT_BAR_MULTI_X,
-                  'var:bar_neg_pos': VAR.VERT_BAR_NEG_X,
-                  'var:bar_nau_pos': VAR.VERT_BAR_NAU_X,
-                  'var:bar_pos_pos': VAR.VERT_BAR_POS_X,
-                  }
-        for key in var_dict:
-            if var == key:
-                x_var=var_dict[key]
-            else:
-                continue
+    def update_bar_pos(self, var, x):
         pos = self.monitor.get_value(var)
-        if pos == None:
-            try:
-                v_bar_pos = [min(x) + (max(x) - min(x)) / 2.0, max(y), min(y)]
-            except ValueError:
-                return
-        else:
-            try:
-                v_bar_pos = [pos[0], max(y), min(y)]
-            except ValueError:
-                v_bar_pos = pos
-
-        self.monitor.update(x_var, v_bar_pos[0])
+        try:  # if its not set or outside bounds of graph, then move
+            if pos == None:
+                pos = min(x) + (max(x) - min(x)) / 2.0
+            elif not max(x)+(max(x) - min(x))*0.01 > pos:
+                pos = max(x)
+            elif not pos > min(x)-(max(x) - min(x))*0.01:
+                pos = min(x)
+        except ValueError:
+            if pos == None:
+                pos = 0
+        v_bar_pos = pos
         self.monitor.update(var, v_bar_pos)
 
     def update_CB(self, x_data_CB, y_data_CB, type):
@@ -1144,9 +1127,11 @@ class Core(object):
             print repr(connection) + " was not initialized and hence was not closed"
         return sess
 
-    def error():
-        showerror("Answer", "Sorry, no answer available")
-
+    def get_motor(self, motor_name, Motors):
+        for motor in Motors:
+            if motor_name == motor.Name:
+                return motor
+        return False  # Failed to find Motor
 
 class Calculation:
 

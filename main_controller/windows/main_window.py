@@ -370,6 +370,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.pushButton_open_pos_load.clicked.connect(self.handle_action_save_load)
         self.saved_pos = []
 
+        self.init_label_props()
+
     """POPUPS"""
     def handle_action_save_load(self):
         center_point = self.geometry().center()
@@ -526,7 +528,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
     def scan_plot(self):
         go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(),
                                       self.comboBox_scan_data_y.currentIndex())
-        self.core.update_bar_pos(VAR.VERT_BAR_SCAN_POS, x, y)
+        self.core.update_bar_pos(VAR.VERT_BAR_SCAN_X, x)
 
         if not self.old_scan_x == x or not self.old_scan_y == y and go:
             self.scan_plot_id.new_plot(x, y)
@@ -891,6 +893,73 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
     def handle_tabWidget_changed(self, current):
         tabText = self.tabWidget.tabText(current)
         self.core.set_status("Tab Clicked: %s" % QtCore.QString(tabText))
+
+    def init_label_props(self):
+        labels = [[self.pushButton_motor_all_stop, {'hover': 'Stop Motors if they are moving, if they are not moving nothing will happen',
+                                                    'text' : 'Stop All',
+                                                    }],
+                  [self.pushButton_motor_all_move, {'hover': 'Move All Motors to the positions set below',
+                                                    'text': 'Move All',
+                                                    }],
+                  [self.pushButton_motor_all_checkpos, {'hover': 'Check the positions of all the motors',
+                                                    'text': 'Where All',
+                                                    }],
+
+                  [self.label_scan_CWHM, {'hover': 'Position of the center of half maximum, \nDouble click to move to',
+                                                    'move_motor': self.comboBox_scan_motor,
+                                                    }],
+                  [self.label_scan_COM, {'hover': 'Position of the center of mass, \nDouble click to move to',
+                                          'move_motor': self.comboBox_scan_motor,
+                                          }],
+                  [self.label_scan_curser, {'hover': 'Position of the curser, \nDouble click to move to',
+                                          'move_motor': self.comboBox_scan_motor,
+                                          }],
+
+                  [self.label_cent_calc_cent_x, {'hover': 'Position of the calculated X position \nDouble click to move to',
+                                            'move_motor': self.comboBox_cent_motor_scan,
+                                            }],
+
+                  [self.label_cent_calc_cent_y, {'hover': 'Position of the calculated Y position, \nDouble click to move to',
+                                            'move_motor': self.comboBox_cent_motor_scan,
+                                            }],
+
+                  ]
+
+        for label in labels:
+            item, dict = label[0], label[1]
+            for key, value in dict.iteritems():  # this would be items() in python 3
+                if key == 'hover':
+                    QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 10))
+                    item.setToolTip(Qt.QString(value))
+                elif key == 'text':
+                    item.setText(value)
+                elif key == 'move_motor':
+                    self.clickable(item).connect(partial(self.move_clicker, value, item))
+
+    def move_clicker(self, CB, label):
+        motor = self.core.get_motor(str(CB.currentText()), self.Motors)
+        if motor:
+            try:
+                moveto = float(str(label.text()))
+                self.core.move_motor(motor, moveto=moveto, movetype='Absolute')
+            except ValueError:
+                dialog_info(msg='Motor Destination : ' + str(label.text()) + " is not a valid destination")
+        else:
+            dialog_info(msg ='Motor : ' + str(CB.currentText()) + " could not be found")
+
+    def clickable(self, widget):
+        class Filter(QtCore.QObject):
+            clicked = QtCore.pyqtSignal()
+            def eventFilter(self, obj, event):
+                if obj == widget:
+                    if event.type() == QtCore.QEvent.MouseButtonDblClick:
+                        if obj.rect().contains(event.pos()):
+                            self.clicked.emit()  # The developer can opt for .emit(obj) to get the object within the slot.
+                            return True
+                return False
+        filter = Filter(widget)
+        widget.installEventFilter(filter)
+        return filter.clicked
 
     def init_labels(self):
 

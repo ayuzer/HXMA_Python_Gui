@@ -64,54 +64,27 @@ class Plotter(Qwt.QwtPlot):
 
         self.bars = not (self.id == 'multi' or self.id == 'rock')
         if self.bars:
-            self.vbar_curser = self.vbar_max = self.vbar_com = None
-            self.curser = [self.vbar_curser,
-                      'Curser',
-                      Qt.Qt.red,
-                      ]
-
-            self.max = [self.vbar_max,
-                      'Max',
-                      Qt.Qt.cyan,
-                      ]
-
-            self.com = [self.vbar_com,
-                   'COM',
-                   Qt.Qt.darkBlue,
-                   ]
-            for bar in [self.curser, self.max, self.com]:
+            self.vbar_curser = self.vbar_max = self.vbar_com = self.vbar_cwhm = None
+            self.curser =   [self.vbar_curser,  'Curser',   Qt.Qt.red,]
+            self.max =      [self.vbar_max,     'Max',      Qt.Qt.cyan,]
+            self.com =      [self.vbar_com,     'COM',      Qt.Qt.darkBlue,]
+            self.cwhm =     [self.vbar_cwhm,    'CWHM',     Qt.Qt.gray,]
+            for bar in [self.curser, self.max, self.com, self.cwhm]:
                 bar[0] = Qwt.QwtPlotMarker()
                 bar[0].setLabel(Qwt.QwtText(bar[1]))
                 bar[0].setLineStyle(Qwt.QwtPlotMarker.VLine)
                 bar[0].setLinePen(Qt.QPen(bar[2]))
                 bar[0].setLabelAlignment(Qt.Qt.AlignBottom)
                 bar[0].attach(self)
-            # # self.curve.setStyle(Qwt.QwtPlotCurve.Sticks)
-            # self.vbar_curser = Qwt.QwtPlotMarker()
-            # self.vbar_curser.setLabel(Qwt.QwtText('Curser'))
-            # self.vbar_curser.setLineStyle(Qwt.QwtPlotMarker.VLine)
-            # self.vbar_curser.setLinePen(Qt.QPen(Qt.Qt.red, 1))
-            # self.vbar_curser.setLabelAlignment(Qt.Qt.AlignBottom)
-            # self.vbar_curser.attach(self)
-            #
-            # self.vbar_max = Qwt.QwtPlotCurve('Max')
-            # self.vbar_max.setItemAttribute(Qwt.QwtPlotItem.Legend, True)
-            # self.vbar_max.setPen(Qt.Qt.yellow)
-            # self.vbar_max.attach(self)
-            #
-            # self.vbar_com = Qwt.QwtPlotCurve('COM')
-            # self.vbar_com.setItemAttribute(Qwt.QwtPlotItem.Legend, True)
-            # self.vbar_com.setPen(Qt.Qt.blue)
-            # self.vbar_com.attach(self)
 
             self._dragBar = False
 
             self.setMouseTracking(True)
 
-            self.curser_pos_list = {'scan': self.VAR.VERT_BAR_SCAN_POS,
-                           'neg': self.VAR.VERT_BAR_NEG_POS,
-                           'nau': self.VAR.VERT_BAR_NAU_POS,
-                           'pos': self.VAR.VERT_BAR_POS_POS,
+            self.curser_pos_list = {'scan': self.VAR.VERT_BAR_SCAN_X,
+                           'neg': self.VAR.VERT_BAR_NEG_X,
+                           'nau': self.VAR.VERT_BAR_NAU_X,
+                           'pos': self.VAR.VERT_BAR_POS_X,
                            }
 
             self.max_pos_list = {'scan': self.VAR.SCAN_MAX_Y_NUM,
@@ -125,24 +98,26 @@ class Plotter(Qwt.QwtPlot):
                                  'nau': self.VAR.CENT_NAU_COM,
                                  'pos': self.VAR.CENT_POS_COM,
                                  }
+            
+            self.cwhm_pos_list = {'scan': self.VAR.SCAN_CWHM,
+                                 'neg': self.VAR.CENT_NEG_CWHM,
+                                 'nau': self.VAR.CENT_NAU_CWHM,
+                                 'pos': self.VAR.CENT_POS_CWHM,
+                                 }
+            self.pos = self.max_pos = self.com_pos = self.cwhm_pos = None
+            self.bar_vars = [
+                        [self.curser_pos_list, self.pos, self.handle_vbar_curser],
+                        [self.max_pos_list, self.max_pos, self.handle_vbar_max],
+                        [self.com_pos_list, self.com_pos, self.handle_vbar_com],
+                        [self.cwhm_pos_list, self.cwhm_pos, self.handle_vbar_cwhm],
+                        ]
 
-            for key in self.curser_pos_list:
-                if self.id == key:
-                    self.pos = self.curser_pos_list[key]
-                    self.monitor.connect(self.pos, self.handle_vbar_curser)
-
-            for key in self.max_pos_list:
-                if self.id == key:
-                    self.max_pos = self.max_pos_list[key]
-                    self.monitor.connect(self.max_pos, self.handle_vbar_max)
-
-            for key in self.com_pos_list:
-                if self.id == key:
-                    self.com_pos = self.com_pos_list[key]
-                    self.monitor.connect(self.com_pos, self.handle_vbar_com)
+            for bar in self.bar_vars:
+                for key in bar[0]:
+                    if self.id == key:
+                        bar[1] = bar[0][key]
+                        self.monitor.connect(bar[1], bar[2])
         self.__initZooming()
-        self.setZoomerMousePattern(0)
-
         
         mY = Qwt.QwtPlotMarker()
         mY.setLabelAlignment(Qt.Qt.AlignRight | Qt.Qt.AlignTop)
@@ -159,30 +134,25 @@ class Plotter(Qwt.QwtPlot):
                                         Qwt.QwtPicker.AlwaysOff,
                                         self.canvas())
         self.zoomer.setRubberBandPen(Qt.QPen(Qt.Qt.black))
+        self.setZoomerMousePattern()
 
-    def setZoomerMousePattern(self, index):
-        """Set the mouse zoomer pattern.
-        """
-        if index == 0:
-            pattern = [
-                Qwt.QwtEventPattern.MousePattern(Qt.Qt.LeftButton,
-                                                 Qt.Qt.ShiftModifier), # zoom in with shift click
-                Qwt.QwtEventPattern.MousePattern(Qt.Qt.MidButton,
-                                                 Qt.Qt.NoModifier),  # zoom all out with mid click
-                Qwt.QwtEventPattern.MousePattern(Qt.Qt.RightButton,
-                                                 Qt.Qt.NoModifier), # zoom out one layer with shift right click
-                # Qwt.QwtEventPattern.MousePattern(Qt.Qt.LeftButton,
-                #                                  Qt.Qt.ShiftModifier),
-                # Qwt.QwtEventPattern.MousePattern(Qt.Qt.MidButton,
-                #                                  Qt.Qt.ShiftModifier),
-                # Qwt.QwtEventPattern.MousePattern(Qt.Qt.RightButton,
-                #                                  Qt.Qt.ShiftModifier),
-                ]
-            self.zoomer.setMousePattern(pattern)
-        elif index in (1, 2, 3):
-            self.zoomer.initMousePattern(index)
-        else:
-            raise ValueError, 'index must be in (0, 1, 2, 3)'
+    def setZoomerMousePattern(self):
+        """Set the mouse zoomer pattern."""
+        pattern = [
+            Qwt.QwtEventPattern.MousePattern(Qt.Qt.LeftButton,
+                                             Qt.Qt.ShiftModifier), # zoom in with shift click
+            Qwt.QwtEventPattern.MousePattern(Qt.Qt.MidButton,
+                                             Qt.Qt.NoModifier),  # zoom all out with mid click
+            Qwt.QwtEventPattern.MousePattern(Qt.Qt.RightButton,
+                                             Qt.Qt.NoModifier), # zoom out one layer with shift right click
+            # Qwt.QwtEventPattern.MousePattern(Qt.Qt.LeftButton,
+            #                                  Qt.Qt.ShiftModifier),
+            # Qwt.QwtEventPattern.MousePattern(Qt.Qt.MidButton,
+            #                                  Qt.Qt.ShiftModifier),
+            # Qwt.QwtEventPattern.MousePattern(Qt.Qt.RightButton,
+            #                                  Qt.Qt.ShiftModifier),
+            ]
+        self.zoomer.setMousePattern(pattern)
 
     def autoscale(self):
         """Auto scale and clear the zoom stack
@@ -207,38 +177,39 @@ class Plotter(Qwt.QwtPlot):
         if not value == None:
             self.vertical_bar(value, 'com')
 
+    def handle_vbar_cwhm(self, pv_name):
+        value = self.monitor.get_value(pv_name)
+        if not value == None:
+            self.vertical_bar(value, 'cwhm')
+
     def mouseReleaseEvent(self, event):
         print "Mouse release", event.pos()
         self._dragBar = False
 
     def vertical_bar(self, bar_pos, type):
         if isinstance(bar_pos, list):
-            pass
+            bar_pos = bar_pos[0]
         elif bar_pos == None :
-            bar_pos = [0, 1, -1]
-        else:
-            pos = self.monitor.get_value(self.pos)
-            print repr(pos) + type
-            if not pos == None:
-                pos[0] = bar_pos
-                bar_pos = pos
-            else:
-                bar_pos = [bar_pos, 1, -1]
-        x = [bar_pos[0], bar_pos[0]]
-        y = [bar_pos[1], bar_pos[2]]
+            bar_pos = 0
         if self.bars:
+            bar = None
             if type == 'curser':
-                self.curser[0].setXValue(bar_pos[0])
+                bar = self.curser
             elif type == 'max':
-                self.max[0].setXValue(bar_pos[0])
+                bar = self.max
             elif type == 'com':
-                self.com[0].setXValue(bar_pos[0])
+                bar = self.com
+            elif type == 'cwhm':
+                bar = self.cwhm
+            if not bar == None:
+                bar[0].setXValue(bar_pos)
             self.replot()
 
     def new_plot(self, x, y):
         self.curves[0].setData(x, y)
         if self.bars:
-            self.handle_vbar_curser(self.pos)
+            self.monitor.update(self.bar_vars[0][2], self.monitor.get_value(self.bar_vars[0][1]))
+            self.handle_vbar_curser(self.bar_vars[0][2])
         if self.zoomer.zoomRectIndex() == 0:
             self.autoscale()
         self.replot()
@@ -305,26 +276,26 @@ class Plotter(Qwt.QwtPlot):
         # print "xFloat", xFloat, "yFloat", yFloat
 
         if self._dragBar:
-            pos =self.monitor.get_value(self.pos)
-            self.monitor.update(self.pos, [xFloat, pos[1], pos[2]])
+            pos =self.monitor.get_value(self.bar_vars[0][1])
+            self.monitor.update(self.bar_vars[0][1], xFloat)
 
     def mousePressEvent(self, event):
-        print "Mouse PRESS", event.pos()
+        # print "Mouse PRESS", event.pos()
 
         canvasPos = self.canvas().mapFrom(self, event.pos())
         xFloat = self.invTransform(Qwt.QwtPlot.xBottom, canvasPos.x())
         yFloat = self.invTransform(Qwt.QwtPlot.yLeft, canvasPos.y())
 
         x1 = self.invTransform(Qwt.QwtPlot.xBottom, 0)
-        x2 = self.invTransform(Qwt.QwtPlot.xBottom, 5)
+        x2 = self.invTransform(Qwt.QwtPlot.xBottom, 20)
 
         diff = abs(x1 - x2)
-        print "2 pixel diff", diff
+        # print "20 pixel diff", diff
 
         try:
-            cur_vbar_value = self.monitor.get_value(self.pos)[0]
-        except TypeError:
-            print "canvas has not been set, clicking will do nothing"
+            cur_vbar_value = self.monitor.get_value(self.bar_vars[0][1])
+        except (TypeError, AttributeError):
+            print "Canvas not set, clicking is ineffective"
 
         try:
             if cur_vbar_value > (xFloat - diff) and cur_vbar_value < (xFloat + diff):
@@ -337,9 +308,6 @@ class Plotter(Qwt.QwtPlot):
 
     def terminate(self):
         self.monitor.disconnect(self)
-
-
-
 
 class MouseTracker(Qt.QObject):
 

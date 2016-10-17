@@ -172,8 +172,9 @@ class CENT_KEY(object):
     RELMIN = 'relmin'
     STEPS = 'steps'
     WAITTIME = 'wait_time'
-    SCANMOTOR = 'scan_motor'
-    ANGLEMOTOR = 'angle_motor'
+    # SCANMOTOR = 'scan_motor'
+    # ANGLEMOTOR = 'angle_motor'
+    MOTORS = 'motors'
 
 
 class CentMixin(object):
@@ -192,7 +193,7 @@ class CentMixin(object):
 
             self.doubleSpinBox_cent_relmax.setValue(cent_dict[CENT_KEY.RELMAX])
             self.doubleSpinBox_cent_relmin.setValue(cent_dict[CENT_KEY.RELMIN])
-            self.doubleSpinBox_cent_center.setValue(cent_dict[CENT_KEY.CENTER])
+            # self.doubleSpinBox_cent_center.setValue(cent_dict[CENT_KEY.CENTER])
             self.doubleSpinBox_cent_angle_pm.setValue(cent_dict[CENT_KEY.OMEGA_DEL])
             self.doubleSpinBox_cent_angle_o.setValue(cent_dict[CENT_KEY.OMEGA_NAU])
             self.doubleSpinBox_cent_steps.setValue(cent_dict[CENT_KEY.STEPS])
@@ -201,8 +202,9 @@ class CentMixin(object):
             self.comboBox_cent_data_y.setCurrentIndex(cent_dict[CENT_KEY.Y_INDEX])
             self.lineEdit_cent_select_file.setText(cent_dict[CENT_KEY.SAVEDIR])
             self.lineEdit_cent_filename.setText(cent_dict[CENT_KEY.SAVENAME])
-            self.comboBox_cent_motor_scan.setCurrentIndex(cent_dict[CENT_KEY.SCANMOTOR])
-            self.comboBox_cent_motor_angle.setCurrentIndex(cent_dict[CENT_KEY.ANGLEMOTOR])
+            # self.comboBox_cent_motor_scan.setCurrentIndex(cent_dict[CENT_KEY.SCANMOTOR])
+            # self.comboBox_cent_motor_angle.setCurrentIndex(cent_dict[CENT_KEY.ANGLEMOTOR])
+            self.cent_dict = (cent_dict[CENT_KEY.MOTORS])
 
             return True
         except:
@@ -223,8 +225,9 @@ class CentMixin(object):
             CENT_KEY.Y_INDEX: self.comboBox_cent_data_y.currentIndex(),
             CENT_KEY.SAVEDIR: str(self.lineEdit_cent_select_file.text()),
             CENT_KEY.SAVENAME: str(self.lineEdit_cent_filename.text()),
-            CENT_KEY.SCANMOTOR: self.comboBox_cent_motor_scan.currentIndex(),
-            CENT_KEY.ANGLEMOTOR: self.comboBox_cent_motor_angle.currentIndex(),
+            # CENT_KEY.SCANMOTOR: self.comboBox_cent_motor_scan.currentIndex(),
+            # CENT_KEY.ANGLEMOTOR: self.comboBox_cent_motor_angle.currentIndex(),
+            CENT_KEY.MOTORS: self.cent_dict
         }
 
         print "SETTING CENT PROPERTY %s TO %s" % (key, cent_dict)

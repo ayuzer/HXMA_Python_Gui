@@ -328,11 +328,14 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.comboBox_scan_data_y.activated.connect(self.handle_comboBox_scan_data)
 
         self.pushButton_scan_start_stop.setText(self.scan_button_text())  # This means the button says Start instead of START/STOP
+
+        self.checkBox_rel_scan.stateChanged.connect(partial(self.scan_rel, self.checkBox_rel_scan))
         # INIT RUN
         self.handle_comboBox_scan_motor()
         self.update_scan_cols()
         self.set_scan_props() # updating variables from the saved file (last session)
         self.core.update_filepath(self.lineEdit_scan_select_file, 'scan')
+        self.scan_rel(self.checkBox_rel_scan)
         # Plot
         self.scan_plot_id = Plotter(monitor=self.monitor, VAR=VAR, id='scan')
         self.verticalLayout_scan_graph.addWidget(self.scan_plot_id)
@@ -343,6 +346,40 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.scan_plot_id.set_legend()
         self.scan_plot_id.timer = QtCore.QTimer()
 
+        """MESH INIT"""
+        # Connect Buttons
+        self.pushButton_mesh_start_stop.clicked.connect(self.handle_pushButton_mesh_start_stop)
+        # self.pushButton_mesh_save.clicked.connect(self.handle_save_mesh)
+        # self.pushButton_mesh_select_file.clicked.connect(partial(self.select_file, self.lineEdit_mesh_select_file))
+        #
+        # self.lineEdit_mesh_select_file.textChanged.connect(
+        #     partial(self.core.update_filepath, self.lineEdit_mesh_select_file, 'mesh'))
+
+        self.comboBox_mesh_slow_motor.currentIndexChanged.connect(self.handle_comboBox_mesh_motor)
+        self.comboBox_mesh_fast_motor.currentIndexChanged.connect(self.handle_comboBox_mesh_motor)
+        self.comboBox_mesh_data_x.activated.connect(self.handle_comboBox_mesh_data)
+        self.comboBox_mesh_data_y.activated.connect(self.handle_comboBox_mesh_data)
+        self.comboBox_mesh_data_intes.activated.connect(self.handle_comboBox_mesh_data)
+
+        self.pushButton_mesh_start_stop.setText(
+            self.mesh_button_text())  # This means the button says Start instead of START/STOP
+
+        self.checkBox_rel_mesh.stateChanged.connect(partial(self.mesh_rel, self.checkBox_rel_mesh))
+        # INIT RUN
+        self.handle_comboBox_mesh_motor()
+        self.update_mesh_cols()
+        # self.set_mesh_props()  # updating variables from the saved file (last session)
+        # self.core.update_filepath(self.lineEdit_mesh_select_file, 'mesh')
+        self.mesh_rel(self.checkBox_rel_mesh)
+        # Plot
+        self.mesh_plot_id = Plotter(monitor=self.monitor, VAR=VAR, id='mesh')
+        # self.verticalLayout_mesh_graph.addWidget(self.mesh_plot_id)
+        # self.mesh_plot_id.set_title(PLOT_TITLE)
+        # self.mesh_plot_id.set_axis_label_x(PLOT_LABEL_X)
+        # self.mesh_plot_id.set_axis_label_y(PLOT_LABEL_Y)
+        # self.mesh_plot_id.set_legend()
+        self.mesh_plot_id.timer = QtCore.QTimer()
+
         """CENTER INIT"""
         # Connect Buttons
         self.pushButton_cent_start_stop.clicked.connect(self.handle_pushButton_cent_start_stop)
@@ -352,8 +389,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.lineEdit_scan_select_file.textChanged.connect(
             partial(self.core.update_filepath, self.lineEdit_scan_select_file, 'cent'))
 
-        self.comboBox_cent_motor_scan.currentIndexChanged.connect(self.handle_comboBox_cent_motor)
-        self.comboBox_cent_motor_angle.currentIndexChanged.connect(self.handle_comboBox_cent_motor)
         self.comboBox_cent_data_x.activated.connect(self.handle_comboBox_cent_data)
         self.comboBox_cent_data_y.activated.connect(self.handle_comboBox_cent_data)
 
@@ -371,13 +406,13 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.cent_timer = QtCore.QTimer()
 
         # INIT RUN
-        self.handle_comboBox_cent_motor()
         self.update_cent_cols()
         self.set_cent_props()  # updating variables from the saved file (last session)
+        self.populateCentSubMenus(self.Motors_Stage)
+        # self.handle_comboBox_cent_motor()
         self.init_cent_graph(self.checkBox_cent_single.isChecked())
         self.core.update_filepath(self.lineEdit_cent_select_file, 'cent')
         self.core.is_centering(self.pushButton_cent_start_stop)
-
         
         """ROCKING INIT"""
         # Connect Buttons
@@ -420,6 +455,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         pic.setPixmap(pixmap.scaled(500, 500, QtCore.Qt.KeepAspectRatio))
         pic.show()
         self.old_scan_x, self.old_scan_y = ([] for i in range(2))
+        self.old_mesh_x, self.old_mesh_y, self.old_mesh_intes = ([] for i in range(3))
 
         """POPOUTS"""
         self.pushButton_open_pos_load.clicked.connect(self.handle_action_save_load)
@@ -432,7 +468,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         center_point = self.geometry().center()
         window = LoadPositionsWindow(monitor=self.monitor,
                                      center=center_point,
-                                     motors=self.Motors,
+                                     motors=self.Motors_Stage,
                                      formatter=self.formatter,
                                      saved_pos=self.saved_pos,
                                      )
@@ -740,7 +776,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
     def update_motors(self, Motors):
         self.core._move_terminate_flag = True
-        t = threading.Timer(1.5,  self.core.update_motors, [self.motor_names, Motors, (self.comboBox_scan_motor, self.comboBox_cent_motor_scan, self.comboBox_cent_motor_angle, self.comboBox_rock_motor)])
+        t = threading.Timer(1.5,  self.core.update_motors, [self.motor_names, Motors,
+            (self.comboBox_scan_motor, self.comboBox_rock_motor, self.comboBox_mesh_slow_motor, self.comboBox_mesh_fast_motor)])
         t.start()
         self.Motors = Motors
         Motor_Stage = []
@@ -758,6 +795,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             return 'Start'
 
     def handle_pushButton_scan_start_stop(self):
+        (start, stop) = self.doubleSpinBox_scan_startpos.value(), self.doubleSpinBox_scan_stoppos.value()
+        if self.checkBox_rel_scan.isChecked():
+            start = start + float(str(self.label_rel_curr_pos.text()))
+            stop = stop + float(str(self.label_rel_curr_pos.text()))
         if self.core.is_scanning(self.pushButton_scan_start_stop):
             self.core.scan_stop()
         else:
@@ -770,14 +811,25 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             else:
                 self.core.scan_start(type,
                                      self.comboBox_scan_motor.currentText(),  # Which Motor are we using? Passes NAME back
-                                     self.doubleSpinBox_scan_startpos.value(),  # the rest are just values
-                                     self.doubleSpinBox_scan_stoppos.value(),
+                                     start,  # the rest are just values
+                                     stop,
                                      self.doubleSpinBox_scan_steps.value(),
                                      self.doubleSpinBox_scan_waittime.value(),
                                      self.Motors  # We need to pass this so we can see which motor we are scanning with
                                      )
                 self.scan_plot_id.timer.start(250.0)
                 self.connect(self.scan_plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
+
+    def scan_rel(self, check):
+        if check.isChecked():
+            start = 'Relative Start'
+            stop = 'Relative Stop'
+        else:
+            start = 'Start Location'
+            stop = 'Stop Location'
+        self.label_rel_curr_pos.setEnabled(check.isChecked())
+        self.label_scan_startpos_name.setText(start)
+        self.label_scan_stoppos_name.setText(stop)
 
     def scan_plot(self):
         go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(),
@@ -806,6 +858,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                 self.Motors,
                                 self.doubleSpinBox_scan_waittime
                                 )
+        try:
+            self.add_label({self.core.get_motor(self.comboBox_scan_motor.currentText(), self.Motors).Pos_VAR: (self.label_rel_curr_pos, '{:.3f}', 12, True),}, double=True)
+        except AttributeError:
+            print "Scan motor Not set"
 
     def update_scan_cols(self):
         self.core.update_CB(self.comboBox_scan_data_x, self.comboBox_scan_data_y, 'scan')
@@ -819,20 +875,112 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                  self.comboBox_scan_data_y,
                                  )
 
-    """CENTER"""
-    def handle_comboBox_cent_motor(self):
-        self.core.cent_settings(self.comboBox_cent_motor_scan.currentText(),
-                                self.comboBox_cent_motor_angle.currentText(),
-                                self.doubleSpinBox_cent_relmax,
-                                self.doubleSpinBox_cent_relmin,
-                                self.doubleSpinBox_cent_angle_pm,
-                                self.doubleSpinBox_cent_angle_o,
-                                self.Motors_Stage,
-                                self.doubleSpinBox_cent_waittime,
-                                self.comboBox_cent_calc_choose,
+    """MESH"""
+
+    def mesh_button_text(self):
+        if self.core.is_meshing(self.pushButton_mesh_start_stop):
+            return 'Stop'
+        else:
+            return 'Start'
+
+    def handle_pushButton_mesh_start_stop(self):
+        (f_start, f_stop) = self.doubleSpinBox_fast_mesh_startpos.value(), self.doubleSpinBox_fast_mesh_stoppos.value()
+        (s_start, s_stop) = self.doubleSpinBox_slow_mesh_startpos.value(), self.doubleSpinBox_slow_mesh_stoppos.value()
+        if self.checkBox_rel_mesh.isChecked():
+            s_start = s_start + float(str(self.label_slow_mesh_currpos.text()))
+            s_stop = s_stop + float(str(self.label_slow_mesh_currpos.text()))
+            f_start = f_start + float(str(self.label_fast_mesh_currpos.text()))
+            f_stop = f_stop + float(str(self.label_fast_mesh_currpos.text()))
+        if self.core.is_meshing(self.pushButton_mesh_start_stop):
+            self.core.mesh_stop()
+        else:
+            if self.comboBox_mesh_slow_motor.currentIndex() == -1 or self.comboBox_mesh_fast_motor.currentIndex() == -1:
+                dialog_info(msg="Motor was not chosen, \nmeshing cannot begin")
+            else:
+                self.core.mesh_start(self.comboBox_mesh_fast_motor.currentText(),
+                                     self.comboBox_mesh_slow_motor.currentText(),# Which Motor are we using? Passes NAME back
+                                     f_start,  # the rest are just values
+                                     f_stop,
+                                     s_start,  # the rest are just values
+                                     s_stop,
+                                     self.doubleSpinBox_fast_mesh_steps.value(),
+                                     self.doubleSpinBox_slow_mesh_steps.value(),
+                                     self.doubleSpinBox_mesh_waittime.value(),
+                                     self.Motors  # We need to pass this so we can see which motor we are meshing with
+                                     )
+                self.mesh_plot_id.timer.start(250.0)
+                self.connect(self.mesh_plot_id.timer, QtCore.SIGNAL('timeout()'), self.mesh_plot)
+
+    def mesh_rel(self, check):
+        if check.isChecked():
+            start = 'Relative Start'
+            stop = 'Relative Stop'
+        else:
+            start = 'Start Location'
+            stop = 'Stop Location'
+        self.label_slow_mesh_currpos.setEnabled(check.isChecked())
+        self.label_fast_mesh_currpos.setEnabled(check.isChecked())
+        self.label_mesh_startpos_name.setText(start)
+        self.label_mesh_stoppos_name.setText(stop)
+
+    def mesh_plot(self):
+        go, x, y, intes = self.core.get_mesh_data(self.comboBox_mesh_data_x.currentIndex(),
+                                           self.comboBox_mesh_data_y.currentIndex(),
+                                           self.comboBox_mesh_data_intes.currentIndex(), )
+
+        if not self.old_mesh_x == x or not self.old_mesh_y == y or not self.old_mesh_intes == y and go:
+            # self.mesh_plot_id.new_plot(x, y)
+            # self.core.mesh_calculations(x, y)
+            pass
+        (self.old_mesh_x, self.old_mesh_y, self.old_mesh_intes) = x, y, intes
+        
+    def handle_comboBox_mesh_motor(self):
+        self.core.mesh_settings(self.comboBox_mesh_fast_motor.currentText(),
+                                self.doubleSpinBox_fast_mesh_startpos,
+                                self.doubleSpinBox_fast_mesh_stoppos,
+                                self.comboBox_mesh_slow_motor.currentText(),
+                                self.doubleSpinBox_slow_mesh_startpos,
+                                self.doubleSpinBox_slow_mesh_stoppos,
+                                self.Motors,
+                                self.doubleSpinBox_mesh_waittime
                                 )
         try:
-            self.add_label({self.core.get_motor(self.comboBox_cent_motor_scan.currentText(), self.Motors_Stage).Pos_VAR: (
+            self.add_label({self.core.get_motor(self.comboBox_mesh_slow_motor.currentText(), self.Motors).Pos_VAR: (
+            self.label_slow_mesh_currpos, '{:.3f}', 12, True), }, double=True)
+        except AttributeError:
+            print "Slow Mesh motor Not set"
+        try:
+            self.add_label({self.core.get_motor(self.comboBox_mesh_fast_motor.currentText(), self.Motors).Pos_VAR: (
+                self.label_fast_mesh_currpos, '{:.3f}', 12, True), }, double=True)
+        except AttributeError:
+            print "Fast Mesh motor Not set"
+            
+    def update_mesh_cols(self):
+        self.core.update_CB(self.comboBox_mesh_data_x, self.comboBox_mesh_data_y, 'mesh', intes_CB=self.comboBox_mesh_data_intes)
+
+    def handle_comboBox_mesh_data(self):
+        pass
+
+    # def handle_save_mesh(self):
+    #     self.core.save_mesh_curr(str(self.lineEdit_mesh_filename.text()),
+    #                              self.comboBox_mesh_data_x,
+    #                              self.comboBox_mesh_data_y,
+    #                              )
+
+    """CENTER"""
+    def handle_comboBox_cent_motor(self):
+        self.core.cent_settings(self.cent_dict.get('Scan X'),
+                            self.cent_dict.get('Angular Motor'),
+                            self.doubleSpinBox_cent_relmax,
+                            self.doubleSpinBox_cent_relmin,
+                            self.doubleSpinBox_cent_angle_pm,
+                            self.doubleSpinBox_cent_angle_o,
+                            self.Motors_Stage,
+                            self.doubleSpinBox_cent_waittime,
+                            self.comboBox_cent_calc_choose,
+                            )
+        try:
+            self.add_label({self.core.get_motor(self.cent_dict.get('Scan X'), self.Motors_Stage).Pos_VAR: (
             self.label_cent_center, '{:.3f}', 12, True), }, double=True)
         except AttributeError:
             print "Cent scan motor Not set"
@@ -841,11 +989,11 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         if self.core.is_centering(self.pushButton_cent_start_stop):
             self.core.cent_stop()
         else:
-            if self.comboBox_cent_motor_scan.currentIndex() == -1 or self.comboBox_cent_motor_angle.currentIndex() == -1:
+            if str(self.label_cent_motor_scan.text()) == None or str(self.label_cent_motor_angle.text()) == None:
                 dialog_info(msg="One or more motors were not chosen, \ncentering cannot begin")
             else:
-                self.core.cent_start(self.comboBox_cent_motor_scan.currentText(),
-                                     self.comboBox_cent_motor_angle.currentText(),
+                self.core.cent_start(self.cent_dict.get('Scan X'),
+                                     self.cent_dict.get('Angular Motor'),
                                      self.doubleSpinBox_cent_relmax.value(),
                                      self.doubleSpinBox_cent_relmin.value(),
                                      float(str(self.label_cent_center.text())),
@@ -923,12 +1071,18 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             self.cent_plot_id.hide()
 
     def populateCentMenu(self):
-        self.cent_menus = ['Centre X', 'Centre Y']
+        self.cent_menus = ['Centre X', 'Centre Y', 'Scan X', 'Angular Motor']
         for i, menu in enumerate(self.cent_menus):
             self.cent_menus[i] = self.menuCentering.addMenu(menu)
 
     def populateCentSubMenus(self, Motors):
         motor_list = []
+        dict_check=False
+        try:
+            if not self.cent_dict == None:
+                dict_check = True
+        except AttributeError:
+            self.cent_dict = {}
         for motor in Motors:
             if motor.Enabled and not motor.Extra:
                 motor_list.append(motor.Name)
@@ -936,13 +1090,31 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             menu.clear()
             motor_group = QtGui.QActionGroup(self, exclusive=True)
             for motor in motor_list:
-                menuItem = motor_group.addAction(QtGui.QAction(motor, menu, checkable=True))
-                receiver = lambda motor=motor: self.onFilmSet(motor)
+                action = QtGui.QAction(motor, menu, checkable=True)
+                menuItem = motor_group.addAction(action)
+                receiver = lambda motor=(str(menu.title()), str(motor)): self.SetCentMotor(motor)
                 self.connect(menuItem, Qt.SIGNAL('triggered()'), receiver)
+                if dict_check:
+                    for key, value in self.cent_dict.items():
+                        if key == str(menu.title()) and motor == value:
+                            menuItem.setChecked(True)
                 menu.addAction(menuItem)
+        self.update_cent_labels(self.cent_dict)
+        self.handle_comboBox_cent_motor()
 
-    def onFilmSet(self, value):
-        print 'Menu Clicked ', value
+    def SetCentMotor(self, motor):
+        (motortype, value) = motor
+        self.cent_dict[motortype] = value
+        print 'Menu Clicked ', value, " Motor: ", motortype
+        self.update_cent_labels(self.cent_dict)
+        self.handle_comboBox_cent_motor()
+
+    def update_cent_labels(self, cent_dict):
+        for key, value in cent_dict.items():
+            if key == 'Scan X':
+                self.monitor.update(VAR.CENT_SCAN_MOTOR, value)
+            elif key == 'Angular Motor':
+                self.monitor.update(VAR.CENT_AMGLE_MOTOR, value)
             
     """ROCKING"""
     def handle_comboBox_rock_motor(self):
@@ -956,6 +1128,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             self.add_label({self.core.get_motor(self.comboBox_rock_motor.currentText(), self.Motors_Stage).Pos_VAR: (self.label_motor_currpos, '{:.3f}', 12, True),}, double=True)
         except AttributeError:
             print "Rocking motor Not set"
+
     def check_omit(self, passback=False):
         all_regions = [
             [self.checkBox_rock_zone1.isChecked(), self.doubleSpinBox_rock_min_zone1, self.doubleSpinBox_rock_max_zone1],
@@ -1197,15 +1370,15 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                           'move_motor': self.comboBox_scan_motor,
                                           }],
 
-                  [self.label_cent_calc_cent_x, {'hover': 'Position of the calculated X position \nDouble click to move to',
-                                            'move_motor': self.comboBox_cent_motor_scan,
+                  [self.label_cent_calc_cent_x, {'hover': 'Position of the relative calculated X position \nDouble click to move to',
+                                            'move_motor_comp': (self.label_cent_motor_scan, 'Centre X')
                                             }],
 
-                  [self.label_cent_calc_cent_y, {'hover': 'Position of the calculated Y position, \nDouble click to move to',
-                                            'move_motor': self.comboBox_cent_motor_scan,
+                  [self.label_cent_calc_cent_y, {'hover': 'Position of the relative calculated Y position, \nDouble click to move to',
+                                            'move_motor_rel': 'Centre Y'
                                             }],
 
-                  ]
+                   ]
 
         for label in labels:
             item, dict = label[0], label[1]
@@ -1217,17 +1390,40 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                     item.setText(value)
                 elif key == 'move_motor':
                     self.clickable(item).connect(partial(self.move_clicker, value, item))
+                elif key == 'move_motor_comp':
+                    self.clickable(item).connect(partial(self.move_comp, value, item))
+                elif key == 'move_motor_rel':
+                    self.clickable(item).connect(partial(self.move_clicker, value, item, rel=True))
 
-    def move_clicker(self, CB, label):
-        motor = self.core.get_motor(str(CB.currentText()), self.Motors)
+    def move_comp(self, motors, label):
+        (scan, cent) = motors
+        self.move_clicker(cent, label, rel=True)
+        self.move_clicker(scan, label, rel=True, neg=True)
+
+    def move_clicker(self, lab, label, rel=False, neg=False):
+        if isinstance(lab, basestring):
+            mot = self.cent_dict.get(lab)
+        else:
+            try:
+                mot = str(lab.currentText())
+            except AttributeError:
+                mot = str(lab.text())
+        motor = self.core.get_motor(mot, self.Motors)
         if motor:
             try:
-                moveto = float(str(label.text()))
-                self.core.move_motor(motor, moveto=moveto, movetype='Absolute')
+                if neg:
+                    moveto = float(str(label.text())) * -1
+                else:
+                    moveto = float(str(label.text()))
+                if rel == True:
+                    movetype = 'Relative'
+                else:
+                    movetype = 'Absolute'
+                self.core.move_motor(motor, moveto=moveto, movetype=movetype)
             except ValueError:
-                dialog_info(msg='Motor Destination : ' + str(label.text()) + " is not a valid destination")
+                dialog_info(msg='Motor Destination : ' + mot + " is not a valid destination")
         else:
-            dialog_info(msg ='Motor : ' + str(CB.currentText()) + " could not be found")
+            dialog_info(msg ='Motor : ' + mot + " could not be found")
 
     def clickable(self, widget):
         class Filter(QtCore.QObject):
@@ -1301,6 +1497,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             VAR.VERT_BAR_SCAN_X:    (self.label_scan_curser,        '{:.3f}',   10, False),
             VAR.CENT_CENTERED_X:    (self.label_cent_calc_cent_x,   '{:.3f}',   12, True),
             VAR.CENT_CENTERED_Y:    (self.label_cent_calc_cent_y,   '{:.3f}',   12, True),
+
+            VAR.CENT_AMGLE_MOTOR:   (self.label_cent_motor_angle,   '{:s}',     12, True),
+            VAR.CENT_SCAN_MOTOR:    (self.label_cent_motor_scan,    '{:s}',     12, True),
 
 
             PV.COND_TABLE_HOR_STATUS: (self.label_cond_table_hor_status, '{:g}',     12, True),

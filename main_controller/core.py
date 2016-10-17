@@ -138,11 +138,14 @@ class VAR(Constant):
     SCAN_CENTROID       = 'var:scan_centroid'
     SCAN_MAX_Y_NUM      = 'var:scan_max_y_num'
 
+    MESH_ARRAY = 'var:mesh_array'
+
     CENT_NEG_MAXY       = 'var:cent_neg_maxy'
     CENT_NEG_COM        = 'var:cent_neg_com'
     CENT_NEG_CWHM       = 'var:cent_neg_cwhm'
     CENT_NAU_MAXY       = 'var:cent_nau_maxy'
     CENT_NAU_COM        = 'var:cent_nau_com'
+    CENT_NAU_CWHM       = 'var:cent_nau_cwhm'
     CENT_NAU_CWHM       = 'var:cent_nau_cwhm'
     CENT_POS_MAXY       = 'var:cent_pos_maxy'
     CENT_POS_COM        = 'var:cent_pos_com'
@@ -150,6 +153,9 @@ class VAR(Constant):
 
     CENT_CENTERED_X     = 'var:cent_centered_x'
     CENT_CENTERED_Y     = 'var:cent_centered_y'
+
+    CENT_SCAN_MOTOR     = 'var:cent_scan_motor'
+    CENT_AMGLE_MOTOR    = 'var:cent_angle_motor'
 
     COUNTER_1_COUNT     = 'var:counter_1_count'
     COUNTER_2_COUNT     = 'var:counter_2_count'
@@ -202,6 +208,11 @@ class Core(object):
         self.scan_event = threading.Event()
         self.scan_event.clear()
 
+        self._mesh_timer = threading.Timer(1, self.handle_mesh)
+        self._mesh_timer.start()
+        self.mesh_event = threading.Event()
+        self.mesh_event.clear()
+
         self._cent_timer = threading.Timer(1, self.handle_cent)
         self._cent_timer.start()
         self.cent_event = threading.Event()
@@ -216,6 +227,7 @@ class Core(object):
         self.Spec_sess = Spec()
         self.SpecMotor_sess = SpecMotor()
         self.SpecScan_sess = SpecScan()
+        self.SpecMesh_sess = SpecScan()
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
@@ -574,6 +586,208 @@ class Core(object):
                             row.append(scan_row[j])
                         writer.writerow(row)
                     print "Backup csv has been created in " + repr(csvfile)
+
+    """ MESHING """
+
+    def is_meshing(self, button=None):
+        if button == None:
+            try:
+                button = self.saved_button
+            except UnboundLocalError:
+                pass
+        else:
+            self.saved_button = button
+            # This property is checked, so functions here will work
+        self.SpecMesh_sess.meshing = SpecScan.isMeshing(self.SpecMesh_sess)
+        if self.SpecMesh_sess.meshing:
+            button.setText('Stop')
+            # self.update_CB(self.x_mesh_data_CB, self.y_mesh_data_CB, 'mesh')
+        else:
+            button.setText('Start')
+            try:
+                # self.backup_mesh()
+                pass
+            except OSError:
+                print "Backup Directory not specified, BACKUP NOT SAVED"
+                # self.mesh_event.clear() # stops the meshing thread when the mesh isn't running
+        return self.SpecMesh_sess.meshing
+
+    def mesh_start(self, fast_motor_name, slow_motor_name, fast_startpos, fast_endpos, 
+                   slow_startpos, slow_endpos, fast_intervals, slow_intervals, count_time, Motors):
+        (fast_found, slow_found) = False, False
+        for i in range(len(Motors)):
+            if not fast_found:
+                Fast_Motor_inst = Motors[i]
+                if Fast_Motor_inst.Name == fast_motor_name:
+                    if Fast_Motor_inst.Enabled:
+                        fast_found = True
+            if not slow_found:
+                Slow_Motor_inst = Motors[i]
+                if Slow_Motor_inst.Name == slow_motor_name:
+                    if Slow_Motor_inst.Enabled:
+                        slow_found = True
+            if slow_found and fast_found:
+                self.mesh_array_counter = 0
+                self.mesh_array_fast = fast_intervals
+                self.mesh_event.set()
+                SpecScan.connectToSpec(self.SpecMesh_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
+                SpecScan.newScan(self.SpecMesh_sess, True)
+                SpecScan.mesh(self.SpecMesh_sess, Fast_Motor_inst.Mne, fast_startpos, fast_endpos, fast_intervals,
+                              Slow_Motor_inst.Mne, slow_startpos, slow_endpos, slow_intervals, count_time)
+                
+                self.mesh_array = []  # starting/wiping an array for the mesh data to push into
+                break
+        if slow_found and fast_found:
+            print "Mesh Started"
+            return True  # Saying the mesh is started
+        else:
+            raise Exception('Mesh cannot be started as the motor was not Enabled')
+
+    def handle_mesh(self):
+        # Thread which handles mesh data
+        self.mesh_event.wait()
+        self.mesh_data = []  # Initalizing empty arrays
+        self.mesh_point = []
+        while True:
+            if self._terminate_flag: break
+            self.mesh_event.wait()
+            if self._terminate_flag: break
+            # while self.is_meshing():
+            while True:
+                if self._terminate_flag: break
+                old_data = self.mesh_data
+                old_point = self.mesh_point
+                # self.mesh_data = SpecMesh.get_MESH_D(self.SpecMesh_sess)
+                try:
+                    self.mesh_point = json.JSONDecoder.decode(json.JSONDecoder(),
+                                                              SpecScan.get_SCAN_PT(self.SpecMesh_sess))
+                except (ValueError, TypeError):
+                    print "Error: Mesh Point"
+                    pass
+                # elif array_equal(old_data, self.mesh_data):
+                if not old_point == self.mesh_point:  # here is where you would graph it/save it to the csv
+                    print "Mesh point " + repr(self.mesh_point[0]) + " Counter: " + repr(self.mesh_array_counter)
+                    if self.mesh_point[0] == 1 and self.mesh_array_counter == 0:
+                        self.mesh_array_counter = self.mesh_array_counter + 1
+                    if self.mesh_point[0] > self.mesh_array_counter and self.mesh_array_counter == 0:  # Skips old point
+                        print "Mesh point ignored MeshPoint:" + repr(self.mesh_point[0]) + " Counter: " + repr(
+                            self.mesh_array_counter)
+                    elif self.mesh_point[0] == self.mesh_array_counter:
+                        self.mesh_array.insert(self.mesh_point[0], self.mesh_point[1])
+                        self.mesh_array_counter = self.mesh_array_counter + 1
+                        self.monitor.update(VAR.MESH_ARRAY, self.mesh_array)
+                    else:
+                        print "Entering data into the mesh array has not worked properly \n" \
+                              "Mesh Counter: " + repr(self.mesh_array_counter) + " Mesh Point: " + repr(
+                            self.mesh_point[0])
+                    if self.mesh_array_fast+1 == self.mesh_array_counter:
+                        self.mesh_array_counter = 0  # We've gone through a fast scan, resetting counter
+                    self.mesh_SB_sleeper(ratio=0.75, _min=False)
+                    pass
+                elif not self.is_meshing():
+                    self.mesh_SB_sleeper()
+                else:
+                    self.mesh_SB_sleeper(ratio=0.5, _min=False)
+
+            self.mesh_SB_sleeper()
+
+    def mesh_stop(self):
+        SpecScan.abort(self.SpecMesh_sess)
+        self.mesh_event.clear()
+        print "Mesh Stopped"
+        return False  # Saying the mesh is stopped
+
+    def mesh_settings(self, fast_motor_name, fast_startpos_SB, fast_stoppos_SB, 
+                      slow_motor_name, slow_startpos_SB, slow_stoppos_SB, Motors, wait_time_SB):
+        self.mesh_wait_time_SB = wait_time_SB
+        for i in range(len(Motors)):
+            Fast_Motor_inst = Motors[i]
+            if Fast_Motor_inst.Name == fast_motor_name:
+                if Fast_Motor_inst.Enabled:
+                    (min_lim, max_lim) = self.check_limits(Fast_Motor_inst)
+                    fast_startpos_SB.setRange(min_lim, max_lim)
+                    fast_stoppos_SB.setRange(min_lim, max_lim)
+            Slow_Motor_inst = Motors[i]
+            if Slow_Motor_inst.Name == slow_motor_name:
+                if Slow_Motor_inst.Enabled:
+                    (min_lim, max_lim) = self.check_limits(Slow_Motor_inst)
+                    slow_startpos_SB.setRange(min_lim, max_lim)
+                    slow_stoppos_SB.setRange(min_lim, max_lim)
+
+    def mesh_SB_sleeper(self, default_time=3.0, ratio=1.0, _min=True):
+        try:  # Setting wait times to the interval time of the mesh's spinbox if it isn't too small
+            if self.mesh_wait_time_SB.value() > 0.5 or not _min:
+                sleep_time = self.wait_time_SB.value() * ratio
+            else:
+                sleep_time = default_time
+        except:
+            sleep_time = default_time
+        # print "Meshing Thread is sleeping for " + repr(sleep_time)
+        time.sleep(sleep_time)
+
+    def get_mesh_data(self, x_index, y_index, intes_index, array='mesh_array'):
+        if array == 'mesh_array':  # if we have not provided an array
+            array = self.monitor.get_value(VAR.MESH_ARRAY)
+        if array is None or not array:
+            return False, [], [], []
+        else:
+            (x, y, intes) = [point[x_index] for point in array], \
+                            [point[y_index] for point in array], \
+                            [point[intes_index] for point in array]
+            return True, x, y, intes
+    #
+    # def mesh_calculations(self, x, y):
+    #     calc = Calculation(x, y)
+    #     self.monitor.update(VAR.MESH_MAX_Y, calc.y_max_string())
+    #     self.monitor.update(VAR.MESH_MAX_Y_NUM, calc.x_at_y_max())
+    #     self.monitor.update(VAR.MESH_FWHM, calc.FWHM())
+    #     self.monitor.update(VAR.MESH_COM, calc.COM())
+    #     self.monitor.update(VAR.MESH_CWHM, calc.CFWHM())
+    #
+    # def save_mesh_curr(self, filename, x_CB, y_CB):
+    #     filedir = self.mesh_dir
+    #     go, x, y = self.get_data(x_CB.currentIndex(), y_CB.currentIndex())
+    #     if go:
+    #         curr_time = time.strftime("%b_%d_%Y_%H-%M-%S")  # getting time also so we wont have name conflicts
+    #         with open(filedir + '/' + filename + '_' + curr_time + ".csv", 'wb') as csvfile:
+    #             header = [str(x_CB.currentText()), str(y_CB.currentText())]
+    #             writer = csv.writer(csvfile)
+    #             writer.writerow(header)
+    #             for i in range(len(x)):
+    #                 writer.writerow([x[i], y[i]])
+    #             writer.writerow(["Max Y", "FWHM", "CWHM", "COM", "Centroid"])
+    #             writer.writerow([self.monitor.get_value(VAR.MESH_MAX_Y),
+    #                              self.monitor.get_value(VAR.MESH_FWHM),
+    #                              self.monitor.get_value(VAR.MESH_CWHM),
+    #                              self.monitor.get_value(VAR.MESH_COM),
+    #                              self.monitor.get_value(VAR.MESH_CENTROID),
+    #                              ])
+    #             print "Successfully saved " + filename + '_' + curr_time + ".csv" + " In : " + filedir
+    #     else:
+    #         print "Cannot Write, No data acquired"
+    #
+    # def backup_mesh(self):
+    #     if not self.old_array == self.mesh_array:
+    #         self.old_array = self.mesh_array
+    #         back_dir = self.mesh_dir + '/backup'
+    #         if not os.path.exists(back_dir):
+    #             os.makedirs(back_dir)
+    #             print "Backup directory in " + back_dir + "\nhas been created"
+    #         if self.mesh_array and self.meshner_names:
+    #             curr_time = time.strftime("%b_%d_%Y_%H-%M-%S")  # getting time also so we wont have name conflicts
+    #             with open(back_dir + '/' + "BACKUP" + '_' + curr_time + ".csv", 'wb') as csvfile:
+    #                 writer = csv.writer(csvfile)
+    #                 header = []
+    #                 for k in range(len(self.meshner_names)):
+    #                     header.append(self.meshner_names[str(k)])
+    #                 writer.writerow(header)
+    #                 for i in range(len(self.mesh_array)):
+    #                     mesh_row = self.mesh_array[i]
+    #                     row = []
+    #                     for j in range(len(mesh_row)):
+    #                         row.append(mesh_row[j])
+    #                     writer.writerow(row)
+    #                 print "Backup csv has been created in " + repr(csvfile)
 
     """ CENTER """
     def cent_settings(self, scan_motor_name, angle_motor_name, relmax_SB, relmin_SB, angle_pm_SB, angle_o_SB, Motors, wait_time_SB, center_calc_CB):
@@ -1068,7 +1282,7 @@ class Core(object):
         v_bar_pos = pos
         self.monitor.update(var, v_bar_pos)
 
-    def update_CB(self, x_data_CB, y_data_CB, type):
+    def update_CB(self, x_data_CB, y_data_CB, type, intes_CB=None):
         self.CB_lock.acquire()
         try:
             if type == 'scan':
@@ -1080,17 +1294,21 @@ class Core(object):
             elif type == 'rock':
                 self.x_rock_data_CB = x_data_CB
                 self.y_rock_data_CB = y_data_CB
+            elif type == 'mesh':
+                self.x_mesh_data_CB = x_data_CB
+                self.y_mesh_data_CB = y_data_CB
             self.scanner_names = self.get_var('SCAN_COLS')
             i=0
-            (x_index, y_index) = x_data_CB.currentIndex(), y_data_CB.currentIndex()
-            x_data_CB.clear()
-            y_data_CB.clear()
-            for i in range(len(self.scanner_names)):
-                x_data_CB.addItem(self.scanner_names[str(i)])
-                y_data_CB.addItem(self.scanner_names[str(i)])
-            #print scanner_names
-            x_data_CB.setCurrentIndex(x_index)
-            y_data_CB.setCurrentIndex(y_index)
+            indicies = []
+            CBs = [x_data_CB, y_data_CB]
+            if not intes_CB == None:
+                CBs.append(intes_CB)
+            for j, cb in enumerate(CBs):
+                indicies.append(cb.currentIndex())
+                cb.clear()
+                for i in range(len(self.scanner_names)):
+                    cb.addItem(self.scanner_names[str(i)])
+                cb.setCurrentIndex(indicies[j])
         finally:
             self.CB_lock.release()
 
@@ -1130,7 +1348,7 @@ class Core(object):
     def terminate(self):
         self._terminate_flag = True
         print "core.terminate called"
-        for event in [self.count_event, self.stage_move_event, self.extra_move_event, self.scan_event, self.cent_event, self.rock_event]:
+        for event in [self.count_event, self.stage_move_event, self.extra_move_event, self.scan_event, self.mesh_event, self.cent_event, self.rock_event]:
             event.set() # allow any blocked threads to terminate
         self.scan_stop()
         sess_list = [  # self.SpecCounter_ic2,

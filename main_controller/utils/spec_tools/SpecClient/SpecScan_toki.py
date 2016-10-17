@@ -194,6 +194,9 @@ class SpecScanA:
             else:
                 return False
 
+    def isMeshing(self):
+        return self.isScanning()
+
     def isReady(self):
         return self.ready
 
@@ -363,6 +366,17 @@ class SpecScanA:
             # self.SpecCommander = SpecCommand.SpecCommand(cmd, self.connection)
             # SpecCommand.SpecCommand.executeCommand(self.SpecCommander, cmd)
             self.__status = 'scanning'
+            return True
+        else:
+            return False
+        
+    def mesh(self, slowmotorMne, slowstartPos, slowendPos, slownbPoints,
+             fastmotorMne, faststartPos, fastendPos, fastnbPoints, countTime):
+        if self.connection.isSpecConnected():
+            cmd = "mesh %s %f %f %d %s %f %f %d %f" % (slowmotorMne, slowstartPos, slowendPos, slownbPoints,
+                                           fastmotorMne, faststartPos, fastendPos, fastnbPoints, countTime)
+            self.connection.send_msg_cmd(cmd)
+            self.__status = 'meshing'
             return True
         else:
             return False

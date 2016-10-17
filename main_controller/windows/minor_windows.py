@@ -25,6 +25,8 @@ import simplejson
 import os
 import csv
 
+import time
+
 from PyQt4 import QtGui, QtCore
 
 import settings
@@ -39,7 +41,7 @@ class LoadPositions(QtGui.QWidget, DragTextMixin, UiMixin, PosMixin):
         center_point = kwargs['center']
         del kwargs['center']
 
-        self.Motors = kwargs['motors']
+        self.Motors_Stage = kwargs['motors']
         del kwargs['motors']
 
         self.formatter = kwargs['formatter']
@@ -81,7 +83,7 @@ class LoadPositions(QtGui.QWidget, DragTextMixin, UiMixin, PosMixin):
                       self.label_mne6_name,
                       ]
         for i in range(len(label_list)):
-            Motor_inst = self.Motors[i]
+            Motor_inst = self.Motors_Stage[i]
             if Motor_inst.Enabled:
                 label_list[i].setText(Motor_inst.Name)
             else:
@@ -148,12 +150,14 @@ class LoadPositions(QtGui.QWidget, DragTextMixin, UiMixin, PosMixin):
 
     def handle_move(self, slot):
         goto_list = self.pos_label_list[slot - 1]
-        for i in range(len(self.Motors)):
-            Motor_inst = self.Motors[i]
+        for i in range(len(self.Motors_Stage)):
+            Motor_inst = self.Motors_Stage[i]
             if Motor_inst.Enabled:
                 for title in self.label_list:
-                    if str(title.text()) is not "N/A":
+                    if str(title.text()) is not "N/A" and str(title.text()) == Motor_inst.Name:
+                        print str(title.text())
                         self.core.move_motor(Motor_inst, moveto=float(goto_list[i].text()), movetype='Absolute')
+                        time.sleep(.1)
         print "Move Commands have been sent"
 
     def update_load(self, labels, CB):

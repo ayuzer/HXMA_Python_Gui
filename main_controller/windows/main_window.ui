@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1170</width>
+    <width>849</width>
     <height>808</height>
    </rect>
   </property>
@@ -85,7 +85,7 @@
                 <item>
                  <widget class="QTabWidget" name="tab_SPEC_slits">
                   <property name="currentIndex">
-                   <number>0</number>
+                   <number>2</number>
                   </property>
                   <widget class="QWidget" name="tab_4">
                    <attribute name="title">
@@ -514,415 +514,415 @@
                        </spacer>
                       </item>
                       <item>
+                       <layout class="QVBoxLayout" name="verticalLayout_12">
+                        <item>
+                         <layout class="QHBoxLayout" name="horizontalLayout_11">
+                          <item>
+                           <widget class="QLabel" name="label_slit_2_name">
+                            <property name="font">
+                             <font>
+                              <pointsize>14</pointsize>
+                              <weight>75</weight>
+                              <bold>true</bold>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>Slit 2 </string>
+                            </property>
+                           </widget>
+                          </item>
+                         </layout>
+                        </item>
+                        <item>
+                         <layout class="QGridLayout" name="gridLayout_motor_main_4">
+                          <item row="1" column="5">
+                           <spacer name="horizontalSpacer_53">
+                            <property name="orientation">
+                             <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                             <size>
+                              <width>40</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                           </spacer>
+                          </item>
+                          <item row="2" column="0">
+                           <widget class="QLabel" name="label_slit_2_motor_2_name">
+                            <property name="minimumSize">
+                             <size>
+                              <width>120</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>Slit 2 Motor 2</string>
+                            </property>
+                            <property name="alignment">
+                             <set>Qt::AlignCenter</set>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="2" column="1">
+                           <widget class="QLabel" name="label_slit_2_motor_2_pos">
+                            <property name="minimumSize">
+                             <size>
+                              <width>100</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>0</string>
+                            </property>
+                            <property name="alignment">
+                             <set>Qt::AlignCenter</set>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="1" column="2">
+                           <widget class="QDoubleSpinBox" name="doubleSpinBox_slit_2_motor_1_moveto">
+                            <property name="minimumSize">
+                             <size>
+                              <width>100</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                            <property name="decimals">
+                             <number>4</number>
+                            </property>
+                            <property name="minimum">
+                             <double>-1000.000000000000000</double>
+                            </property>
+                            <property name="maximum">
+                             <double>1000.000000000000000</double>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="1" column="4">
+                           <widget class="QPushButton" name="pushButton_slit_2_motor_1_movego">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                              <weight>75</weight>
+                              <bold>true</bold>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>GO</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="2" column="4">
+                           <widget class="QPushButton" name="pushButton_slit_2_motor_2_movego">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                              <weight>75</weight>
+                              <bold>true</bold>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>GO</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="2" column="3">
+                           <widget class="QComboBox" name="comboBox_slit_2_motor_2_movetype">
+                            <item>
+                             <property name="text">
+                              <string>Relative</string>
+                             </property>
+                            </item>
+                            <item>
+                             <property name="text">
+                              <string>Absolute</string>
+                             </property>
+                            </item>
+                           </widget>
+                          </item>
+                          <item row="3" column="0">
+                           <widget class="QLabel" name="label_slit_2_motor_3_name">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>Slit 2 Motor 3</string>
+                            </property>
+                            <property name="alignment">
+                             <set>Qt::AlignCenter</set>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="4" column="0">
+                           <widget class="QLabel" name="label_slit_2_motor_4_name">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>Slit 2 Motor 4</string>
+                            </property>
+                            <property name="alignment">
+                             <set>Qt::AlignCenter</set>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="3" column="1">
+                           <widget class="QLabel" name="label_slit_2_motor_3_pos">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>0</string>
+                            </property>
+                            <property name="alignment">
+                             <set>Qt::AlignCenter</set>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="4" column="1">
+                           <widget class="QLabel" name="label_slit_2_motor_4_pos">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>0</string>
+                            </property>
+                            <property name="alignment">
+                             <set>Qt::AlignCenter</set>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="3" column="2">
+                           <widget class="QDoubleSpinBox" name="doubleSpinBox_slit_2_motor_3_moveto">
+                            <property name="decimals">
+                             <number>4</number>
+                            </property>
+                            <property name="minimum">
+                             <double>-1000.000000000000000</double>
+                            </property>
+                            <property name="maximum">
+                             <double>1000.000000000000000</double>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="4" column="2">
+                           <widget class="QDoubleSpinBox" name="doubleSpinBox_slit_2_motor_4_moveto">
+                            <property name="decimals">
+                             <number>4</number>
+                            </property>
+                            <property name="minimum">
+                             <double>-1000.000000000000000</double>
+                            </property>
+                            <property name="maximum">
+                             <double>1000.000000000000000</double>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="3" column="3">
+                           <widget class="QComboBox" name="comboBox_slit_2_motor_3_movetype">
+                            <item>
+                             <property name="text">
+                              <string>Relative</string>
+                             </property>
+                            </item>
+                            <item>
+                             <property name="text">
+                              <string>Absolute</string>
+                             </property>
+                            </item>
+                           </widget>
+                          </item>
+                          <item row="1" column="3">
+                           <widget class="QComboBox" name="comboBox_slit_2_motor_1_movetype">
+                            <property name="font">
+                             <font>
+                              <pointsize>10</pointsize>
+                             </font>
+                            </property>
+                            <item>
+                             <property name="text">
+                              <string>Relative</string>
+                             </property>
+                            </item>
+                            <item>
+                             <property name="text">
+                              <string>Absolute</string>
+                             </property>
+                            </item>
+                           </widget>
+                          </item>
+                          <item row="4" column="3">
+                           <widget class="QComboBox" name="comboBox_slit_2_motor_4_movetype">
+                            <item>
+                             <property name="text">
+                              <string>Relative</string>
+                             </property>
+                            </item>
+                            <item>
+                             <property name="text">
+                              <string>Absolute</string>
+                             </property>
+                            </item>
+                           </widget>
+                          </item>
+                          <item row="3" column="4">
+                           <widget class="QPushButton" name="pushButton_slit_2_motor_3_movego">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                              <weight>75</weight>
+                              <bold>true</bold>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>GO</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="4" column="4">
+                           <widget class="QPushButton" name="pushButton_slit_2_motor_4_movego">
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                              <weight>75</weight>
+                              <bold>true</bold>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>GO</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="2" column="2">
+                           <widget class="QDoubleSpinBox" name="doubleSpinBox_slit_2_motor_2_moveto">
+                            <property name="minimumSize">
+                             <size>
+                              <width>100</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                            <property name="decimals">
+                             <number>4</number>
+                            </property>
+                            <property name="minimum">
+                             <double>-1000.000000000000000</double>
+                            </property>
+                            <property name="maximum">
+                             <double>1000.000000000000000</double>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="1" column="0">
+                           <widget class="QLabel" name="label_slit_2_motor_1_name">
+                            <property name="minimumSize">
+                             <size>
+                              <width>120</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>Slit 2 Motor 1</string>
+                            </property>
+                            <property name="alignment">
+                             <set>Qt::AlignCenter</set>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="1" column="1">
+                           <widget class="QLabel" name="label_slit_2_motor_1_pos">
+                            <property name="minimumSize">
+                             <size>
+                              <width>100</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>11</pointsize>
+                             </font>
+                            </property>
+                            <property name="text">
+                             <string>0</string>
+                            </property>
+                            <property name="alignment">
+                             <set>Qt::AlignCenter</set>
+                            </property>
+                           </widget>
+                          </item>
+                          <item row="4" column="5">
+                           <spacer name="horizontalSpacer_54">
+                            <property name="orientation">
+                             <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                             <size>
+                              <width>40</width>
+                              <height>20</height>
+                             </size>
+                            </property>
+                           </spacer>
+                          </item>
+                          <item row="0" column="0">
+                           <widget class="Line" name="line_45">
+                            <property name="orientation">
+                             <enum>Qt::Horizontal</enum>
+                            </property>
+                           </widget>
+                          </item>
+                         </layout>
+                        </item>
+                        <item>
+                         <widget class="Line" name="line_39">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="verticalSpacer_14">
+                          <property name="orientation">
+                           <enum>Qt::Vertical</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>20</width>
+                            <height>40</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
                        <widget class="Line" name="line_17">
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
                         </property>
                        </widget>
-                      </item>
-                     </layout>
-                    </item>
-                    <item>
-                     <layout class="QVBoxLayout" name="verticalLayout_12">
-                      <item>
-                       <layout class="QHBoxLayout" name="horizontalLayout_11">
-                        <item>
-                         <widget class="QLabel" name="label_slit_2_name">
-                          <property name="font">
-                           <font>
-                            <pointsize>14</pointsize>
-                            <weight>75</weight>
-                            <bold>true</bold>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>Slit 2 </string>
-                          </property>
-                         </widget>
-                        </item>
-                       </layout>
-                      </item>
-                      <item>
-                       <layout class="QGridLayout" name="gridLayout_motor_main_4">
-                        <item row="1" column="5">
-                         <spacer name="horizontalSpacer_53">
-                          <property name="orientation">
-                           <enum>Qt::Horizontal</enum>
-                          </property>
-                          <property name="sizeHint" stdset="0">
-                           <size>
-                            <width>40</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                         </spacer>
-                        </item>
-                        <item row="2" column="0">
-                         <widget class="QLabel" name="label_slit_2_motor_2_name">
-                          <property name="minimumSize">
-                           <size>
-                            <width>120</width>
-                            <height>0</height>
-                           </size>
-                          </property>
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>Slit 2 Motor 2</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="2" column="1">
-                         <widget class="QLabel" name="label_slit_2_motor_2_pos">
-                          <property name="minimumSize">
-                           <size>
-                            <width>100</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>0</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="1" column="2">
-                         <widget class="QDoubleSpinBox" name="doubleSpinBox_slit_2_motor_1_moveto">
-                          <property name="minimumSize">
-                           <size>
-                            <width>100</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                          <property name="decimals">
-                           <number>4</number>
-                          </property>
-                          <property name="minimum">
-                           <double>-1000.000000000000000</double>
-                          </property>
-                          <property name="maximum">
-                           <double>1000.000000000000000</double>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="1" column="4">
-                         <widget class="QPushButton" name="pushButton_slit_2_motor_1_movego">
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                            <weight>75</weight>
-                            <bold>true</bold>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>GO</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="2" column="4">
-                         <widget class="QPushButton" name="pushButton_slit_2_motor_2_movego">
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                            <weight>75</weight>
-                            <bold>true</bold>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>GO</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="2" column="3">
-                         <widget class="QComboBox" name="comboBox_slit_2_motor_2_movetype">
-                          <item>
-                           <property name="text">
-                            <string>Relative</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>Absolute</string>
-                           </property>
-                          </item>
-                         </widget>
-                        </item>
-                        <item row="3" column="0">
-                         <widget class="QLabel" name="label_slit_2_motor_3_name">
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>Slit 2 Motor 3</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="4" column="0">
-                         <widget class="QLabel" name="label_slit_2_motor_4_name">
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>Slit 2 Motor 4</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="3" column="1">
-                         <widget class="QLabel" name="label_slit_2_motor_3_pos">
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>0</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="4" column="1">
-                         <widget class="QLabel" name="label_slit_2_motor_4_pos">
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>0</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="3" column="2">
-                         <widget class="QDoubleSpinBox" name="doubleSpinBox_slit_2_motor_3_moveto">
-                          <property name="decimals">
-                           <number>4</number>
-                          </property>
-                          <property name="minimum">
-                           <double>-1000.000000000000000</double>
-                          </property>
-                          <property name="maximum">
-                           <double>1000.000000000000000</double>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="4" column="2">
-                         <widget class="QDoubleSpinBox" name="doubleSpinBox_slit_2_motor_4_moveto">
-                          <property name="decimals">
-                           <number>4</number>
-                          </property>
-                          <property name="minimum">
-                           <double>-1000.000000000000000</double>
-                          </property>
-                          <property name="maximum">
-                           <double>1000.000000000000000</double>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="3" column="3">
-                         <widget class="QComboBox" name="comboBox_slit_2_motor_3_movetype">
-                          <item>
-                           <property name="text">
-                            <string>Relative</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>Absolute</string>
-                           </property>
-                          </item>
-                         </widget>
-                        </item>
-                        <item row="1" column="3">
-                         <widget class="QComboBox" name="comboBox_slit_2_motor_1_movetype">
-                          <property name="font">
-                           <font>
-                            <pointsize>10</pointsize>
-                           </font>
-                          </property>
-                          <item>
-                           <property name="text">
-                            <string>Relative</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>Absolute</string>
-                           </property>
-                          </item>
-                         </widget>
-                        </item>
-                        <item row="4" column="3">
-                         <widget class="QComboBox" name="comboBox_slit_2_motor_4_movetype">
-                          <item>
-                           <property name="text">
-                            <string>Relative</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>Absolute</string>
-                           </property>
-                          </item>
-                         </widget>
-                        </item>
-                        <item row="3" column="4">
-                         <widget class="QPushButton" name="pushButton_slit_2_motor_3_movego">
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                            <weight>75</weight>
-                            <bold>true</bold>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>GO</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="4" column="4">
-                         <widget class="QPushButton" name="pushButton_slit_2_motor_4_movego">
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                            <weight>75</weight>
-                            <bold>true</bold>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>GO</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="2" column="2">
-                         <widget class="QDoubleSpinBox" name="doubleSpinBox_slit_2_motor_2_moveto">
-                          <property name="minimumSize">
-                           <size>
-                            <width>100</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                          <property name="decimals">
-                           <number>4</number>
-                          </property>
-                          <property name="minimum">
-                           <double>-1000.000000000000000</double>
-                          </property>
-                          <property name="maximum">
-                           <double>1000.000000000000000</double>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="1" column="0">
-                         <widget class="QLabel" name="label_slit_2_motor_1_name">
-                          <property name="minimumSize">
-                           <size>
-                            <width>120</width>
-                            <height>0</height>
-                           </size>
-                          </property>
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>Slit 2 Motor 1</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="1" column="1">
-                         <widget class="QLabel" name="label_slit_2_motor_1_pos">
-                          <property name="minimumSize">
-                           <size>
-                            <width>100</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                          <property name="font">
-                           <font>
-                            <pointsize>11</pointsize>
-                           </font>
-                          </property>
-                          <property name="text">
-                           <string>0</string>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="4" column="5">
-                         <spacer name="horizontalSpacer_54">
-                          <property name="orientation">
-                           <enum>Qt::Horizontal</enum>
-                          </property>
-                          <property name="sizeHint" stdset="0">
-                           <size>
-                            <width>40</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                         </spacer>
-                        </item>
-                        <item row="0" column="0">
-                         <widget class="Line" name="line_45">
-                          <property name="orientation">
-                           <enum>Qt::Horizontal</enum>
-                          </property>
-                         </widget>
-                        </item>
-                       </layout>
-                      </item>
-                      <item>
-                       <widget class="Line" name="line_39">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="verticalSpacer_14">
-                        <property name="orientation">
-                         <enum>Qt::Vertical</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>20</width>
-                          <height>40</height>
-                         </size>
-                        </property>
-                       </spacer>
                       </item>
                      </layout>
                     </item>
@@ -4853,7 +4853,14 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox_scan_motor"/>
+               <widget class="QComboBox" name="comboBox_scan_motor">
+                <property name="minimumSize">
+                 <size>
+                  <width>125</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="Line" name="line_6">
@@ -4898,7 +4905,7 @@
               </property>
               <item>
                <layout class="QGridLayout" name="gridLayout_ScanSettings">
-                <item row="1" column="2">
+                <item row="1" column="3">
                  <widget class="QLabel" name="label_scan_stoppos_name">
                   <property name="minimumSize">
                    <size>
@@ -4911,7 +4918,7 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="4">
+                <item row="1" column="5">
                  <widget class="QLabel" name="label_scan_steps_name">
                   <property name="minimumSize">
                    <size>
@@ -4924,7 +4931,7 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="6">
+                <item row="1" column="7">
                  <widget class="QLabel" name="label_scan_waittime_name">
                   <property name="minimumSize">
                    <size>
@@ -4937,7 +4944,7 @@
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="5">
+                <item row="2" column="6">
                  <spacer name="horizontalSpacer_11">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -4953,7 +4960,7 @@
                   </property>
                  </spacer>
                 </item>
-                <item row="2" column="7">
+                <item row="2" column="8">
                  <spacer name="horizontalSpacer_12">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -4966,7 +4973,7 @@
                   </property>
                  </spacer>
                 </item>
-                <item row="2" column="3">
+                <item row="2" column="4">
                  <spacer name="horizontalSpacer_13">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -4982,7 +4989,7 @@
                   </property>
                  </spacer>
                 </item>
-                <item row="2" column="1">
+                <item row="2" column="2">
                  <spacer name="horizontalSpacer_14">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -4998,7 +5005,7 @@
                   </property>
                  </spacer>
                 </item>
-                <item row="1" column="1">
+                <item row="1" column="2">
                  <spacer name="horizontalSpacer_15">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -5014,7 +5021,7 @@
                   </property>
                  </spacer>
                 </item>
-                <item row="1" column="3">
+                <item row="1" column="4">
                  <spacer name="horizontalSpacer_16">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -5030,7 +5037,7 @@
                   </property>
                  </spacer>
                 </item>
-                <item row="1" column="5">
+                <item row="1" column="6">
                  <spacer name="horizontalSpacer_17">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -5046,7 +5053,7 @@
                   </property>
                  </spacer>
                 </item>
-                <item row="1" column="7">
+                <item row="1" column="8">
                  <spacer name="horizontalSpacer_18">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -5059,7 +5066,7 @@
                   </property>
                  </spacer>
                 </item>
-                <item row="1" column="0">
+                <item row="1" column="1">
                  <widget class="QLabel" name="label_scan_startpos_name">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -5078,17 +5085,62 @@
                   </property>
                  </widget>
                 </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_scan_startpos">
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="3">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_scan_stoppos">
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-9999.989999999999782</double>
+                  </property>
+                  <property name="maximum">
+                   <double>9999.989999999999782</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="5">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_scan_steps">
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <double>20000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QCheckBox" name="checkBox_rel_scan">
+                  <property name="text">
+                   <string>Relative Scan</string>
+                  </property>
+                 </widget>
+                </item>
                 <item row="2" column="0">
-                 <widget class="QDoubleSpinBox" name="doubleSpinBox_scan_startpos"/>
+                 <widget class="QLabel" name="label_rel_curr_pos">
+                  <property name="text">
+                   <string>0</string>
+                  </property>
+                 </widget>
                 </item>
-                <item row="2" column="2">
-                 <widget class="QDoubleSpinBox" name="doubleSpinBox_scan_stoppos"/>
-                </item>
-                <item row="2" column="4">
-                 <widget class="QDoubleSpinBox" name="doubleSpinBox_scan_steps"/>
-                </item>
-                <item row="2" column="6">
-                 <widget class="QDoubleSpinBox" name="doubleSpinBox_scan_waittime"/>
+                <item row="2" column="7">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_scan_waittime">
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.001000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>3000000.000000000000000</double>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </item>
@@ -5110,48 +5162,6 @@
             </item>
             <item>
              <widget class="Line" name="line">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_scan_datamanip">
-              <item>
-               <widget class="QCheckBox" name="checkBox_scan_back_sub">
-                <property name="text">
-                 <string>Automatic Background 
-Subtraction (Linear) -NC</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_21">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_scan_norm_enable">
-                <property name="text">
-                 <string>Normalization -NC</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QComboBox" name="comboBox_scan_norm_pick"/>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <widget class="Line" name="line_2">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -5483,6 +5493,584 @@ Subtraction (Linear) -NC</string>
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="tab_contour">
+           <attribute name="title">
+            <string>Contour</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_16">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_ChooseMotor_Mesh">
+              <item>
+               <widget class="QLabel" name="label_choose_mesh_slow_motor">
+                <property name="text">
+                 <string>Slow Scan Motor</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_mesh_slow_motor">
+                <property name="minimumSize">
+                 <size>
+                  <width>125</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_55">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_choose_mesh_fast_motor">
+                <property name="text">
+                 <string>Fast Scan Motor</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_mesh_fast_motor">
+                <property name="minimumSize">
+                 <size>
+                  <width>125</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_8">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_mesh_start_stop">
+                <property name="text">
+                 <string>START/STOP</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_MeshSettings">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetDefaultConstraint</enum>
+              </property>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_MeshSettings">
+                <item row="1" column="4">
+                 <widget class="QLabel" name="label_mesh_stoppos_name">
+                  <property name="minimumSize">
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Stop Location</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="6">
+                 <widget class="QLabel" name="label_mesh_steps_name">
+                  <property name="minimumSize">
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Steps</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="7">
+                 <spacer name="horizontalSpacer_21">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Maximum</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>50</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="2" column="5">
+                 <spacer name="horizontalSpacer_25">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Maximum</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>50</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="2" column="3">
+                 <spacer name="horizontalSpacer_57">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Maximum</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>50</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="1" column="3">
+                 <spacer name="horizontalSpacer_58">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Maximum</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>50</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="1" column="5">
+                 <spacer name="horizontalSpacer_63">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Maximum</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>50</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="1" column="7">
+                 <spacer name="horizontalSpacer_64">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Maximum</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>50</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QLabel" name="label_mesh_startpos_name">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Start Location</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_slow_mesh_startpos">
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="4">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_slow_mesh_stoppos">
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-9999.989999999999782</double>
+                  </property>
+                  <property name="maximum">
+                   <double>9999.989999999999782</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="6">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_slow_mesh_steps">
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <double>20000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QLabel" name="label_slow_mesh_currpos">
+                  <property name="text">
+                   <string>0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label_slow_mesh_name">
+                  <property name="text">
+                   <string>Slow Scan</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QCheckBox" name="checkBox_rel_mesh">
+                  <property name="text">
+                   <string>Relative</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLabel" name="label_mesh_currpos_name">
+                  <property name="text">
+                   <string>Current Position</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="label_fast_mesh_name">
+                  <property name="text">
+                   <string>Fast Scan</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QLabel" name="label_fast_mesh_currpos">
+                  <property name="text">
+                   <string>0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="2">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_fast_mesh_startpos">
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="3">
+                 <spacer name="horizontalSpacer_67">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Maximum</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>50</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="3" column="4">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_fast_mesh_stoppos">
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-9999.989999999999782</double>
+                  </property>
+                  <property name="maximum">
+                   <double>9999.989999999999782</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="5">
+                 <spacer name="horizontalSpacer_68">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Maximum</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>50</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="3" column="6">
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_fast_mesh_steps">
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <double>20000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="7">
+                 <spacer name="horizontalSpacer_69">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Maximum</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>50</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_72">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="Line" name="line_56">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_19">
+                <item>
+                 <widget class="QLabel" name="label_scan_waittime_name_2">
+                  <property name="minimumSize">
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Time per point</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox_mesh_waittime">
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.001000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>3000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="Line" name="line_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_mesh_graph">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetDefaultConstraint</enum>
+              </property>
+              <item>
+               <spacer name="verticalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_mesh_save">
+              <item>
+               <spacer name="horizontalSpacer_70">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_mesh_save">
+                <property name="text">
+                 <string>Save</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_mesh_select_file">
+                <property name="text">
+                 <string>Select Folder:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_mesh_select_file">
+                <property name="minimumSize">
+                 <size>
+                  <width>250</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_mesh_filename_name">
+                <property name="text">
+                 <string>Filename:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_mesh_filename">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>50</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_mesh_choosegraph">
+              <item>
+               <widget class="QLabel" name="label_mesh_data_x_name">
+                <property name="text">
+                 <string> X Data </string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_mesh_data_x"/>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_71">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Minimum</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_mesh_data_y_name">
+                <property name="text">
+                 <string> Y Data </string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_mesh_data_y"/>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_mesh_data_y_name_2">
+                <property name="text">
+                 <string>Intensity</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_mesh_data_intes"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
           <widget class="QWidget" name="tab_centering">
            <attribute name="title">
             <string>&amp;Centering</string>
@@ -5506,12 +6094,15 @@ Subtraction (Linear) -NC</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QComboBox" name="comboBox_cent_motor_scan">
+                 <widget class="QLabel" name="label_cent_motor_scan">
                   <property name="minimumSize">
                    <size>
                     <width>125</width>
                     <height>0</height>
                    </size>
+                  </property>
+                  <property name="text">
+                   <string>Scan Motor</string>
                   </property>
                  </widget>
                 </item>
@@ -5529,12 +6120,15 @@ Subtraction (Linear) -NC</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QComboBox" name="comboBox_cent_motor_angle">
+                 <widget class="QLabel" name="label_cent_motor_angle">
                   <property name="minimumSize">
                    <size>
                     <width>125</width>
                     <height>0</height>
                    </size>
+                  </property>
+                  <property name="text">
+                   <string>TextLabel</string>
                   </property>
                  </widget>
                 </item>
@@ -5587,6 +6181,12 @@ Subtraction (Linear) -NC</string>
                   <property name="decimals">
                    <number>3</number>
                   </property>
+                  <property name="minimum">
+                   <double>-360.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
                  </widget>
                 </item>
                 <item row="0" column="8">
@@ -5606,6 +6206,12 @@ Subtraction (Linear) -NC</string>
                  <widget class="QDoubleSpinBox" name="doubleSpinBox_cent_waittime">
                   <property name="decimals">
                    <number>3</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.001000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>9999.998999999999796</double>
                   </property>
                  </widget>
                 </item>
@@ -5638,7 +6244,13 @@ Subtraction (Linear) -NC</string>
                 <item row="2" column="5">
                  <widget class="QDoubleSpinBox" name="doubleSpinBox_cent_steps">
                   <property name="decimals">
-                   <number>3</number>
+                   <number>0</number>
+                  </property>
+                  <property name="minimum">
+                   <double>1.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>9999999.000000000000000</double>
                   </property>
                  </widget>
                 </item>
@@ -5660,12 +6272,24 @@ Subtraction (Linear) -NC</string>
                   <property name="decimals">
                    <number>3</number>
                   </property>
+                  <property name="minimum">
+                   <double>-9999.998999999999796</double>
+                  </property>
+                  <property name="maximum">
+                   <double>9999.998999999999796</double>
+                  </property>
                  </widget>
                 </item>
                 <item row="2" column="2">
                  <widget class="QDoubleSpinBox" name="doubleSpinBox_cent_relmax">
                   <property name="decimals">
                    <number>3</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-9999.998999999999796</double>
+                  </property>
+                  <property name="maximum">
+                   <double>999.999000000000024</double>
                   </property>
                  </widget>
                 </item>
@@ -5712,6 +6336,12 @@ Subtraction (Linear) -NC</string>
                  <widget class="QDoubleSpinBox" name="doubleSpinBox_cent_angle_o">
                   <property name="decimals">
                    <number>3</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-360.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
                   </property>
                  </widget>
                 </item>
@@ -5893,7 +6523,7 @@ Subtraction (Linear) -NC</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="0">
+                  <item row="4" column="0">
                    <widget class="QLabel" name="label_cent_com_p">
                     <property name="maximumSize">
                      <size>
@@ -5930,21 +6560,21 @@ Subtraction (Linear) -NC</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="2">
+                  <item row="4" column="2">
                    <widget class="QLabel" name="label_cent_com_m">
                     <property name="text">
                      <string>0</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="1">
+                  <item row="4" column="1">
                    <widget class="QLabel" name="label_cent_com_o">
                     <property name="text">
                      <string>0</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="4" column="0">
+                  <item row="5" column="0">
                    <widget class="QLabel" name="label_cent_curs_p_name">
                     <property name="font">
                      <font>
@@ -5956,14 +6586,14 @@ Subtraction (Linear) -NC</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="5" column="0">
+                  <item row="6" column="0">
                    <widget class="QLabel" name="label_cent_curs_p">
                     <property name="text">
                      <string>0</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="4" column="1">
+                  <item row="5" column="1">
                    <widget class="QLabel" name="label_cent_curs_o_name">
                     <property name="font">
                      <font>
@@ -5975,7 +6605,7 @@ Subtraction (Linear) -NC</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="4" column="2">
+                  <item row="5" column="2">
                    <widget class="QLabel" name="label_cent_curs_m_name">
                     <property name="font">
                      <font>
@@ -5987,21 +6617,21 @@ Subtraction (Linear) -NC</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="5" column="1">
+                  <item row="6" column="1">
                    <widget class="QLabel" name="label_cent_curs_o">
                     <property name="text">
                      <string>0</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="5" column="2">
+                  <item row="6" column="2">
                    <widget class="QLabel" name="label_cent_curs_m">
                     <property name="text">
                      <string>0</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="6" column="0">
+                  <item row="7" column="0">
                    <widget class="QLabel" name="label_cent_cwhm_p_name">
                     <property name="font">
                      <font>
@@ -6013,7 +6643,7 @@ Subtraction (Linear) -NC</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="6" column="1">
+                  <item row="7" column="1">
                    <widget class="QLabel" name="label_cent_cwhm_o_name">
                     <property name="font">
                      <font>
@@ -6025,7 +6655,7 @@ Subtraction (Linear) -NC</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="6" column="2">
+                  <item row="7" column="2">
                    <widget class="QLabel" name="label_cent_cwhm_m_name">
                     <property name="font">
                      <font>
@@ -6037,21 +6667,21 @@ Subtraction (Linear) -NC</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="7" column="0">
+                  <item row="8" column="0">
                    <widget class="QLabel" name="label_cent_cwhm_p">
                     <property name="text">
                      <string>0</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="7" column="1">
+                  <item row="8" column="1">
                    <widget class="QLabel" name="label_cent_cwhm_o">
                     <property name="text">
                      <string>0</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="7" column="2">
+                  <item row="8" column="2">
                    <widget class="QLabel" name="label_cent_cwhm_m">
                     <property name="text">
                      <string>0</string>
@@ -7114,7 +7744,7 @@ Based On</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1170</width>
+     <width>849</width>
      <height>25</height>
     </rect>
    </property>
@@ -7281,9 +7911,6 @@ Based On</string>
   <tabstop>doubleSpinBox_scan_steps</tabstop>
   <tabstop>doubleSpinBox_scan_waittime</tabstop>
   <tabstop>checkBox_scan_return_home</tabstop>
-  <tabstop>checkBox_scan_back_sub</tabstop>
-  <tabstop>checkBox_scan_norm_enable</tabstop>
-  <tabstop>comboBox_scan_norm_pick</tabstop>
   <tabstop>tableWidget_scan_data</tabstop>
   <tabstop>pushButton_scan_save</tabstop>
   <tabstop>pushButton_scan_select_file</tabstop>
@@ -7291,8 +7918,6 @@ Based On</string>
   <tabstop>lineEdit_scan_filename</tabstop>
   <tabstop>comboBox_scan_data_x</tabstop>
   <tabstop>comboBox_scan_data_y</tabstop>
-  <tabstop>comboBox_cent_motor_scan</tabstop>
-  <tabstop>comboBox_cent_motor_angle</tabstop>
   <tabstop>pushButton_cent_start_stop</tabstop>
   <tabstop>doubleSpinBox_cent_angle_pm</tabstop>
   <tabstop>doubleSpinBox_cent_angle_o</tabstop>

@@ -103,6 +103,32 @@ class VAR(Constant):
     MOTOR_4_POS         = 'var:motor_4_pos'
     MOTOR_5_POS         = 'var:motor_5_pos'
     MOTOR_6_POS         = 'var:motor_6_pos'
+    
+    EXTRA_MOTOR_1_POS         = 'var:extra_motor_1_pos'
+    EXTRA_MOTOR_2_POS         = 'var:extra_motor_2_pos'
+    EXTRA_MOTOR_3_POS         = 'var:extra_motor_3_pos'
+    EXTRA_MOTOR_4_POS         = 'var:extra_motor_4_pos'
+    EXTRA_MOTOR_5_POS         = 'var:extra_motor_5_pos'
+    EXTRA_MOTOR_6_POS         = 'var:extra_motor_6_pos'
+
+    SLIT_1_MOTOR_1_POS = 'var:slit_1_motor_1_pos'
+    SLIT_1_MOTOR_2_POS = 'var:slit_1_motor_2_pos'
+    SLIT_1_MOTOR_3_POS = 'var:slit_1_motor_3_pos'
+    SLIT_1_MOTOR_4_POS = 'var:slit_1_motor_4_pos'
+
+    SLIT_2_MOTOR_1_POS = 'var:slit_2_motor_1_pos'
+    SLIT_2_MOTOR_2_POS = 'var:slit_2_motor_2_pos'
+    SLIT_2_MOTOR_3_POS = 'var:slit_2_motor_3_pos'
+    SLIT_2_MOTOR_4_POS = 'var:slit_2_motor_4_pos'
+    
+    APER_MOTOR_1_POS         = 'var:aper_motor_1_pos'
+    APER_MOTOR_2_POS         = 'var:aper_motor_2_pos'
+    
+    DAC_MOTOR_1_POS         = 'var:dac_motor_1_pos'
+    DAC_MOTOR_2_POS         = 'var:dac_motor_2_pos'
+    
+    STOP_MOTOR_1_POS         = 'var:stop_motor_1_pos'
+    STOP_MOTOR_2_POS         = 'var:stop_motor_2_pos'
 
     SCAN_ARRAY          = 'var:scan_array'
     SCAN_MAX_Y          = 'var:scan_max_y'
@@ -163,8 +189,10 @@ class Core(object):
         self.count_event = threading.Event()
         self.count_event.clear()
 
-        self.move_event = threading.Event()
-        self.move_event.set()
+        self.stage_move_event = threading.Event()
+        self.stage_move_event.set()
+        self.extra_move_event = threading.Event()
+        self.extra_move_event.set()
         self.check_move_event = threading.Event()
         self.check_move_event.set()
         self._move_terminate_flag = False
@@ -191,7 +219,7 @@ class Core(object):
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
-        self._SpecMotor_sess = [None]*6
+        self._SpecMotor_sess = [None]*26
 
         self.moving_bool_dict = {}
         self.old_full_array, self.scan_array, self.old_array, self.old_x, self.old_y, = ([] for i in range(5))
@@ -267,7 +295,10 @@ class Core(object):
         moved = False  # initializing variable which gets checked before assigned on first loop
         self._SpecMotor_sess[id] = SpecMotor()
         while True:
-            self.move_event.wait()
+            if motor.Extra:
+                self.extra_move_event.wait()
+            else:
+                self.stage_move_event.wait()
             if self._move_terminate_flag: break
             if self._terminate_flag: break
             if self._SpecMotor_sess[id].specName == motor.Mne:
@@ -296,11 +327,17 @@ class Core(object):
                 SpecMotor.connectToSpec(self._SpecMotor_sess[id], motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
         print "Thread killed : " + motor.Name
 
-    def motor_track_state(self, state):
+    def stage_motor_track_state(self, state):
         if state:  # If the checkbox is clicked
-            self.move_event.set()
+            self.stage_move_event.set()
         else:  # Disable movecheck
-            self.move_event.clear()
+            self.stage_move_event.clear()
+
+    def extra_motor_track_state(self, state):
+        if state:  # If the checkbox is clicked
+            self.extra_move_event.set()
+        else:  # Disable movecheck
+            self.extra_move_event.clear()
 
     def check_limits(self, motor):
         self.checkpos_motor(motor) # check where the motor is and assigning it.
@@ -539,7 +576,7 @@ class Core(object):
                     print "Backup csv has been created in " + repr(csvfile)
 
     """ CENTER """
-    def cent_settings(self, scan_motor_name, angle_motor_name, relmax_SB, relmin_SB, center_SB, angle_pm_SB, angle_o_SB, Motors, wait_time_SB, center_calc_CB):
+    def cent_settings(self, scan_motor_name, angle_motor_name, relmax_SB, relmin_SB, angle_pm_SB, angle_o_SB, Motors, wait_time_SB, center_calc_CB):
         self.wait_time_SB = wait_time_SB
         items = ['Max Y', 'COM', 'Curser', 'CWHM']
         center_calc_CB.setMaxCount(len(items))    # At init we have to do some limit setting/setting up of UI elements
@@ -551,7 +588,6 @@ class Core(object):
                 (min_lim, max_lim) = self.check_limits(Motor_inst)
                 full_range = abs(min_lim) + abs(max_lim)
                 if Motor_inst.Name == scan_motor_name:
-                    center_SB.setRange(min_lim, max_lim)
                     relmax_SB.setRange(-1 * full_range, full_range)
                     relmin_SB.setRange(-1 * full_range, full_range)
                 elif Motor_inst.Name == angle_motor_name:
@@ -577,6 +613,7 @@ class Core(object):
     def cent_stop(self):
         self.cent_event.clear()
         self._teminate_cent = True
+        self.w_neg_array, self.w_naught_array, self.w_pos_array = ([] for i in range(3))
         self.is_centering(None)
         if self.is_scanning():
             self.scan_stop()
@@ -586,7 +623,7 @@ class Core(object):
         if self.is_centering(self.start_stop_PB):
             self.cent_stop()
         self.cent_props = (scan_motor_name, angle_motor_name, center + relmin, center + relmax,
-                            angle_o - angle_pm, angle_o, angle_o + angle_pm, steps, waittime, Motors, False)
+                            angle_o - angle_pm, angle_o, angle_o + angle_pm, steps, waittime, Motors, center, False)
         self._teminate_cent = False
         self.cent_started = False
         self.cent_event.set()
@@ -615,7 +652,7 @@ class Core(object):
             if self._terminate_flag: break
             self.w_neg_array, self.w_naught_array, self.w_pos_array = ([] for i in range(3))
             (scan_motor_name, angle_motor_name, cent_scan_start, cent_scan_stop,
-             cent_angle_m, cent_angle_o, cent_angle_p, steps, waittime, Motors, terminate) = self.cent_props
+             cent_angle_m, cent_angle_o, cent_angle_p, steps, waittime, Motors, cent, terminate) = self.cent_props
             for i in range(len(Motors)):
                 motor_inst = Motors[i]
                 if scan_motor_name == motor_inst.Name:
@@ -665,6 +702,9 @@ class Core(object):
                 self.cent_command_buff(self.is_scanning, self.set_array, ('pos', False), "W+ Scan Successful", waitsleep=3)
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
+                self.cent_command_buff(self.is_moving, self.move_motor, (angle_motor, cent_angle_o, "Absolute"),
+                                       "CENTERING: MOVING BACK", command2=self.move_motor,
+                                       command2args=(scan_motor, cent, "Absolute"))
                 self.cent_event.clear()
                 self.is_centering(None)
             print "Centering Complete"
@@ -897,7 +937,6 @@ class Core(object):
             print "DONE ROCKING"
             self.is_rocking()
 
-
     def rock_stop(self, Motors):
         self.rock_event.clear()
         self._teminate_rock = True
@@ -908,6 +947,7 @@ class Core(object):
             Motor_inst = Motors[i]
             if Motor_inst.Enabled:
                 self.motor_stop(Motor_inst)
+
 
     def rock_roll(self, motor, startlist, stoplist, intervallist, count_time, Motors):
         """Here is where we should start the rocking and then push it to the plot"""
@@ -1090,7 +1130,7 @@ class Core(object):
     def terminate(self):
         self._terminate_flag = True
         print "core.terminate called"
-        for event in [self.count_event, self.move_event, self.scan_event, self.cent_event, self.rock_event]:
+        for event in [self.count_event, self.stage_move_event, self.extra_move_event, self.scan_event, self.cent_event, self.rock_event]:
             event.set() # allow any blocked threads to terminate
         self.scan_stop()
         sess_list = [  # self.SpecCounter_ic2,
@@ -1108,24 +1148,27 @@ class Core(object):
 
 
     def term_sess(self, sess):
-        connection = sess.connection
         try:
-            sess.stop()
-        except Exception, e:
-            print repr(e)
-        if connection is not None:
+            connection = sess.connection
             try:
-                for key, channel in connection.dispatcher.registeredChannels.iteritems():
-                    channel.unregister()
-                connection.abort()
-                pass
-            except SpecClientError:
-                print "Successfully disconnected " + repr(sess) + " ?"
-            connection.dispatcher.disconnect()
-            # connection.disconnect()
-        else:
-            print repr(connection) + " was not initialized and hence was not closed"
-        return sess
+                sess.stop()
+            except Exception, e:
+                print repr(e)
+            if connection is not None:
+                try:
+                    for key, channel in connection.dispatcher.registeredChannels.iteritems():
+                        channel.unregister()
+                    connection.abort()
+                    pass
+                except SpecClientError:
+                    print "Successfully disconnected " + repr(sess) + " ?"
+                connection.dispatcher.disconnect()
+                # connection.disconnect()
+            else:
+                print repr(connection) + " was not initialized and hence was not closed"
+            return sess
+        except AttributeError:
+            print "Passing on killing session: " + repr(sess)
 
     def get_motor(self, motor_name, Motors):
         for motor in Motors:

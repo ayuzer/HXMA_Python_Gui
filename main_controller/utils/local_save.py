@@ -170,7 +170,6 @@ class CENT_KEY(object):
     OMEGA_NAU = 'omega_nau'
     RELMAX = 'relmax'
     RELMIN = 'relmin'
-    CENTER = 'center'
     STEPS = 'steps'
     WAITTIME = 'wait_time'
     SCANMOTOR = 'scan_motor'
@@ -216,7 +215,6 @@ class CentMixin(object):
         cent_dict = {
             CENT_KEY.RELMAX: self.doubleSpinBox_cent_relmax.value(),
             CENT_KEY.RELMIN: self.doubleSpinBox_cent_relmin.value(),
-            CENT_KEY.CENTER: self.doubleSpinBox_cent_center.value(),
             CENT_KEY.OMEGA_DEL: self.doubleSpinBox_cent_angle_pm.value(),
             CENT_KEY.OMEGA_NAU: self.doubleSpinBox_cent_angle_o.value(),
             CENT_KEY.STEPS: self.doubleSpinBox_cent_steps.value(),

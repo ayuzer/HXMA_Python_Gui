@@ -164,6 +164,23 @@ class LabelFormatter(object):
 
         self.data_dict[label] = kwargs
 
+    def replace(self, pv_name, label, **kwargs):
+        for PV, labels in self.label_dict.iteritems():  # delete all the old entries
+            for i, _label in enumerate(labels):
+                if label == _label:
+                    del labels[i]
+                    self.label_dict[PV] = labels
+        labels = self.label_dict.get(pv_name, [])
+        labels.append(label)
+        self.label_dict[pv_name] = labels
+
+        data = self.data_dict.get(label)
+        if data is not None:
+            print "Already have data for label", repr(label) + "Countinuing?"
+            del self.data_dict[label]
+
+        self.data_dict[label] = kwargs
+
 
 class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin, CentMixin, MotMixin, RockMixin):
 
@@ -198,12 +215,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         self._item_count = 0
 
-        # Track mouse position while in graphics view
-        # self.mouse_tracker = MouseTracker(self.graphicsView)
-        # self.mouse_tracker.SIGNAL_MOVE.connect(self.handle_mouse_signal_move)
-        # self.mouse_tracker.SIGNAL_PRESS.connect(self.handle_mouse_signal_press)
-        # self.mouse_tracker.SIGNAL_RELEASE.connect(self.handle_mouse_signal_release)
-
         self.init_labels()
 
         actions = {
@@ -213,6 +224,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             self.action_set_server: self.handle_action_set_server_wind,
             self.action_motor_slots: self.handle_action_motor_slots,
         }
+        self.populateCentMenu()
 
         for action, handler in actions.iteritems():
             action.triggered.connect(handler)
@@ -239,32 +251,69 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             self.label_motor_4_name,
             self.label_motor_5_name,
             self.label_motor_6_name,
+
+            self.label_slit_1_motor_1_name,
+            self.label_slit_1_motor_2_name,
+            self.label_slit_1_motor_3_name,
+            self.label_slit_1_motor_4_name,
+            self.label_slit_2_motor_1_name,
+            self.label_slit_2_motor_2_name,
+            self.label_slit_2_motor_3_name,
+            self.label_slit_2_motor_4_name,
+            self.label_aper_motor_1_name,
+            self.label_aper_motor_2_name,
+            self.label_dac_motor_1_name,
+            self.label_dac_motor_2_name,
+            self.label_stop_motor_1_name,
+            self.label_stop_motor_2_name,
+            self.label_extra_motor_1_name,
+            self.label_extra_motor_2_name,
+            self.label_extra_motor_3_name,
+            self.label_extra_motor_4_name,
+            self.label_extra_motor_5_name,
+            self.label_extra_motor_6_name,
         ]
-        self.Motors = [self.Motor_1, self.Motor_2, self.Motor_3, self.Motor_4, self.Motor_5, self.Motor_6]
+        self.Motors = [self.Motor_1, self.Motor_2, self.Motor_3, self.Motor_4, self.Motor_5, self.Motor_6,
+
+                       self.Slit_1_Motor_1, self.Slit_1_Motor_2, self.Slit_1_Motor_3, self.Slit_1_Motor_4,
+                       self.Slit_2_Motor_1, self.Slit_2_Motor_2, self.Slit_2_Motor_3, self.Slit_2_Motor_4,
+                       self.Aper_Motor_1, self.Aper_Motor_2,
+                       self.Dac_Motor_1, self.Dac_Motor_2,
+                       self.Stop_Motor_1, self.Stop_Motor_2,
+                       self.Extra_Motor_1, self.Extra_Motor_2, self.Extra_Motor_3, self.Extra_Motor_4,
+                       self.Extra_Motor_5, self.Extra_Motor_6,
+                       ]
+
+        self.Motors_Stage = [self.Motor_1, self.Motor_2, self.Motor_3, self.Motor_4, self.Motor_5, self.Motor_6]
         if not motor_props==False:
             for i in range(len(self.Motors)):
                 self.Motors[i] = self.Motors[i]._replace(Name=motor_props[0][i], Mne=motor_props[1][i], Enabled=motor_props[2][i])
         self.update_motors(self.Motors)
         self.handle_pushButton_motor_all_checkpos(False)  # just checking position, False is a dummy var
         # Connect Buttons
-        self.pushButton_motor_1_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 1))
-        self.pushButton_motor_2_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 2))
-        self.pushButton_motor_3_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 3))
-        self.pushButton_motor_4_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 4))
-        self.pushButton_motor_5_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 5))
-        self.pushButton_motor_6_movego.clicked.connect(partial(self.handle_pushButton_motor_movego, 6))
+        pushbuttons = [self.pushButton_motor_1_movego, self.pushButton_motor_2_movego, self.pushButton_motor_3_movego, 
+                       self.pushButton_motor_4_movego, self.pushButton_motor_5_movego, self.pushButton_motor_6_movego,
+
+                       self.pushButton_slit_1_motor_1_movego, self.pushButton_slit_1_motor_2_movego, self.pushButton_slit_1_motor_3_movego, self.pushButton_slit_1_motor_4_movego,
+                       self.pushButton_slit_2_motor_1_movego, self.pushButton_slit_2_motor_2_movego, self.pushButton_slit_2_motor_3_movego, self.pushButton_slit_2_motor_4_movego,
+
+                       self.pushButton_aper_motor_1_movego, self.pushButton_aper_motor_2_movego,
+                       self.pushButton_dac_motor_1_movego, self.pushButton_dac_motor_2_movego,
+                       self.pushButton_stop_motor_1_movego, self.pushButton_stop_motor_2_movego,
+
+                       self.pushButton_extra_motor_1_movego, self.pushButton_extra_motor_2_movego, self.pushButton_extra_motor_3_movego,
+                       self.pushButton_extra_motor_4_movego, self.pushButton_extra_motor_5_movego, self.pushButton_extra_motor_6_movego,
+                       ]
+        for i, but in enumerate(pushbuttons):
+            but.clicked.connect(partial(self.handle_pushButton_motor_movego, i+1))
 
         self.pushButton_motor_all_checkpos.clicked.connect(self.handle_pushButton_motor_all_checkpos)
         self.pushButton_motor_all_move.clicked.connect(self.handle_pushButton_motor_all_move)
         self.pushButton_motor_all_stop.clicked.connect(self.handle_pushButton_motor_all_stop)
 
         self.checkBox_motor_all_checkpos.stateChanged.connect(self.handle_checkBox_motor_all_checkpos)
-        """COUNTER INIT"""
-        # Connect Buttons
-        self.checkBox_count.stateChanged.connect(self.handle_checkBox_count)
-        # INIT RUN
-        self.handle_checkBox_count()  # handing down the count variables to core with this
-
+        self.checkBox_SPEC_checkpos.stateChanged.connect(self.handle_checkBox_SPEC_checkpos)
+        
         """SCAN INIT"""
         # Connect Buttons
         self.pushButton_scan_start_stop.clicked.connect(self.handle_pushButton_scan_start_stop)
@@ -309,20 +358,26 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.comboBox_cent_data_y.activated.connect(self.handle_comboBox_cent_data)
 
         self.checkBox_cent_single.stateChanged.connect(partial(self.cent_graph, self.checkBox_cent_single))
-        #Variables
-        (self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3) = Plotter(monitor=self.monitor, VAR=VAR, id='neg'), \
-                                                                          Plotter(monitor=self.monitor, VAR=VAR, id='nau'), \
-                                                                          Plotter(monitor=self.monitor, VAR=VAR, id='pos')
+
+        # Variables
+        (self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3) = Plotter(monitor=self.monitor, VAR=VAR,
+                                                                                  id='neg'), \
+                                                                          Plotter(monitor=self.monitor, VAR=VAR,
+                                                                                  id='nau'), \
+                                                                          Plotter(monitor=self.monitor, VAR=VAR,
+                                                                                  id='pos')
         self.plots = [self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3]
         self.cent_plot_id = Plotter(monitor=self.monitor, VAR=VAR, id='multi')
         self.cent_timer = QtCore.QTimer()
+
         # INIT RUN
-        self.init_cent_graph(self.checkBox_cent_single.isChecked())
         self.handle_comboBox_cent_motor()
         self.update_cent_cols()
         self.set_cent_props()  # updating variables from the saved file (last session)
+        self.init_cent_graph(self.checkBox_cent_single.isChecked())
         self.core.update_filepath(self.lineEdit_cent_select_file, 'cent')
         self.core.is_centering(self.pushButton_cent_start_stop)
+
         
         """ROCKING INIT"""
         # Connect Buttons
@@ -413,29 +468,32 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.handle_pushButton_motor_all_checkpos(self.Motors)
 
     def handle_pushButton_motor_all_move(self, dummy): # this just calls the moving function if enabled for each
-        for i in range(len(self.Motors)):
-            Motor_inst = self.Motors[i]
+        for i in range(len(self.Motors_Stage)):
+            Motor_inst = self.Motors_Stage[i]
             if Motor_inst.Enabled:
                 self.core.move_motor(Motor_inst)
 
     def handle_pushButton_motor_all_checkpos(self,dummy):  # calls a check_pos for each motor if enabled
-        for i in range(len(self.Motors)):
-            Motor_inst = self.Motors[i]
+        for i in range(len(self.Motors_Stage)):
+            Motor_inst = self.Motors_Stage[i]
             if Motor_inst.Enabled:
                 self.core.checkpos_motor(Motor_inst)
 
     def handle_checkBox_motor_all_checkpos(self):  # Enables/disables constant position tracking
-        self.core.motor_track_state(self.checkBox_motor_all_checkpos.isChecked())
+        self.core.stage_motor_track_state(self.checkBox_motor_all_checkpos.isChecked())
+
+    def handle_checkBox_SPEC_checkpos(self):  # Enables/disables constant position tracking
+        self.core.extra_motor_track_state(self.checkBox_SPEC_checkpos.isChecked())
 
     def handle_pushButton_motor_all_stop(self):
-        for i in range(len(self.Motors)):
-            Motor_inst = self.Motors[i]
+        for i in range(len(self.Motors_Stage)):
+            Motor_inst = self.Motors_Stage[i]
             if Motor_inst.Enabled:
                 self.core.motor_stop(Motor_inst)
 
     def init_motor_slots(self):
         Motor_Slot = namedtuple('Motor_Slot',
-                                ['Name', 'Mne', 'Enabled', 'Pos_VAR', 'Moveto_SB', 'Move_PB', 'MoveType_CB'])
+                                ['Name', 'Mne', 'Enabled', 'Pos_VAR', 'Moveto_SB', 'Move_PB', 'MoveType_CB', 'Extra'])
         self.Motor_1 = Motor_Slot(Pos_VAR=VAR.MOTOR_1_POS,
                                   Moveto_SB=self.doubleSpinBox_motor_1_moveto,
                                   Move_PB=self.pushButton_motor_1_movego,
@@ -443,6 +501,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                   Name='',
                                   Mne='',
                                   Enabled=False,
+                                  Extra=False,
                                   )
         self.Motor_2 = Motor_Slot(Pos_VAR=VAR.MOTOR_2_POS,
                                   Moveto_SB=self.doubleSpinBox_motor_2_moveto,
@@ -451,6 +510,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                   Name='',
                                   Mne='',
                                   Enabled=False,
+                                  Extra=False,
                                   )
         self.Motor_3 = Motor_Slot(Pos_VAR=VAR.MOTOR_3_POS,
                                   Moveto_SB=self.doubleSpinBox_motor_3_moveto,
@@ -458,7 +518,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                   MoveType_CB=self.comboBox_motor_3_movetype,
                                   Name='',
                                   Mne='',
-                                  Enabled=False,
+                                  Enabled=False, 
+                                  Extra=False,
                                   )
         self.Motor_4 = Motor_Slot(Pos_VAR=VAR.MOTOR_4_POS,
                                   Moveto_SB=self.doubleSpinBox_motor_4_moveto,
@@ -466,7 +527,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                   MoveType_CB=self.comboBox_motor_4_movetype,
                                   Name='',
                                   Mne='',
-                                  Enabled=False,
+                                  Enabled=False, 
+                                  Extra=False,
                                   )
         self.Motor_5 = Motor_Slot(Pos_VAR=VAR.MOTOR_5_POS,
                                   Moveto_SB=self.doubleSpinBox_motor_5_moveto,
@@ -474,7 +536,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                   MoveType_CB=self.comboBox_motor_5_movetype,
                                   Name='',
                                   Mne='',
-                                  Enabled=False,
+                                  Enabled=False, 
+                                  Extra=False,
                                   )
         self.Motor_6 = Motor_Slot(Pos_VAR=VAR.MOTOR_6_POS,
                                   Moveto_SB=self.doubleSpinBox_motor_6_moveto,
@@ -482,7 +545,197 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                   MoveType_CB=self.comboBox_motor_6_movetype,
                                   Name='',
                                   Mne='',
-                                  Enabled=False,
+                                  Enabled=False, 
+                                  Extra=False,
+                                  )
+    # 
+    # def init_motor_beam_cond_slots(self):
+    #     Motor_Slot = namedtuple('Motor_Slot',
+    #                             ['Name', 'Mne', 'Enabled', 'Pos_VAR', 'Moveto_SB', 'Move_PB', 'MoveType_CB', 'Extra'])
+        self.Slit_1_Motor_1 = Motor_Slot(Pos_VAR=VAR.SLIT_1_MOTOR_1_POS,
+                                  Moveto_SB=self.doubleSpinBox_slit_1_motor_1_moveto,
+                                  Move_PB=self.pushButton_slit_1_motor_1_movego,
+                                  MoveType_CB=self.comboBox_slit_1_motor_1_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Slit_1_Motor_2 = Motor_Slot(Pos_VAR=VAR.SLIT_1_MOTOR_2_POS,
+                                  Moveto_SB=self.doubleSpinBox_slit_1_motor_2_moveto,
+                                  Move_PB=self.pushButton_slit_1_motor_2_movego,
+                                  MoveType_CB=self.comboBox_slit_1_motor_2_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Slit_1_Motor_3 = Motor_Slot(Pos_VAR=VAR.SLIT_1_MOTOR_3_POS,
+                                  Moveto_SB=self.doubleSpinBox_slit_1_motor_3_moveto,
+                                  Move_PB=self.pushButton_slit_1_motor_3_movego,
+                                  MoveType_CB=self.comboBox_slit_1_motor_3_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Slit_1_Motor_4 = Motor_Slot(Pos_VAR=VAR.SLIT_1_MOTOR_4_POS,
+                                  Moveto_SB=self.doubleSpinBox_slit_1_motor_4_moveto,
+                                  Move_PB=self.pushButton_slit_1_motor_4_movego,
+                                  MoveType_CB=self.comboBox_slit_1_motor_4_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                         )
+        
+        self.Slit_2_Motor_1 = Motor_Slot(Pos_VAR=VAR.SLIT_2_MOTOR_1_POS,
+                                  Moveto_SB=self.doubleSpinBox_slit_2_motor_1_moveto,
+                                  Move_PB=self.pushButton_slit_2_motor_1_movego,
+                                  MoveType_CB=self.comboBox_slit_2_motor_1_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Slit_2_Motor_2 = Motor_Slot(Pos_VAR=VAR.SLIT_2_MOTOR_2_POS,
+                                  Moveto_SB=self.doubleSpinBox_slit_2_motor_2_moveto,
+                                  Move_PB=self.pushButton_slit_2_motor_2_movego,
+                                  MoveType_CB=self.comboBox_slit_2_motor_2_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Slit_2_Motor_3 = Motor_Slot(Pos_VAR=VAR.SLIT_2_MOTOR_3_POS,
+                                  Moveto_SB=self.doubleSpinBox_slit_2_motor_3_moveto,
+                                  Move_PB=self.pushButton_slit_2_motor_3_movego,
+                                  MoveType_CB=self.comboBox_slit_2_motor_3_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Slit_2_Motor_4 = Motor_Slot(Pos_VAR=VAR.SLIT_2_MOTOR_4_POS,
+                                  Moveto_SB=self.doubleSpinBox_slit_2_motor_4_moveto,
+                                  Move_PB=self.pushButton_slit_2_motor_4_movego,
+                                  MoveType_CB=self.comboBox_slit_2_motor_4_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+
+        self.Aper_Motor_1 = Motor_Slot(Pos_VAR=VAR.APER_MOTOR_1_POS,
+                                         Moveto_SB=self.doubleSpinBox_aper_motor_1_moveto,
+                                         Move_PB=self.pushButton_aper_motor_1_movego,
+                                         MoveType_CB=self.comboBox_aper_motor_1_movetype,
+                                         Name='',
+                                         Mne='',
+                                         Enabled=False, 
+                                  Extra=True,
+                                         )
+        self.Aper_Motor_2 = Motor_Slot(Pos_VAR=VAR.APER_MOTOR_2_POS,
+                                         Moveto_SB=self.doubleSpinBox_aper_motor_2_moveto,
+                                         Move_PB=self.pushButton_aper_motor_2_movego,
+                                         MoveType_CB=self.comboBox_aper_motor_2_movetype,
+                                         Name='',
+                                         Mne='',
+                                         Enabled=False, 
+                                  Extra=True,
+                                         )
+
+        self.Dac_Motor_1 = Motor_Slot(Pos_VAR=VAR.DAC_MOTOR_1_POS,
+                                         Moveto_SB=self.doubleSpinBox_dac_motor_1_moveto,
+                                         Move_PB=self.pushButton_dac_motor_1_movego,
+                                         MoveType_CB=self.comboBox_dac_motor_1_movetype,
+                                         Name='',
+                                         Mne='',
+                                         Enabled=False, 
+                                  Extra=True,
+                                         )
+        self.Dac_Motor_2 = Motor_Slot(Pos_VAR=VAR.DAC_MOTOR_2_POS,
+                                         Moveto_SB=self.doubleSpinBox_dac_motor_2_moveto,
+                                         Move_PB=self.pushButton_dac_motor_2_movego,
+                                         MoveType_CB=self.comboBox_dac_motor_2_movetype,
+                                         Name='',
+                                         Mne='',
+                                         Enabled=False, 
+                                  Extra=True,
+                                         )
+
+        self.Stop_Motor_1 = Motor_Slot(Pos_VAR=VAR.STOP_MOTOR_1_POS,
+                                         Moveto_SB=self.doubleSpinBox_stop_motor_1_moveto,
+                                         Move_PB=self.pushButton_stop_motor_1_movego,
+                                         MoveType_CB=self.comboBox_stop_motor_1_movetype,
+                                         Name='',
+                                         Mne='',
+                                         Enabled=False, 
+                                  Extra=True,
+                                         )
+        self.Stop_Motor_2 = Motor_Slot(Pos_VAR=VAR.STOP_MOTOR_2_POS,
+                                         Moveto_SB=self.doubleSpinBox_stop_motor_2_moveto,
+                                         Move_PB=self.pushButton_stop_motor_2_movego,
+                                         MoveType_CB=self.comboBox_stop_motor_2_movetype,
+                                         Name='',
+                                         Mne='',
+                                         Enabled=False, 
+                                  Extra=True,
+                                         )
+
+        self.Extra_Motor_1 = Motor_Slot(Pos_VAR=VAR.EXTRA_MOTOR_1_POS,
+                                  Moveto_SB=self.doubleSpinBox_extra_motor_1_moveto,
+                                  Move_PB=self.pushButton_extra_motor_1_movego,
+                                  MoveType_CB=self.comboBox_extra_motor_1_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Extra_Motor_2 = Motor_Slot(Pos_VAR=VAR.EXTRA_MOTOR_2_POS,
+                                  Moveto_SB=self.doubleSpinBox_extra_motor_2_moveto,
+                                  Move_PB=self.pushButton_extra_motor_2_movego,
+                                  MoveType_CB=self.comboBox_extra_motor_2_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Extra_Motor_3 = Motor_Slot(Pos_VAR=VAR.EXTRA_MOTOR_3_POS,
+                                  Moveto_SB=self.doubleSpinBox_extra_motor_3_moveto,
+                                  Move_PB=self.pushButton_extra_motor_3_movego,
+                                  MoveType_CB=self.comboBox_extra_motor_3_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Extra_Motor_4 = Motor_Slot(Pos_VAR=VAR.EXTRA_MOTOR_4_POS,
+                                  Moveto_SB=self.doubleSpinBox_extra_motor_4_moveto,
+                                  Move_PB=self.pushButton_extra_motor_4_movego,
+                                  MoveType_CB=self.comboBox_extra_motor_4_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Extra_Motor_5 = Motor_Slot(Pos_VAR=VAR.EXTRA_MOTOR_5_POS,
+                                  Moveto_SB=self.doubleSpinBox_extra_motor_5_moveto,
+                                  Move_PB=self.pushButton_extra_motor_5_movego,
+                                  MoveType_CB=self.comboBox_extra_motor_5_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
+                                  )
+        self.Extra_Motor_6 = Motor_Slot(Pos_VAR=VAR.EXTRA_MOTOR_6_POS,
+                                  Moveto_SB=self.doubleSpinBox_extra_motor_6_moveto,
+                                  Move_PB=self.pushButton_extra_motor_6_movego,
+                                  MoveType_CB=self.comboBox_extra_motor_6_movetype,
+                                  Name='',
+                                  Mne='',
+                                  Enabled=False, 
+                                  Extra=True,
                                   )
 
     def update_motors(self, Motors):
@@ -490,11 +743,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         t = threading.Timer(1.5,  self.core.update_motors, [self.motor_names, Motors, (self.comboBox_scan_motor, self.comboBox_cent_motor_scan, self.comboBox_cent_motor_angle, self.comboBox_rock_motor)])
         t.start()
         self.Motors = Motors
-
-    """COUNT"""
-    def handle_checkBox_count(self):  #Also passes the reference to the count-time down
-        self.core.counting_state(self.checkBox_count.isChecked(), self.doubleSpinBox_count_time_set)
-        self.doubleSpinBox_count_time_set.setRange(0.01, 259200)  # 0.1 sec to 3 days
+        Motor_Stage = []
+        for motor in Motors:
+            if not motor.Extra:
+                Motor_Stage.append(motor)
+        self.Motors_Stage = Motor_Stage
+        self.populateCentSubMenus(self.Motors_Stage)
 
     """SCAN"""
     def scan_button_text(self):
@@ -571,13 +825,17 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                 self.comboBox_cent_motor_angle.currentText(),
                                 self.doubleSpinBox_cent_relmax,
                                 self.doubleSpinBox_cent_relmin,
-                                self.doubleSpinBox_cent_center,
                                 self.doubleSpinBox_cent_angle_pm,
                                 self.doubleSpinBox_cent_angle_o,
-                                self.Motors,
+                                self.Motors_Stage,
                                 self.doubleSpinBox_cent_waittime,
                                 self.comboBox_cent_calc_choose,
                                 )
+        try:
+            self.add_label({self.core.get_motor(self.comboBox_cent_motor_scan.currentText(), self.Motors_Stage).Pos_VAR: (
+            self.label_cent_center, '{:.3f}', 12, True), }, double=True)
+        except AttributeError:
+            print "Cent scan motor Not set"
 
     def handle_pushButton_cent_start_stop(self):
         if self.core.is_centering(self.pushButton_cent_start_stop):
@@ -590,12 +848,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                      self.comboBox_cent_motor_angle.currentText(),
                                      self.doubleSpinBox_cent_relmax.value(),
                                      self.doubleSpinBox_cent_relmin.value(),
-                                     self.doubleSpinBox_cent_center.value(),
+                                     float(str(self.label_cent_center.text())),
                                      self.doubleSpinBox_cent_angle_pm.value(),
                                      self.doubleSpinBox_cent_angle_o.value(),
                                      self.doubleSpinBox_cent_steps.value(),
                                      self.doubleSpinBox_cent_waittime.value(),
-                                     self.Motors,
+                                     self.Motors_Stage,
                                      )
                 self.cent_timer.start(250.0)
                 self.connect(self.cent_timer,  QtCore.SIGNAL('timeout()'), self.cent_plot)
@@ -663,16 +921,41 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             for plot in self.plots:
                 plot.show()
             self.cent_plot_id.hide()
+
+    def populateCentMenu(self):
+        self.cent_menus = ['Centre X', 'Centre Y']
+        for i, menu in enumerate(self.cent_menus):
+            self.cent_menus[i] = self.menuCentering.addMenu(menu)
+
+    def populateCentSubMenus(self, Motors):
+        motor_list = []
+        for motor in Motors:
+            if motor.Enabled and not motor.Extra:
+                motor_list.append(motor.Name)
+        for menu in self.cent_menus:
+            menu.clear()
+            motor_group = QtGui.QActionGroup(self, exclusive=True)
+            for motor in motor_list:
+                menuItem = motor_group.addAction(QtGui.QAction(motor, menu, checkable=True))
+                receiver = lambda motor=motor: self.onFilmSet(motor)
+                self.connect(menuItem, Qt.SIGNAL('triggered()'), receiver)
+                menu.addAction(menuItem)
+
+    def onFilmSet(self, value):
+        print 'Menu Clicked ', value
             
     """ROCKING"""
     def handle_comboBox_rock_motor(self):
         self.core.rock_settings(self.comboBox_rock_motor.currentText(),
                                 self.doubleSpinBox_rock_startpos,
                                 self.doubleSpinBox_rock_stoppos,
-                                self.Motors,
+                                self.Motors_Stage,
                                 self.doubleSpinBox_rock_waittime
                                 )
-
+        try:
+            self.add_label({self.core.get_motor(self.comboBox_rock_motor.currentText(), self.Motors_Stage).Pos_VAR: (self.label_motor_currpos, '{:.3f}', 12, True),}, double=True)
+        except AttributeError:
+            print "Rocking motor Not set"
     def check_omit(self, passback=False):
         all_regions = [
             [self.checkBox_rock_zone1.isChecked(), self.doubleSpinBox_rock_min_zone1, self.doubleSpinBox_rock_max_zone1],
@@ -695,10 +978,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             region[1].setEnabled(region[0])
             region[2].setEnabled(region[0])
 
-
     def handle_pushButton_rock_start_stop(self):
         if self.core.is_rocking(self.pushButton_rock_start_stop):
-            self.core.rock_stop(self.Motors)
+            self.core.rock_stop(self.Motors_Stage)
         elif self.core.is_scanning() == True or self.core.is_centering == True:
             print "Cannot rock, there is currently an operation ongoing (scanning or centering)"
         else:
@@ -710,7 +992,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                      self.doubleSpinBox_rock_stoppos.value(),
                                      self.doubleSpinBox_rock_steps.value(),
                                      self.doubleSpinBox_rock_waittime.value(),
-                                     self.Motors,  # We need to pass this so we can see which motor we are rockning with
+                                     self.Motors_Stage,  # We need to pass this so we can see which motor we are rockning with
                                      self.check_omit(),
                                      self.doubleSpinBox_rock_time.value(),
                                      self.label_motor_currpos,
@@ -962,10 +1244,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         return filter.clicked
 
     def init_labels(self):
-
-        css_normal= "QLabel { background-color : %s; color : %s; }" % \
-                  (CSS_COLOUR.GROUP_BOX, CSS_COLOUR.BLUE)
-
         label_map = {
             PV.SYSTEM_TIME:         (self.label_system_time,        '{:s}',     12, True),
             PV.BEAM_STOP:           (self.label_beam_stop,          '{:g}',    12, True),
@@ -977,9 +1255,33 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             VAR.MOTOR_4_POS:        (self.label_motor_4_pos,        '{:,.3f}',  12, True),
             VAR.MOTOR_5_POS:        (self.label_motor_5_pos,        '{:,.3f}',  12, True),
             VAR.MOTOR_6_POS:        (self.label_motor_6_pos,        '{:,.3f}',  12, True),
-            VAR.COUNTER_1_COUNT:    (self.label_counter_1_count,    '{:,d}',    12, True),
-            VAR.COUNTER_2_COUNT:    (self.label_counter_2_count,    '{:,d}',    12, True),
-            VAR.COUNT_TIME:         (self.label_count_time,         '{:.3f}',   12, True),
+
+            VAR.SLIT_1_MOTOR_1_POS: (self.label_slit_1_motor_1_pos, '{:,.3f}', 12, True),
+            VAR.SLIT_1_MOTOR_2_POS: (self.label_slit_1_motor_2_pos, '{:,.3f}', 12, True),
+            VAR.SLIT_1_MOTOR_3_POS: (self.label_slit_1_motor_3_pos, '{:,.3f}', 12, True),
+            VAR.SLIT_1_MOTOR_4_POS: (self.label_slit_1_motor_4_pos, '{:,.3f}', 12, True),
+
+            VAR.SLIT_2_MOTOR_1_POS: (self.label_slit_2_motor_1_pos, '{:,.3f}', 12, True),
+            VAR.SLIT_2_MOTOR_2_POS: (self.label_slit_2_motor_2_pos, '{:,.3f}', 12, True),
+            VAR.SLIT_2_MOTOR_3_POS: (self.label_slit_2_motor_3_pos, '{:,.3f}', 12, True),
+            VAR.SLIT_2_MOTOR_4_POS: (self.label_slit_2_motor_4_pos, '{:,.3f}', 12, True),
+
+            VAR.APER_MOTOR_1_POS:   (self.label_aper_motor_1_pos,   '{:,.3f}', 12, True),
+            VAR.APER_MOTOR_2_POS:   (self.label_aper_motor_2_pos,   '{:,.3f}', 12, True),
+
+            VAR.DAC_MOTOR_1_POS:    (self.label_dac_motor_1_pos,    '{:,.3f}', 12, True),
+            VAR.DAC_MOTOR_2_POS:    (self.label_dac_motor_2_pos,    '{:,.3f}', 12, True),
+
+            VAR.STOP_MOTOR_1_POS:   (self.label_stop_motor_1_pos,   '{:,.3f}', 12, True),
+            VAR.STOP_MOTOR_2_POS:   (self.label_stop_motor_2_pos,   '{:,.3f}', 12, True),
+            
+            VAR.EXTRA_MOTOR_1_POS:  (self.label_extra_motor_1_pos,  '{:,.3f}', 12, True),
+            VAR.EXTRA_MOTOR_2_POS:  (self.label_extra_motor_2_pos,  '{:,.3f}', 12, True),
+            VAR.EXTRA_MOTOR_3_POS:  (self.label_extra_motor_3_pos,  '{:,.3f}', 12, True),
+            VAR.EXTRA_MOTOR_4_POS:  (self.label_extra_motor_4_pos,  '{:,.3f}', 12, True),
+            VAR.EXTRA_MOTOR_5_POS:  (self.label_extra_motor_5_pos,  '{:,.3f}', 12, True),
+            VAR.EXTRA_MOTOR_6_POS:  (self.label_extra_motor_6_pos,  '{:,.3f}', 12, True),
+
             VAR.SCAN_MAX_Y:         (self.label_scan_max_y,         '{:s}',     12, True),
             VAR.SCAN_FWHM:          (self.label_scan_FWHM,          '{:.2f}',   12, True),
             VAR.SCAN_COM:           (self.label_scan_COM,           '{:.2f}',   12, True),
@@ -1039,7 +1341,11 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             PV.COND_BEAM_STOP_HOR_STATUS: (self.label_cond_beam_stop_hor_status, '{:g}', 12, True),
             PV.COND_BEAM_STOP_VERT_STATUS: (self.label_cond_beam_stop_vert_status, '{:g}', 12, True),
         }
+        self.add_label(label_map)
 
+    def add_label(self, label_map, double=False): # double means we will disconnect any old
+        css_normal= "QLabel { background-color : %s; color : %s; }" % \
+                  (CSS_COLOUR.GROUP_BOX, CSS_COLOUR.BLUE)
         for pv_name, data in label_map.iteritems():
             # self.monitor.add(pv_name)
 
@@ -1048,7 +1354,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             widget.setFont(font)
             widget.setText(EMPTY_STRING)
 
-            self.set_drag_text(widget, pv_name)
+
+            if not double:  # No drag text for labels which are attached to two. Dont know how to switch drag text
+                self.set_drag_text(widget, pv_name)
 
             try:
                 if data[3]:
@@ -1056,11 +1364,18 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             except:
                 pass
 
-            self.formatter.add(pv_name, widget, format=data[1],
-                css_normal=css_normal,
-                css_lost=CSS_LABEL_PV_LOST)
+            if not double:  # No drag text for labels which are attached to two. Dont know how to switch drag text
+                self.formatter.add(pv_name, widget, format=data[1],
+                    css_normal=css_normal,
+                    css_lost=CSS_LABEL_PV_LOST)
+            else:
+                self.formatter.replace(pv_name, widget, format=data[1],
+                                   css_normal=css_normal,
+                                   css_lost=CSS_LABEL_PV_LOST)
 
             self.monitor.connect(pv_name, self.handle_label)
+            if double:
+                self.monitor.start()
 
     def handle_label(self, pv_name):
         self.formatter.format(pv_name)

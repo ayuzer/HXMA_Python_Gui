@@ -436,6 +436,32 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
             self.comboBox_motor_slot_4,
             self.comboBox_motor_slot_5,
             self.comboBox_motor_slot_6,
+
+            self.comboBox_slit_1_motor_slot_1,
+            self.comboBox_slit_1_motor_slot_2,
+            self.comboBox_slit_1_motor_slot_3,
+            self.comboBox_slit_1_motor_slot_4,
+
+            self.comboBox_slit_2_motor_slot_1,
+            self.comboBox_slit_2_motor_slot_2,
+            self.comboBox_slit_2_motor_slot_3,
+            self.comboBox_slit_2_motor_slot_4,
+
+            self.comboBox_aper_motor_slot_1,
+            self.comboBox_aper_motor_slot_2,
+
+            self.comboBox_dac_motor_slot_1,
+            self.comboBox_dac_motor_slot_2,
+
+            self.comboBox_stop_motor_slot_1,
+            self.comboBox_stop_motor_slot_2,
+
+            self.comboBox_extra_motor_slot_1,
+            self.comboBox_extra_motor_slot_2,
+            self.comboBox_extra_motor_slot_3,
+            self.comboBox_extra_motor_slot_4,
+            self.comboBox_extra_motor_slot_5,
+            self.comboBox_extra_motor_slot_6,
         ]
         self.checkboxes = [
             self.checkBox_motor_slot_1,
@@ -444,6 +470,32 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
             self.checkBox_motor_slot_4,
             self.checkBox_motor_slot_5,
             self.checkBox_motor_slot_6,
+
+            self.checkBox_slit_1_motor_slot_1,
+            self.checkBox_slit_1_motor_slot_2,
+            self.checkBox_slit_1_motor_slot_3,
+            self.checkBox_slit_1_motor_slot_4,
+
+            self.checkBox_slit_2_motor_slot_1,
+            self.checkBox_slit_2_motor_slot_2,
+            self.checkBox_slit_2_motor_slot_3,
+            self.checkBox_slit_2_motor_slot_4,
+
+            self.checkBox_aper_motor_slot_1,
+            self.checkBox_aper_motor_slot_2,
+
+            self.checkBox_dac_motor_slot_1,
+            self.checkBox_dac_motor_slot_2,
+
+            self.checkBox_stop_motor_slot_1,
+            self.checkBox_stop_motor_slot_2,
+
+            self.checkBox_extra_motor_slot_1,
+            self.checkBox_extra_motor_slot_2,
+            self.checkBox_extra_motor_slot_3,
+            self.checkBox_extra_motor_slot_4,
+            self.checkBox_extra_motor_slot_5,
+            self.checkBox_extra_motor_slot_6,
         ]
 
         self.fill_CB(self.comboboxes)
@@ -467,7 +519,7 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
         self.core.Spec_sess.connectToSpec(self.monitor.get_value(VAR.SERVER_ADDRESS))
         motor_names = Spec.getMotorsNames(self.core.Spec_sess)
         motor_mnes = Spec.getMotorsMne(self.core.Spec_sess)
-        self.motor_props=[motor_names,motor_mnes]
+        self.motor_props=[motor_names, motor_mnes]
         for combo in CBs:
             combo.clear()
             for i in range(len(self.motor_props[0])):

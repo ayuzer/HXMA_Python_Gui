@@ -38,6 +38,7 @@ from utils import to_rad
 from utils.monitor import KEY as MONITOR_KEY
 
 from utils.graph import Plotter
+from utils.contour import Contour
 
 from windows.css import GROUP_BOX_STYLE
 from windows.css import GROUP_BOX_STYLE_NO_TITLE
@@ -372,8 +373,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         # self.core.update_filepath(self.lineEdit_mesh_select_file, 'mesh')
         self.mesh_rel(self.checkBox_rel_mesh)
         # Plot
-        self.mesh_plot_id = Plotter(monitor=self.monitor, VAR=VAR, id='mesh')
-        # self.verticalLayout_mesh_graph.addWidget(self.mesh_plot_id)
+        self.mesh_plot_id = Contour()
+        self.verticalLayout_mesh_graph.addWidget(self.mesh_plot_id)
         # self.mesh_plot_id.set_title(PLOT_TITLE)
         # self.mesh_plot_id.set_axis_label_x(PLOT_LABEL_X)
         # self.mesh_plot_id.set_axis_label_y(PLOT_LABEL_Y)
@@ -928,10 +929,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                            self.comboBox_mesh_data_y.currentIndex(),
                                            self.comboBox_mesh_data_intes.currentIndex(), )
 
-        if not self.old_mesh_x == x or not self.old_mesh_y == y or not self.old_mesh_intes == y and go:
-            # self.mesh_plot_id.new_plot(x, y)
+        if not self.old_mesh_x == x or not self.old_mesh_y == y or not self.old_mesh_intes == intes and go:
+            self.mesh_plot_id.plot(x, y, intes)
+            print "NEW PLOT"
             # self.core.mesh_calculations(x, y)
-            pass
         (self.old_mesh_x, self.old_mesh_y, self.old_mesh_intes) = x, y, intes
         
     def handle_comboBox_mesh_motor(self):

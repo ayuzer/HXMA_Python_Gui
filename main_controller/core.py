@@ -601,7 +601,7 @@ class Core(object):
         self.SpecMesh_sess.meshing = SpecScan.isMeshing(self.SpecMesh_sess)
         if self.SpecMesh_sess.meshing:
             button.setText('Stop')
-            # self.update_CB(self.x_mesh_data_CB, self.y_mesh_data_CB, 'mesh')
+            self.update_CB(self.x_mesh_data_CB, self.y_mesh_data_CB, 'mesh')
         else:
             button.setText('Start')
             try:

@@ -358,9 +358,11 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         self.comboBox_mesh_slow_motor.currentIndexChanged.connect(self.handle_comboBox_mesh_motor)
         self.comboBox_mesh_fast_motor.currentIndexChanged.connect(self.handle_comboBox_mesh_motor)
-        self.comboBox_mesh_data_x.activated.connect(self.handle_comboBox_mesh_data)
-        self.comboBox_mesh_data_y.activated.connect(self.handle_comboBox_mesh_data)
+        # self.comboBox_mesh_data_x.activated.connect(self.handle_comboBox_mesh_data)
+        # self.comboBox_mesh_data_y.activated.connect(self.handle_comboBox_mesh_data)
         self.comboBox_mesh_data_intes.activated.connect(self.handle_comboBox_mesh_data)
+
+        self.pushButton_mesh_move.clicked.connect(self.handle_pushButton_mesh_move)
 
         self.pushButton_mesh_start_stop.setText(
             self.mesh_button_text())  # This means the button says Start instead of START/STOP
@@ -373,7 +375,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         # self.core.update_filepath(self.lineEdit_mesh_select_file, 'mesh')
         self.mesh_rel(self.checkBox_rel_mesh)
         # Plot
-        self.mesh_plot_id = Contour()
+        self.mesh_plot_id = Contour(monitor=self.monitor, VAR=VAR)
         self.verticalLayout_mesh_graph.addWidget(self.mesh_plot_id)
         # self.mesh_plot_id.set_title(PLOT_TITLE)
         # self.mesh_plot_id.set_axis_label_x(PLOT_LABEL_X)
@@ -818,7 +820,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                      self.doubleSpinBox_scan_waittime.value(),
                                      self.Motors  # We need to pass this so we can see which motor we are scanning with
                                      )
-                self.scan_plot_id.timer.start(250.0)
+                self.scan_plot_id.timer.start(333.0)
                 self.connect(self.scan_plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
 
     def scan_rel(self, check):
@@ -909,7 +911,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                      self.doubleSpinBox_mesh_waittime.value(),
                                      self.Motors  # We need to pass this so we can see which motor we are meshing with
                                      )
-                self.mesh_plot_id.timer.start(250.0)
+                # self.fast_ind, self.slow_ind = self.doubleSpinBox_fast_mesh_steps.value(), self.doubleSpinBox_slow_mesh_steps.value()
+                self.mesh_plot_id.timer.start(500.0)
                 self.connect(self.mesh_plot_id.timer, QtCore.SIGNAL('timeout()'), self.mesh_plot)
 
     def mesh_rel(self, check):
@@ -925,14 +928,18 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.label_mesh_stoppos_name.setText(stop)
 
     def mesh_plot(self):
-        go, x, y, intes = self.core.get_mesh_data(self.comboBox_mesh_data_x.currentIndex(),
-                                           self.comboBox_mesh_data_y.currentIndex(),
+        go, x, y, intes = self.core.get_mesh_data(
+            0, 1,  # hardcoding motors in
+            # self.comboBox_mesh_data_x.currentIndex(),
+            #                                self.comboBox_mesh_data_y.currentIndex(),
                                            self.comboBox_mesh_data_intes.currentIndex(), )
-
+        if not self.core.get_motor(self.comboBox_mesh_slow_motor.currentText(), self.Motors).Mne == self.label_mesh_data_x.text() or \
+                not self.core.get_motor(self.comboBox_mesh_fast_motor.currentText(), self.Motors).Mne == self.label_mesh_data_y.text():
+            self.update_mesh_cols()
         if not self.old_mesh_x == x or not self.old_mesh_y == y or not self.old_mesh_intes == intes and go:
             self.mesh_plot_id.plot(x, y, intes)
-            print "NEW PLOT"
-            # self.core.mesh_calculations(x, y)
+            # print "NEW PLOT"
+            self.core.mesh_calculations(x, y, intes)
         (self.old_mesh_x, self.old_mesh_y, self.old_mesh_intes) = x, y, intes
         
     def handle_comboBox_mesh_motor(self):
@@ -957,10 +964,15 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             print "Fast Mesh motor Not set"
             
     def update_mesh_cols(self):
-        self.core.update_CB(self.comboBox_mesh_data_x, self.comboBox_mesh_data_y, 'mesh', intes_CB=self.comboBox_mesh_data_intes)
+        self.core.update_CB(None, None, 'mesh', intes_CB=self.comboBox_mesh_data_intes)
+        self.label_mesh_data_x.setText(self.core.scanner_names[str(0)])
+        self.label_mesh_data_y.setText(self.core.scanner_names[str(1)])
 
     def handle_comboBox_mesh_data(self):
         pass
+
+    def handle_pushButton_mesh_move(self):
+        self.core.mesh_move(self.comboBox_mesh_moveoption.currentText(), self.label_mesh_data_x.text(), self.label_mesh_data_y.text(), self.Motors)
 
     # def handle_save_mesh(self):
     #     self.core.save_mesh_curr(str(self.lineEdit_mesh_filename.text()),
@@ -1478,6 +1490,13 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             VAR.EXTRA_MOTOR_4_POS:  (self.label_extra_motor_4_pos,  '{:,.3f}', 12, True),
             VAR.EXTRA_MOTOR_5_POS:  (self.label_extra_motor_5_pos,  '{:,.3f}', 12, True),
             VAR.EXTRA_MOTOR_6_POS:  (self.label_extra_motor_6_pos,  '{:,.3f}', 12, True),
+
+            VAR.MESH_CLICK_X:       (self.label_mesh_click_x,       '{:,.3f}',  9, True),
+            VAR.MESH_CLICK_Y:       (self.label_mesh_click_y,       '{:,.3f}',  9, True),
+            VAR.MESH_MAX_X:         (self.label_mesh_max_x,         '{:,.3f}',  9, True),
+            VAR.MESH_MAX_Y:         (self.label_mesh_max_y,         '{:,.3f}',  9, True),
+            VAR.MESH_COM_X:         (self.label_mesh_com_x,         '{:,.3f}',  9, True),
+            VAR.MESH_COM_Y:         (self.label_mesh_com_y,         '{:,.3f}',  9, True),
 
             VAR.SCAN_MAX_Y:         (self.label_scan_max_y,         '{:s}',     12, True),
             VAR.SCAN_FWHM:          (self.label_scan_FWHM,          '{:.2f}',   12, True),

@@ -4,7 +4,6 @@
 
 import sys
 from PyQt4 import Qt
-from PyQt4 import QtCore
 from PyQt4 import Qwt5 as Qwt
 import cProfile, pstats, StringIO
 import math
@@ -38,25 +37,9 @@ class SpectrogramData(Qwt.QwtRasterData):
             i = self.new_x.index(x)
             try:
                 self.intes_array[j, i] = _z[index]
-            except IndexError:  #The dimentionality can be incorrect due to an issue with SPEC data output
-                adj = False   # This is a crude fix which just adjusts the size of the array up by one to accomidate
-                _j, _i, = self.intes_array.shape
-                if i == _i:
-                    b = np.empty((_j, i+1))
-                    b[:, :-1] = self.intes_array
-                    self.intes_array = b
-                    adj = True
-                if j == _j:
-                    b = np.empty((j+1, _i))
-                    b[:-1, :] = self.intes_array
-                    self.intes_array = b
-                    adj = True
-                if adj:
-                    self.intes_array[j, i] = _z[index]
-                else:
-                    msg = "Array of Size: ", repr(self.intes_array.shape), " is indexed by : ", j, " ", i, " fed by: ", len(_z), " index: ", index
-                    raise IndexError(msg)
-
+            except IndexError:
+                msg = "Array of Size: ", repr(self.intes_array.shape), " is indexed by : ", i, " ", j, " fed by: ", len(_z), " index: ", index
+                raise IndexError(msg)
         # print self.new_y
         # print self.new_x
         # print self.intes_array
@@ -445,53 +428,13 @@ class SpectrogramData(Qwt.QwtRasterData):
         | z11   alpha >= 0.5 and beta >= 0.5  # upper right corner
         """
 
-class MouseTracker(Qt.QObject):
-
-    SIGNAL_MOVE = QtCore.pyqtSignal(QtCore.QPoint)
-    SIGNAL_PRESS = QtCore.pyqtSignal(QtCore.QPoint)
-    SIGNAL_RELEASE = QtCore.pyqtSignal(QtCore.QPoint)
-
-    def __init__(self, plotter):
-
-        self.plotter = plotter
-        self.parent = self.plotter.canvas()
-
-        super(MouseTracker, self).__init__(self.parent)
-
-        self.parent.setMouseTracking(True)
-
-        # Install this object as an eventFilter
-        self.parent.installEventFilter(self)
-
-    def eventFilter(self, _, event):
-        if event.type() == Qt.QEvent.MouseMove:
-            self.SIGNAL_MOVE.emit(event.pos())
-
-        elif event.type() == Qt.QEvent.MouseButtonPress:
-            self.SIGNAL_PRESS.emit(event.pos())
-
-        elif event.type() == Qt.QEvent.MouseButtonRelease:
-            self.SIGNAL_RELEASE.emit(event.pos())
-        # False indicates event should NOT be eaten
-        return False
-
 class Contour(Qwt.QwtPlot):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parent=None):
 
-        self.monitor = kwargs['monitor']
-        del kwargs['monitor']
-
-        self.VAR = kwargs['VAR']
-        del kwargs['VAR']
-
-        Qwt.QwtPlot.__init__(self, *args)
+        Qwt.QwtPlot.__init__(self, parent)
         self.__spectrogram = Qwt.QwtPlotSpectrogram()
 
-        self.zoomer = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
-                                        Qwt.QwtPlot.yLeft,
-                                        Qwt.QwtPicker.DragSelection,
-                                        Qwt.QwtPicker.AlwaysOn,
-                                        self.canvas())
+        self.zoomer = Qwt.QwtPlotZoomer(self.canvas())
         self.zoomer.setMousePattern(Qwt.QwtEventPattern.MouseSelect2,
                                     Qt.Qt.RightButton, Qt.Qt.ControlModifier)
         self.zoomer.setMousePattern(Qwt.QwtEventPattern.MouseSelect3,
@@ -515,8 +458,9 @@ class Contour(Qwt.QwtPlot):
         #
         # x_a = sorted(x_a, reverse= True)
         # y_a = sorted(y_a, reverse=True)
+        intes = np.asarray(intes)
 
-        self.plot(x_a, y_a, intes)
+
 
         rightAxis = self.axisWidget(Qwt.QwtPlot.yRight)
         rightAxis.setTitle("Intensity")
@@ -560,19 +504,6 @@ class Contour(Qwt.QwtPlot):
         # ps.print_stats()
         # print s.getvalue()
 
-    def mousePressEvent(self, event):
-        # print "Mouse PRESS", event.pos()
-
-        canvasPos = self.canvas().mapFrom(self, event.pos())
-        xFloat = self.invTransform(Qwt.QwtPlot.xBottom, canvasPos.x())
-        yFloat = self.invTransform(Qwt.QwtPlot.yLeft, canvasPos.y())
-
-        try:
-            self.monitor.update(self.VAR.MESH_CLICK_X, xFloat)
-            self.monitor.update(self.VAR.MESH_CLICK_Y, yFloat)
-        except (TypeError, AttributeError):
-            print "Canvas not set, clicking is ineffective"
-
     # showContour()
 
     def showSpectrogram(self, on):
@@ -601,14 +532,14 @@ class Contour(Qwt.QwtPlot):
                 except IndexError:
                     continue
             z.extend(z)
+
+
+
         self.data = SpectrogramData(x, y, z)
         # self.data.sizeHint(Qt.QSize(1000,1000))
         self.__spectrogram.setData(self.data)
         zero_data = filter(lambda a: a != 0, self.data.intes)
-        try:
-            min_intes = int(min(zero_data))
-        except ValueError:
-            min_intes = 0
+        min_intes = int(min(zero_data))
         max_intes = int(math.ceil(self.data.intes_array.max()))
         # size_intes = abs(max_intes - min_intes)
 
@@ -634,7 +565,7 @@ class Contour(Qwt.QwtPlot):
         #     heightlist)
         #
         # self.plotLayout().setAlignCanvasToScales(True)
-        # print "Zoom level = ", self.zoomer.zoomRectIndex()
+        print "Zoom level = ", self.zoomer.zoomRectIndex()
         if self.zoomer.zoomRectIndex() == 0:
             self.autoscale()
         else:
@@ -657,7 +588,6 @@ class Contour(Qwt.QwtPlot):
         # except AttributeError:
         #     print "Axis Scale unset"
         #     pass
-
             # self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
             # self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
         self.__spectrogram.invalidateCache()
@@ -666,89 +596,89 @@ class Contour(Qwt.QwtPlot):
         # self.replot()
 
         # showSpectrogram()
-
+#
 #
 # class Contour()
+
+
+class MainWindow(Qt.QMainWindow):
+    def __init__(self, parent=None):
+        Qt.QMainWindow.__init__(self, parent)
+        self.plot = Contour()
+
+        self.setCentralWidget(self.plot)
+
+        toolBar = Qt.QToolBar(self)
+
+        btnSpectrogram = Qt.QToolButton(toolBar)
+        btnContour = Qt.QToolButton(toolBar)
+        btnreplot = Qt.QToolButton(toolBar)
+
+        btnSpectrogram.setText("Spectrogram")
+        btnSpectrogram.setCheckable(True)
+        btnSpectrogram.setToolButtonStyle(Qt.Qt.ToolButtonTextUnderIcon)
+        toolBar.addWidget(btnSpectrogram)
+
+        btnContour.setText("Contour");
+        btnContour.setCheckable(True)
+        btnContour.setToolButtonStyle(Qt.Qt.ToolButtonTextUnderIcon)
+        toolBar.addWidget(btnContour)
+
+        btnreplot.setText("replot")
+        # btnreplot.setCheckable(True)
+        btnreplot.setToolButtonStyle(Qt.Qt.ToolButtonTextUnderIcon)
+        toolBar.addWidget(btnreplot)
+
+        self.addToolBar(toolBar)
+
+        self.connect(btnSpectrogram, Qt.SIGNAL('toggled(bool)'),
+                     self.plot.showSpectrogram)
+        self.connect(btnContour, Qt.SIGNAL('toggled(bool)'),
+                     self.plot.showContour)
+        self.connect(btnreplot, Qt.SIGNAL('clicked(bool)'),
+                     self.plot.plot)
+
+        btnSpectrogram.setChecked(True)
+        btnContour.setChecked(False)
+
+
+        # __init__()
+
+
 #
+# MainWindow()
 #
-# class MainWindow(Qt.QMainWindow):
-#     def __init__(self, parent=None):
-#         Qt.QMainWindow.__init__(self, parent)
-#         self.plot = Contour()
+
+def make():
+    demo = MainWindow()
+    demo.resize(600, 400)
+    demo.show()
+    return demo
+
 #
-#         self.setCentralWidget(self.plot)
+# make()
 #
-#         toolBar = Qt.QToolBar(self)
-#
-#         btnSpectrogram = Qt.QToolButton(toolBar)
-#         btnContour = Qt.QToolButton(toolBar)
-#         btnreplot = Qt.QToolButton(toolBar)
-#
-#         btnSpectrogram.setText("Spectrogram")
-#         btnSpectrogram.setCheckable(True)
-#         btnSpectrogram.setToolButtonStyle(Qt.Qt.ToolButtonTextUnderIcon)
-#         toolBar.addWidget(btnSpectrogram)
-#
-#         btnContour.setText("Contour");
-#         btnContour.setCheckable(True)
-#         btnContour.setToolButtonStyle(Qt.Qt.ToolButtonTextUnderIcon)
-#         toolBar.addWidget(btnContour)
-#
-#         btnreplot.setText("replot")
-#         # btnreplot.setCheckable(True)
-#         btnreplot.setToolButtonStyle(Qt.Qt.ToolButtonTextUnderIcon)
-#         toolBar.addWidget(btnreplot)
-#
-#         self.addToolBar(toolBar)
-#
-#         self.connect(btnSpectrogram, Qt.SIGNAL('toggled(bool)'),
-#                      self.plot.showSpectrogram)
-#         self.connect(btnContour, Qt.SIGNAL('toggled(bool)'),
-#                      self.plot.showContour)
-#         self.connect(btnreplot, Qt.SIGNAL('clicked(bool)'),
-#                      self.plot.plot)
-#
-#         btnSpectrogram.setChecked(True)
-#         btnContour.setChecked(False)
-#
-#
-#         # __init__()
-#
-#
-# #
-# # MainWindow()
-# #
-#
-# def make():
-#     demo = MainWindow()
-#     demo.resize(600, 400)
-#     demo.show()
-#     return demo
-#
-# #
-# # make()
-# #
-#
-# def main(args):
-#     app = Qt.QApplication(args)
-#
-#     demo = make()
-#     sys.exit(app.exec_())
-#
-#
-# main(None)
-#
-#
-# # Admire
-# if __name__ == '__main__':
-#     if 'settracemask' in sys.argv:
-#         # for debugging, requires: python configure.py --trace ...
-#         import sip
-#
-#         sip.settracemask(0x3f)
-#
-#     main(sys.argv)
-#
-#     # Local Variables: ***
-#     # mode: python ***
-#     # End: ***
+
+def main(args):
+    app = Qt.QApplication(args)
+
+    demo = make()
+    sys.exit(app.exec_())
+
+
+main(None)
+
+
+# Admire
+if __name__ == '__main__':
+    if 'settracemask' in sys.argv:
+        # for debugging, requires: python configure.py --trace ...
+        import sip
+
+        sip.settracemask(0x3f)
+
+    main(sys.argv)
+
+    # Local Variables: ***
+    # mode: python ***
+    # End: ***

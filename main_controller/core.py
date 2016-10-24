@@ -10,6 +10,7 @@ import time
 import os
 
 import numpy as np
+import scipy.ndimage.measurements as meas
 import ctypes  # An included library with Python install.
 
 from functools import partial
@@ -18,6 +19,7 @@ from functools import partial
 from utils.monitor import KEY as MONITOR_KEY
 from utils import Constant
 from utils import graph
+
 
 import SpecClient.SpecMotor as SpecMotor_module
 from SpecClient.SpecMotor import SpecMotorA as SpecMotor
@@ -130,7 +132,7 @@ class VAR(Constant):
     STOP_MOTOR_1_POS         = 'var:stop_motor_1_pos'
     STOP_MOTOR_2_POS         = 'var:stop_motor_2_pos'
 
-    SCAN_ARRAY          = 'var:scan_array'
+    # SCAN_ARRAY          = 'var:scan_array'
     SCAN_MAX_Y          = 'var:scan_max_y'
     SCAN_FWHM           = 'var:scan_FWHM'
     SCAN_COM            = 'var:scan_COM'
@@ -139,6 +141,14 @@ class VAR(Constant):
     SCAN_MAX_Y_NUM      = 'var:scan_max_y_num'
 
     MESH_ARRAY = 'var:mesh_array'
+
+    MESH_COM_X = 'var:mesh_com_x'
+    MESH_COM_Y = 'var:mesh_com_y'
+    MESH_CLICK_X = 'var:mesh_click_x'
+    MESH_CLICK_Y = 'var:mesh_click_y'
+    MESH_MAX_X = 'var:mesh_max_x'
+    MESH_MAX_Y = 'var:mesh_max_y'
+    
 
     CENT_NEG_MAXY       = 'var:cent_neg_maxy'
     CENT_NEG_COM        = 'var:cent_neg_com'
@@ -207,11 +217,14 @@ class Core(object):
         self._scan_timer.start()
         self.scan_event = threading.Event()
         self.scan_event.clear()
+        self.scan_rw_event = threading.Event()
+        self.scan_rw_event.set()
 
         self._mesh_timer = threading.Timer(1, self.handle_mesh)
         self._mesh_timer.start()
         self.mesh_event = threading.Event()
         self.mesh_event.clear()
+        self.mesh_started = False
 
         self._cent_timer = threading.Timer(1, self.handle_cent)
         self._cent_timer.start()
@@ -237,6 +250,8 @@ class Core(object):
         self.old_full_array, self.scan_array, self.old_array, self.old_x, self.old_y, = ([] for i in range(5))
         self.cent_props = ('', '', 0, 0, 0, 0, 0, [], True)
         self.CB_lock = threading.Lock()
+
+        self.main_scan_array = []
 
 
     """ MOTOR """
@@ -429,6 +444,7 @@ class Core(object):
         return self.SpecScan_sess.scanning
 
     def scan_start(self, scantype, motor_name, startpos, endpos, intervals, count_time, Motors):
+        self.mesh_event.clear()
         for i in range(len(Motors)):
             Motor_inst = Motors[i]
             if Motor_inst.Name == motor_name:
@@ -467,14 +483,25 @@ class Core(object):
             # while self.is_scanning():
             while True:
                 if self._terminate_flag: break
+                self.scan_event.wait()
                 old_data = self.scan_data
+                self.check_move_event.wait()
+                self.check_move_event.clear()
                 old_point = self.scan_point
                 #self.scan_data = SpecScan.get_SCAN_D(self.SpecScan_sess)
                 try:
+                    print "Grabbing Point"
+
                     self.scan_point = json.JSONDecoder.decode(json.JSONDecoder(), SpecScan.get_SCAN_PT(self.SpecScan_sess))
+
+                    # scan_arr = SpecScan.get_SCAN_D(self.SpecScan_sess)
+                    # scan_arr = scan_arr[~np.all(scan_arr == 0, axis=1)]
+                    # pass
+
                 except (ValueError, TypeError):
                     print "Error: Scan Point"
                     pass
+                self.check_move_event.set()
                 #elif array_equal(old_data, self.scan_data):
                 if not old_point == self.scan_point: # here is where you would graph it/save it to the csv
                     print "Scan point " + repr(self.scan_point[0]) + " Counter: " +repr(self.scan_array_counter)
@@ -485,7 +512,11 @@ class Core(object):
                     elif self.scan_point[0] == self.scan_array_counter:
                         self.scan_array.insert(self.scan_point[0], self.scan_point[1])
                         self.scan_array_counter = self.scan_array_counter + 1
-                        self.monitor.update(VAR.SCAN_ARRAY, self.scan_array)
+                        print "Point added to array"
+                        self.scan_rw_event.wait()
+                        self.scan_rw_event.clear()
+                        self.main_scan_array = self.scan_array
+                        self.scan_rw_event.set()
                     else:
                         print "Entering data into the scan array has not worked properly \n" \
                               "Scan Counter: " + repr(self.scan_array_counter) + " Scan Point: " + repr(self.scan_point[0])
@@ -495,7 +526,6 @@ class Core(object):
                     self.scan_SB_sleeper()
                 else:
                     self.scan_SB_sleeper(ratio=0.5, _min=False)
-
             self.scan_SB_sleeper()
 
     def scan_stop(self):
@@ -514,20 +544,26 @@ class Core(object):
                     startpos_SB.setRange(min_lim, max_lim)
                     stoppos_SB.setRange(min_lim, max_lim)
 
-    def scan_SB_sleeper(self, default_time=3.0, ratio=1.0, _min=True):
+    def scan_SB_sleeper(self, default_time=2, ratio=1.0, _min=True):
         try:  # Setting wait times to the interval time of the scan's spinbox if it isn't too small
-            if self.scan_wait_time_SB.value() > 0.5 or not _min:
+            if not min:
+                sleep_time = default_time
+
+            elif self.scan_wait_time_SB.value() >= 0.01:
                 sleep_time = self.wait_time_SB.value() * ratio
             else:
-                sleep_time = default_time
+                sleep_time = self.wait_time_SB.value()/ratio
         except:
             sleep_time = default_time
-        #print "Scanning Thread is sleeping for " + repr(sleep_time)
+        print "Scanning Thread is sleeping for " + repr(sleep_time)
         time.sleep(sleep_time)
 
     def get_data(self, x_index, y_index, array='scan_array'):
         if array == 'scan_array':  # if we have not provided an array
-            array = self.monitor.get_value(VAR.SCAN_ARRAY)
+            self.scan_rw_event.wait()
+            self.scan_rw_event.clear()
+            array = self.main_scan_array
+            self.scan_rw_event.set()
         if array is None or not array:
             return False, [], []
         else:
@@ -601,7 +637,9 @@ class Core(object):
         self.SpecMesh_sess.meshing = SpecScan.isMeshing(self.SpecMesh_sess)
         if self.SpecMesh_sess.meshing:
             button.setText('Stop')
-            self.update_CB(self.x_mesh_data_CB, self.y_mesh_data_CB, 'mesh')
+            if not self.mesh_started:
+                self.update_CB(self.x_mesh_data_CB, self.y_mesh_data_CB, 'mesh')
+                self.mesh_started = True
         else:
             button.setText('Start')
             try:
@@ -609,12 +647,15 @@ class Core(object):
                 pass
             except OSError:
                 print "Backup Directory not specified, BACKUP NOT SAVED"
-                # self.mesh_event.clear() # stops the meshing thread when the mesh isn't running
+            if self.mesh_started:
+                self.mesh_event.clear()  # stops the meshing thread when the mesh isn't running
+                self.mesh_started = False
         return self.SpecMesh_sess.meshing
 
     def mesh_start(self, fast_motor_name, slow_motor_name, fast_startpos, fast_endpos, 
                    slow_startpos, slow_endpos, fast_intervals, slow_intervals, count_time, Motors):
         (fast_found, slow_found) = False, False
+        self.scan_event.clear()
         for i in range(len(Motors)):
             if not fast_found:
                 Fast_Motor_inst = Motors[i]
@@ -629,12 +670,11 @@ class Core(object):
             if slow_found and fast_found:
                 self.mesh_array_counter = 0
                 self.mesh_array_fast = fast_intervals
-                self.mesh_event.set()
                 SpecScan.connectToSpec(self.SpecMesh_sess, self.monitor.get_value(VAR.SERVER_ADDRESS))
                 SpecScan.newScan(self.SpecMesh_sess, True)
                 SpecScan.mesh(self.SpecMesh_sess, Fast_Motor_inst.Mne, fast_startpos, fast_endpos, fast_intervals,
                               Slow_Motor_inst.Mne, slow_startpos, slow_endpos, slow_intervals, count_time)
-                
+                self.mesh_event.set()
                 self.mesh_array = []  # starting/wiping an array for the mesh data to push into
                 break
         if slow_found and fast_found:
@@ -645,51 +685,46 @@ class Core(object):
 
     def handle_mesh(self):
         # Thread which handles mesh data
-        self.mesh_event.wait()
+        # self.mesh_event.wait()
         self.mesh_data = []  # Initalizing empty arrays
         self.mesh_point = []
         while True:
             if self._terminate_flag: break
             self.mesh_event.wait()
             if self._terminate_flag: break
-            # while self.is_meshing():
-            while True:
-                if self._terminate_flag: break
-                old_data = self.mesh_data
-                old_point = self.mesh_point
-                # self.mesh_data = SpecMesh.get_MESH_D(self.SpecMesh_sess)
-                try:
-                    self.mesh_point = json.JSONDecoder.decode(json.JSONDecoder(),
-                                                              SpecScan.get_SCAN_PT(self.SpecMesh_sess))
-                except (ValueError, TypeError):
-                    print "Error: Mesh Point"
-                    pass
-                # elif array_equal(old_data, self.mesh_data):
-                if not old_point == self.mesh_point:  # here is where you would graph it/save it to the csv
-                    print "Mesh point " + repr(self.mesh_point[0]) + " Counter: " + repr(self.mesh_array_counter)
-                    if self.mesh_point[0] == 1 and self.mesh_array_counter == 0:
-                        self.mesh_array_counter = self.mesh_array_counter + 1
-                    if self.mesh_point[0] > self.mesh_array_counter and self.mesh_array_counter == 0:  # Skips old point
-                        print "Mesh point ignored MeshPoint:" + repr(self.mesh_point[0]) + " Counter: " + repr(
-                            self.mesh_array_counter)
-                    elif self.mesh_point[0] == self.mesh_array_counter:
-                        self.mesh_array.insert(self.mesh_point[0], self.mesh_point[1])
-                        self.mesh_array_counter = self.mesh_array_counter + 1
-                        self.monitor.update(VAR.MESH_ARRAY, self.mesh_array)
-                    else:
-                        print "Entering data into the mesh array has not worked properly \n" \
-                              "Mesh Counter: " + repr(self.mesh_array_counter) + " Mesh Point: " + repr(
-                            self.mesh_point[0])
-                    if self.mesh_array_fast+1 == self.mesh_array_counter:
-                        self.mesh_array_counter = 0  # We've gone through a fast scan, resetting counter
-                    self.mesh_SB_sleeper(ratio=0.75, _min=False)
-                    pass
-                elif not self.is_meshing():
-                    self.mesh_SB_sleeper()
+            old_data = self.mesh_data
+            old_point = self.mesh_point
+            # self.mesh_data = SpecMesh.get_MESH_D(self.SpecMesh_sess)
+            try:
+                self.mesh_point = json.JSONDecoder.decode(json.JSONDecoder(),
+                                                          SpecScan.get_SCAN_PT(self.SpecMesh_sess))
+            except (ValueError, TypeError):
+                print "Error: Mesh Point"
+                pass
+            # elif array_equal(old_data, self.mesh_data):
+            if not old_point == self.mesh_point:  # here is where you would graph it/save it to the csv
+                print "Mesh point " + repr(self.mesh_point[0]) + " Counter: " + repr(self.mesh_array_counter)
+                if self.mesh_point[0] == 1 and self.mesh_array_counter == 0:
+                    self.mesh_array_counter = self.mesh_array_counter + 1
+                if self.mesh_point[0] > self.mesh_array_counter and self.mesh_array_counter == 0:  # Skips old point
+                    print "Mesh point ignored MeshPoint:" + repr(self.mesh_point[0]) + " Counter: " + repr(
+                        self.mesh_array_counter)
+                elif self.mesh_point[0] == self.mesh_array_counter:
+                    self.mesh_array.insert(self.mesh_point[0], self.mesh_point[1])
+                    self.mesh_array_counter = self.mesh_array_counter + 1
+                    self.monitor.update(VAR.MESH_ARRAY, self.mesh_array)
                 else:
-                    self.mesh_SB_sleeper(ratio=0.5, _min=False)
-
-            self.mesh_SB_sleeper()
+                    print "Entering data into the mesh array has not worked properly \n" \
+                          "Mesh Counter: " + repr(self.mesh_array_counter) + " Mesh Point: " + repr(
+                        self.mesh_point[0])
+                if self.mesh_array_fast+1 == self.mesh_array_counter:
+                    self.mesh_array_counter = 0  # We've gone through a fast scan, resetting counter
+                self.mesh_SB_sleeper(ratio=0.75, _min=False)
+                pass
+            elif not self.is_meshing():
+                self.mesh_SB_sleeper()
+            else:
+                self.mesh_SB_sleeper(ratio=0.5, _min=False)
 
     def mesh_stop(self):
         SpecScan.abort(self.SpecMesh_sess)
@@ -716,13 +751,15 @@ class Core(object):
 
     def mesh_SB_sleeper(self, default_time=3.0, ratio=1.0, _min=True):
         try:  # Setting wait times to the interval time of the mesh's spinbox if it isn't too small
-            if self.mesh_wait_time_SB.value() > 0.5 or not _min:
+            if not min:
+                sleep_time = default_time
+            elif self.mesh_wait_time_SB.value() >= 0.01:
                 sleep_time = self.wait_time_SB.value() * ratio
             else:
-                sleep_time = default_time
+                sleep_time = default_time * ratio
         except:
             sleep_time = default_time
-        # print "Meshing Thread is sleeping for " + repr(sleep_time)
+        print "Meshing Thread is sleeping for " + repr(sleep_time)
         time.sleep(sleep_time)
 
     def get_mesh_data(self, x_index, y_index, intes_index, array='mesh_array'):
@@ -734,16 +771,30 @@ class Core(object):
             (x, y, intes) = [point[x_index] for point in array], \
                             [point[y_index] for point in array], \
                             [point[intes_index] for point in array]
+            # print "Got Mesh Data"
             return True, x, y, intes
-    #
-    # def mesh_calculations(self, x, y):
-    #     calc = Calculation(x, y)
-    #     self.monitor.update(VAR.MESH_MAX_Y, calc.y_max_string())
-    #     self.monitor.update(VAR.MESH_MAX_Y_NUM, calc.x_at_y_max())
-    #     self.monitor.update(VAR.MESH_FWHM, calc.FWHM())
-    #     self.monitor.update(VAR.MESH_COM, calc.COM())
-    #     self.monitor.update(VAR.MESH_CWHM, calc.CFWHM())
-    #
+
+    def mesh_calculations(self, x, y, z):
+        calc = Calculation3D(x, y, z)
+        x_com, y_com = (calc.COM())
+        self.monitor.update(VAR.MESH_COM_X, x_com)
+        self.monitor.update(VAR.MESH_COM_Y, y_com)
+        x_max, y_max = (calc.MAX())
+        self.monitor.update(VAR.MESH_MAX_X, x_max)
+        self.monitor.update(VAR.MESH_MAX_Y, y_max)
+    
+    def mesh_move(self, movetype, xmne, ymne, Motors):
+        if movetype == 'Click':
+            xvar, yvar = VAR.MESH_CLICK_X, VAR.MESH_CLICK_Y
+        elif movetype == 'Max':
+            xvar, yvar = VAR.MESH_MAX_X, VAR.MESH_MAX_Y
+        elif movetype == 'COM':
+            xvar, yvar = VAR.MESH_COM_X, VAR.MESH_COM_Y
+        self.move_motor(self.get_motor(xmne, Motors), moveto=float(self.monitor.get_value(xvar)), movetype='Absolute')
+        time.sleep(0.01)
+        self.move_motor(self.get_motor(ymne, Motors), moveto=float(self.monitor.get_value(yvar)), movetype='Absolute')
+
+
     # def save_mesh_curr(self, filename, x_CB, y_CB):
     #     filedir = self.mesh_dir
     #     go, x, y = self.get_data(x_CB.currentIndex(), y_CB.currentIndex())
@@ -831,6 +882,8 @@ class Core(object):
         self.is_centering(None)
         if self.is_scanning():
             self.scan_stop()
+        if self.is_meshing():
+            self.mesh_stop()
 
     def cent_start(self, scan_motor_name, angle_motor_name, relmax, relmin, center, angle_pm, angle_o, steps, waittime, Motors):
         self.angle_pm=angle_pm
@@ -1157,6 +1210,8 @@ class Core(object):
         self.is_rocking()
         if self.is_scanning():
             self.scan_stop()
+        if self.is_meshing():
+            self.mesh_stop()
         for i in range(len(Motors)):
             Motor_inst = Motors[i]
             if Motor_inst.Enabled:
@@ -1223,7 +1278,7 @@ class Core(object):
 
     def rock_grab_data(self, x_CB, y_CB):
         try:
-            scan_array = self.monitor.get_value(VAR.SCAN_ARRAY)
+            scan_array = self.main_scan_array
             # comb_list = self.rock_array + scan_array
             for elem in scan_array:
                 if elem not in self.rock_array:
@@ -1304,11 +1359,14 @@ class Core(object):
             if not intes_CB == None:
                 CBs.append(intes_CB)
             for j, cb in enumerate(CBs):
-                indicies.append(cb.currentIndex())
-                cb.clear()
-                for i in range(len(self.scanner_names)):
-                    cb.addItem(self.scanner_names[str(i)])
-                cb.setCurrentIndex(indicies[j])
+                if not cb == None:
+                    indicies.append(cb.currentIndex())
+                    cb.clear()
+                    for i in range(len(self.scanner_names)):
+                        cb.addItem(self.scanner_names[str(i)])
+                    cb.setCurrentIndex(indicies[j])
+                else:
+                    indicies.append(0)
         finally:
             self.CB_lock.release()
 
@@ -1392,6 +1450,8 @@ class Core(object):
         for motor in Motors:
             if motor_name == motor.Name:
                 return motor
+            elif motor_name == motor.Mne:
+                return motor
         return False  # Failed to find Motor
 
 class Calculation:
@@ -1459,3 +1519,77 @@ class Calculation:
     #         return (step*np.sum(x_y))/(np.sum(x_step))
     #     except RuntimeWarning:
     #         return 0
+
+class Calculation3D:
+    def __init__(self, x, y, z):
+        (self.x, self.y, self.z) = x, y, z
+        self.array_z, self.array_labels = self.array_maker()
+            
+    def COM(self):
+        x_com_cord, y_com_cord = self.com(self.array_z)
+        try:
+            x_low, y_low = self.array_labels[int(math.floor(x_com_cord)), int(math.floor(y_com_cord))]
+            x_high, y_high = self.array_labels[int(math.ceil(x_com_cord)), int(math.ceil(y_com_cord))]
+            return (x_low * abs(x_com_cord - math.floor(x_com_cord))) + (x_high * (1 - abs(x_com_cord - math.floor(x_com_cord)))),\
+                   (y_low * abs(y_com_cord - math.floor(y_com_cord))) + (y_high * (1 - abs(y_com_cord - math.floor(y_com_cord))))
+        except ValueError:
+            return None, None
+        except TypeError:
+            return None, None
+
+    def com(self, inp, labels=None, index=None):
+        normalizer = meas.sum(inp, labels, index)
+
+        grids = np.ogrid[[slice(0, i) for i in inp.shape]]
+
+        # results = [sum(filter(None, (inp * grids[dir].astype(float), labels) / normalizer
+        #            for dir in range(inp.ndim)))]
+
+        results = [meas.sum(inp * grids[dir].astype(float), labels) / normalizer
+                   for dir in range(inp.ndim)]
+
+        if np.isscalar(results[0]):
+            return tuple(results)
+
+        return [tuple(v) for v in np.array(results).T]
+
+    def array_maker(self):
+        x, y, z = (self.x, self.y, self.z)
+        xyz = zip(x, y, z)
+        array_z = np.empty((x.count(x[0]), y.count(y[0])))
+        array_labels = np.empty((x.count(x[0]), y.count(y[0])), dtype=object)
+        for i, (_x, _y, _z) in enumerate(xyz):
+            (x_ind, y_ind) = x[:i].count(_x), y[:i].count(_y)
+            try:
+                array_z[x_ind, y_ind] = _z - min(z)
+                array_labels[x_ind, y_ind] = (_x, _y)
+            except IndexError:  # The dimentionality can be incorrect due to an issue with SPEC data output
+                adj = False  # This is a crude fix which just adjusts the size of the array up by one to accomidate
+                _i, _j = array_z.shape
+                if x_ind == _i:
+                    a = np.empty((x_ind + 1, _j), dtype=object)
+                    b = np.empty((x_ind + 1, _j))
+                    a[:-1, :] = array_labels
+                    b[:-1, :] = array_z
+                    array_labels, array_z = a, b
+                    adj = True
+                if y_ind == _j:
+                    a = np.empty((_i, y_ind + 1), dtype=object)
+                    b = np.empty((_i, y_ind + 1))
+                    a[:, :-1] = array_labels
+                    b[:, :-1] = array_z
+                    array_labels, array_z = a, b
+                    adj = True
+                if adj:
+                    array_z[x_ind, y_ind] = _z - min(z)
+                    array_labels[x_ind, y_ind] = (_x, _y)
+        return array_z, array_labels
+
+    def MAX(self):
+        x_ind, y_ind = np.unravel_index(np.argmax(self.array_z), self.array_z.shape)
+        try:
+            ret_x, ret_y = self.array_labels[x_ind, y_ind]
+            return ret_x, ret_y
+        except TypeError:
+            return None, None
+

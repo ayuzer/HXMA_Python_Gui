@@ -131,7 +131,7 @@ class Plotter(Qwt.QwtPlot):
         self.zoomer = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
                                         Qwt.QwtPlot.yLeft,
                                         Qwt.QwtPicker.DragSelection,
-                                        Qwt.QwtPicker.AlwaysOff,
+                                        Qwt.QwtPicker.AlwaysOn,
                                         self.canvas())
         self.zoomer.setRubberBandPen(Qt.QPen(Qt.Qt.black))
         self.setZoomerMousePattern()
@@ -303,11 +303,8 @@ class Plotter(Qwt.QwtPlot):
         except UnboundLocalError:
             print "Cannot interact with non-initalized graph"
 
-    def WheelEvent(self, event):
-        print "Wheel", event.pos(), event.delta()
-
     def terminate(self):
-        self.monitor.disconnect(self)
+       self.monitor.disconnect(self)
 
 class MouseTracker(Qt.QObject):
 

@@ -377,10 +377,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         # Plot
         self.mesh_plot_id = Contour(monitor=self.monitor, VAR=VAR)
         self.verticalLayout_mesh_graph.addWidget(self.mesh_plot_id)
-        # self.mesh_plot_id.set_title(PLOT_TITLE)
-        # self.mesh_plot_id.set_axis_label_x(PLOT_LABEL_X)
-        # self.mesh_plot_id.set_axis_label_y(PLOT_LABEL_Y)
-        # self.mesh_plot_id.set_legend()
+        self.checkBox_mesh_log.stateChanged.connect(partial(self.handle_checkBox_mesh_log, self.checkBox_mesh_log))
         self.mesh_plot_id.timer = QtCore.QTimer()
 
         """CENTER INIT"""
@@ -465,6 +462,11 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.saved_pos = []
 
         self.init_label_props()
+        #
+        # self.pushButton_test.clicked.connect(self.handle_pushButton_test)
+
+    def handle_pushButton_test(self):
+        self.core.handle_pushButton_test()
 
     """POPUPS"""
     def handle_action_save_load(self):
@@ -820,7 +822,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                      self.doubleSpinBox_scan_waittime.value(),
                                      self.Motors  # We need to pass this so we can see which motor we are scanning with
                                      )
-                self.scan_plot_id.timer.start(333.0)
+                self.scan_plot_id.timer.start(100.0)
                 self.connect(self.scan_plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
 
     def scan_rel(self, check):
@@ -837,9 +839,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
     def scan_plot(self):
         go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(),
                                       self.comboBox_scan_data_y.currentIndex())
-        self.core.update_bar_pos(VAR.VERT_BAR_SCAN_X, x)
+
 
         if not self.old_scan_x == x or not self.old_scan_y == y and go:
+            self.core.update_bar_pos(VAR.VERT_BAR_SCAN_X, x)
             self.scan_plot_id.new_plot(x, y)
             self.core.scan_calculations(x, y)
             self.tableWidget_scan_data.setHorizontalHeaderLabels([self.comboBox_scan_data_x.currentText(),
@@ -879,6 +882,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                  )
 
     """MESH"""
+    def handle_checkBox_mesh_log(self, PB):
+        self.mesh_plot_id.log_check(PB.isChecked())
 
     def mesh_button_text(self):
         if self.core.is_meshing(self.pushButton_mesh_start_stop):
@@ -1685,6 +1690,13 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.cent_plot_id_1.terminate()
         self.cent_plot_id_2.terminate()
         self.cent_plot_id_3.terminate()
+
+        for plot in [self.scan_plot_id, self.rock_plot_id, self.mesh_plot_id, self.cent_plot_id,
+                     self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3,]:
+            try:
+                plot.timer.stop()
+            except AttributeError:
+                print repr(plot)," did not have a timer?"
 
         self.core.terminate()
 

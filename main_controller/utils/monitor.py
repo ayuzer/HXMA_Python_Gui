@@ -243,7 +243,7 @@ class EpicsMonitor(QtCore.QObject):
             if validator:
                 value = validator(name, value)
 
-        #print "monitor %s %s " % (name, repr(value))
+        # print "monitor %s %s " % (name, repr(value))
         if self.local_dict.has_key(name):
             if self.local_dict[name] == value:
                 # print "monitor: no need to update %s %s" % (name, repr(value))

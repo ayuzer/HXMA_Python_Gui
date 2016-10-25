@@ -38,8 +38,8 @@ class SpectrogramData(Qwt.QwtRasterData):
             i = self.new_x.index(x)
             try:
                 self.intes_array[j, i] = _z[index]
-            except IndexError:  #The dimentionality can be incorrect due to an issue with SPEC data output
-                adj = False   # This is a crude fix which just adjusts the size of the array up by one to accomidate
+            except IndexError:  # The dimentionality of array can be incorrect due to an issue with SPEC data output
+                adj = False   # This is a crude fix which just adjusts the size of the array up by one to accommodate
                 _j, _i, = self.intes_array.shape
                 if i == _i:
                     b = np.empty((_j, i+1))
@@ -499,6 +499,9 @@ class Contour(Qwt.QwtPlot):
         self.zoomer.setRubberBandPen(Qt.Qt.darkBlue)
         self.zoomer.setTrackerPen(Qt.Qt.darkBlue)
 
+        if not hasattr(self, 'log'):
+            self.log = False
+
         xmin = -10
         ymin = -10
         xmax = 10
@@ -517,13 +520,6 @@ class Contour(Qwt.QwtPlot):
         # y_a = sorted(y_a, reverse=True)
 
         self.plot(x_a, y_a, intes)
-
-        rightAxis = self.axisWidget(Qwt.QwtPlot.yRight)
-        rightAxis.setTitle("Intensity")
-        rightAxis.setColorBarEnabled(True)
-        rightAxis.setColorMap(self.__spectrogram.data().range(),
-                              self.__spectrogram.colorMap())
-        self.enableAxis(Qwt.QwtPlot.yRight)
 
         # LeftButton for the zooming
         # MidButton for the panning
@@ -593,7 +589,7 @@ class Contour(Qwt.QwtPlot):
         if all(p == x[0] for p in x) or all(p == y[0] for p in y):# is data 1D?
             xy = [x, y]
             for i, k in enumerate(xy):
-                try:
+                try: # if the data is 1D we will make it slightly bigger so we can graph a contour of it
                     if k[0] == k[1]:
                         xy[i].extend([q+0.1 for q in xy[i]])
                     else:
@@ -602,39 +598,9 @@ class Contour(Qwt.QwtPlot):
                     continue
             z.extend(z)
         self.data = SpectrogramData(x, y, z)
-        # self.data.sizeHint(Qt.QSize(1000,1000))
         self.__spectrogram.setData(self.data)
-        zero_data = filter(lambda a: a != 0, self.data.intes)
-        try:
-            min_intes = int(min(zero_data))
-        except ValueError:
-            min_intes = 0
-        max_intes = int(math.ceil(self.data.intes_array.max()))
-        # size_intes = abs(max_intes - min_intes)
 
-        colorMap = Qwt.QwtLinearColorMap(Qt.Qt.darkCyan, Qt.Qt.red)
-
-        colorMap.addColorStop(0.25, Qt.Qt.cyan)
-        colorMap.addColorStop(0.5, Qt.Qt.darkGreen)
-        colorMap.addColorStop(0.75, Qt.Qt.yellow)
-
-        self.__spectrogram.setColorMap(colorMap)
-        self.__spectrogram.attach(self)
-
-        self.setAxisScale(Qwt.QwtPlot.yRight,
-                          math.floor(min_intes),
-                          math.ceil(max_intes))
-
-        # heightlist = []
-        # for h in [0.1, 0.2, .25, .35, .45, .55, .65, .75, .85, .95]:
-        #     heightlist.append(min_intes + size_intes * h)
-        #
-        # self.__spectrogram.setContourLevels(
-        #     # [0.1, 0.2, .25, .35, .45, .55, .65, .75, .85, .95])
-        #     heightlist)
-        #
-        # self.plotLayout().setAlignCanvasToScales(True)
-        # print "Zoom level = ", self.zoomer.zoomRectIndex()
+        self.log_check(self.log, replot = False)
         if self.zoomer.zoomRectIndex() == 0:
             self.autoscale()
         else:
@@ -666,6 +632,57 @@ class Contour(Qwt.QwtPlot):
         # self.replot()
 
         # showSpectrogram()
+    def log_check(self, log, replot=True):
+        self.log = log
+        min_intes = self.data.intes_array.min()
+        max_intes = math.ceil(self.data.intes_array.max()) + 1.0
+        # print "Max intes : ",max_intes, "Min Intes : ", min_intes
+        # size_intes = abs(max_intes - min_intes)
+        if log:
+            colorMap = Qwt.QwtLinearColorMap(Qt.Qt.darkCyan, Qt.Qt.red)
+            if min_intes <=0:
+                logmin = 0.01
+            else:
+                logmin = min_intes
+
+            self.setAxisScale(Qwt.QwtPlot.yRight,
+                              logmin,
+                              max_intes)
+            oom = int(math.log10(max_intes)) # for log scale we will add in colours depnding on order of magnatiude (oom)
+            map = [[1.0/(10**oom), Qt.Qt.cyan], [0.1, Qt.Qt.yellow], [0.01, Qt.Qt.darkGreen],
+                   [1.0 / (10 ** (oom-1)), Qt.Qt.blue], [1.0 / (10 ** (oom - 2)), Qt.Qt.darkBlue], [1.0 / (10 ** (oom - 3 )), Qt.Qt.green]]
+            for i in range(oom):
+                colorMap.addColorStop(map[i][0], map[i][1])
+            # colorMap.addColorStop(0.1, Qt.Qt.yellow)
+            # colorMap.addColorStop(0.25, Qt.Qt.cyan)
+            # colorMap.addColorStop(0.5, Qt.Qt.darkGreen)
+            # colorMap.addColorStop(0.75, Qt.Qt.yellow)
+            self.__spectrogram.setColorMap(colorMap)
+            self.setAxisScaleEngine(Qwt.QwtPlot.yRight, Qwt.QwtLog10ScaleEngine())
+
+            # print "log"
+        else:
+            colorMap = Qwt.QwtLinearColorMap(Qt.Qt.darkCyan, Qt.Qt.red)
+            self.setAxisScale(Qwt.QwtPlot.yRight,
+                             math.floor(min_intes),
+                             math.ceil(max_intes))
+
+            colorMap.addColorStop(0.25, Qt.Qt.cyan)
+            colorMap.addColorStop(0.5, Qt.Qt.darkGreen)
+            colorMap.addColorStop(0.75, Qt.Qt.yellow)
+            self.setAxisScaleEngine(Qwt.QwtPlot.yRight, Qwt.QwtLinearScaleEngine())
+
+            self.__spectrogram.setColorMap(colorMap)
+            # print "linear"
+        self.__spectrogram.attach(self)
+        rightAxis = self.axisWidget(Qwt.QwtPlot.yRight)
+        rightAxis.setTitle("Intensity")
+        rightAxis.setColorBarEnabled(True)
+        rightAxis.setColorMap(self.__spectrogram.data().range(),
+                              self.__spectrogram.colorMap())
+        self.enableAxis(Qwt.QwtPlot.yRight)
+        if replot:
+            self.replot()
 
 #
 # class Contour()

@@ -153,7 +153,7 @@ class SpecScanA:
         print "SCAN META " + repr(scan_meta)
 
     def __statusChange(self, input):
-        print "status = " + input
+        # print "status = " + input
         if input == 'running':
             self.__status = 'scanning'
         elif input == 'idle':

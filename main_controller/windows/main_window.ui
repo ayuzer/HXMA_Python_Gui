@@ -5877,6 +5877,13 @@
                </spacer>
               </item>
               <item>
+               <widget class="QCheckBox" name="checkBox_mesh_log">
+                <property name="text">
+                 <string>Logarithmic</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="Line" name="line_56">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>

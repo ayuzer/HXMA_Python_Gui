@@ -139,8 +139,8 @@ class VAR(Constant):
     SCAN_CWHM           = 'var:scan_CWHM'
     SCAN_CENTROID       = 'var:scan_centroid'
     SCAN_MAX_Y_NUM      = 'var:scan_max_y_num'
-
-    MESH_ARRAY = 'var:mesh_array'
+    #
+    # MESH_ARRAY = 'var:mesh_array'
 
     MESH_COM_X = 'var:mesh_com_x'
     MESH_COM_Y = 'var:mesh_com_y'
@@ -225,6 +225,7 @@ class Core(object):
         self.mesh_event = threading.Event()
         self.mesh_event.clear()
         self.mesh_started = False
+        self.main_mesh_array = []
 
         self._cent_timer = threading.Timer(1, self.handle_cent)
         self._cent_timer.start()
@@ -252,6 +253,9 @@ class Core(object):
         self.CB_lock = threading.Lock()
 
         self.main_scan_array = []
+
+    def handle_pushButton_test(self):
+        SpecScan.mesh(SpecScan(), )
 
 
     """ MOTOR """
@@ -341,10 +345,10 @@ class Core(object):
                 moved = motor_check['moved']
                 pos = motor_check['pos']
                 if moved:
-                    time.sleep(0.33)
-                    print motor.Name + " has moved to " + repr(pos)
+                    # time.sleep(0.1)
+                   print motor.Name + " has moved to " + repr(pos)
                 else:
-                    time.sleep(1)
+                    time.sleep(.5)
                 try:
                     self.moving_bool_dict[motor.Name] = moved
                 except KeyError:
@@ -435,13 +439,22 @@ class Core(object):
             button.setText('Stop')
             self.update_CB(self.x_scan_data_CB, self.y_scan_data_CB, 'scan')
         else:
+            if str(button.text()) == 'Stop':
+                t = threading.Timer(1, self.post_scan)
+                t.start()
             button.setText('Start')
             try:
                 self.backup_scan()
             except OSError:
                 print "Backup Directory not specified, BACKUP NOT SAVED"
-            #self.scan_event.clear() # stops the scanning thread when the scan isn't running
+            # if self.is_moving():
+            #     self.scan_event.clear() # stops the scanning thread when the scan isn't running
         return self.SpecScan_sess.scanning
+
+    def post_scan(self):
+        if not self.is_scanning():
+            print "Scan Finished"
+            self.scan_event.clear()
 
     def scan_start(self, scantype, motor_name, startpos, endpos, intervals, count_time, Motors):
         self.mesh_event.clear()
@@ -476,6 +489,7 @@ class Core(object):
         self.scan_event.wait()
         self.scan_data = []  # Initalizing empty arrays
         self.scan_point = []
+        _rep = repeats = 0
         while True:
             if self._terminate_flag: break
             self.scan_event.wait()
@@ -490,21 +504,20 @@ class Core(object):
                 old_point = self.scan_point
                 #self.scan_data = SpecScan.get_SCAN_D(self.SpecScan_sess)
                 try:
-                    print "Grabbing Point"
-
+                    # print "Grabbing Point"
                     self.scan_point = json.JSONDecoder.decode(json.JSONDecoder(), SpecScan.get_SCAN_PT(self.SpecScan_sess))
-
                     # scan_arr = SpecScan.get_SCAN_D(self.SpecScan_sess)
                     # scan_arr = scan_arr[~np.all(scan_arr == 0, axis=1)]
-                    # pass
-
                 except (ValueError, TypeError):
                     print "Error: Scan Point"
                     pass
                 self.check_move_event.set()
                 #elif array_equal(old_data, self.scan_data):
                 if not old_point == self.scan_point: # here is where you would graph it/save it to the csv
-                    print "Scan point " + repr(self.scan_point[0]) + " Counter: " +repr(self.scan_array_counter)
+                    _rep = (repeats +_rep)/2
+                    # print "repeats ", _rep
+                    repeats = 0
+                    # print "Scan point " + repr(self.scan_point[0]) + " Counter: " +repr(self.scan_array_counter)
                     if self.scan_point[0] == 1 and self.scan_array_counter == 0:
                         self.scan_array_counter = self.scan_array_counter + 1
                     if self.scan_point[0] > self.scan_array_counter and self.scan_array_counter == 0: #Skips old point
@@ -512,7 +525,7 @@ class Core(object):
                     elif self.scan_point[0] == self.scan_array_counter:
                         self.scan_array.insert(self.scan_point[0], self.scan_point[1])
                         self.scan_array_counter = self.scan_array_counter + 1
-                        print "Point added to array"
+                        print "Scan point " + repr(self.scan_point[0]), " added to array"
                         self.scan_rw_event.wait()
                         self.scan_rw_event.clear()
                         self.main_scan_array = self.scan_array
@@ -525,7 +538,9 @@ class Core(object):
                 elif not self.is_scanning():
                     self.scan_SB_sleeper()
                 else:
-                    self.scan_SB_sleeper(ratio=0.5, _min=False)
+                    repeats = repeats + 1
+                    ratio = 0.5 + _rep*0.1
+                    self.scan_SB_sleeper(ratio=ratio, _min=False)
             self.scan_SB_sleeper()
 
     def scan_stop(self):
@@ -555,7 +570,7 @@ class Core(object):
                 sleep_time = self.wait_time_SB.value()/ratio
         except:
             sleep_time = default_time
-        print "Scanning Thread is sleeping for " + repr(sleep_time)
+        # print "Scanning Thread is sleeping for " + repr(sleep_time)
         time.sleep(sleep_time)
 
     def get_data(self, x_index, y_index, array='scan_array'):
@@ -567,8 +582,29 @@ class Core(object):
         if array is None or not array:
             return False, [], []
         else:
-            (x, y) = [point[x_index] for point in array], [point[y_index] for point in array]
-            return True, x, y
+            try:
+                (x, y) = [point[x_index] for point in array], [point[y_index] for point in array]
+                return True, x, y
+            except IndexError:
+                print "Non valid choice for data, returning closest match"
+                fixed = True  # fixed unless proven otherwise
+                try:  # If you move from contour to anything else, your data choice will be off, so we will try to fix this by slightly altering indicies
+                    x = [point[x_index] for point in array]
+                except IndexError:
+                    try:
+                        x = [point[x_index - 1] for point in array]
+                    except IndexError:
+                        x=[]
+                        fixed = False
+                try:
+                    y = [point[y_index] for point in array]
+                except IndexError:
+                    try:
+                        y = [point[y_index - 1] for point in array]
+                    except IndexError:
+                        y=[]
+                        fixed = False
+                return fixed, x, y
 
     def scan_calculations(self, x, y):
         calc = Calculation(x, y)
@@ -712,7 +748,7 @@ class Core(object):
                 elif self.mesh_point[0] == self.mesh_array_counter:
                     self.mesh_array.insert(self.mesh_point[0], self.mesh_point[1])
                     self.mesh_array_counter = self.mesh_array_counter + 1
-                    self.monitor.update(VAR.MESH_ARRAY, self.mesh_array)
+                    self.main_mesh_array = self.mesh_array
                 else:
                     print "Entering data into the mesh array has not worked properly \n" \
                           "Mesh Counter: " + repr(self.mesh_array_counter) + " Mesh Point: " + repr(
@@ -759,12 +795,12 @@ class Core(object):
                 sleep_time = default_time * ratio
         except:
             sleep_time = default_time
-        print "Meshing Thread is sleeping for " + repr(sleep_time)
+        # print "Meshing Thread is sleeping for " + repr(sleep_time)
         time.sleep(sleep_time)
 
     def get_mesh_data(self, x_index, y_index, intes_index, array='mesh_array'):
         if array == 'mesh_array':  # if we have not provided an array
-            array = self.monitor.get_value(VAR.MESH_ARRAY)
+            array = self.main_mesh_array
         if array is None or not array:
             return False, [], [], []
         else:
@@ -1003,7 +1039,7 @@ class Core(object):
     def cent_plotting(self, plot, table, x_CB, y_CB, calc_CB, single):
         real_name_arr = [x_CB.currentText()] # starting table headers
         (go, x_arr, y_arr, length) = self.cent_grab_data(x_CB, y_CB)
-        if go or not self.old_x == x_arr or not self.old_y == y_arr:  # Should we regraph?
+        if not self.old_x == x_arr or not self.old_y == y_arr and go:  # Should we regraph?
             namearr = ['  w-  ', '  wo  ', '  w+  ']  #defining names and vars for the diff data sets
             max_array = [VAR.CENT_NEG_MAXY, VAR.CENT_NAU_MAXY, VAR.CENT_POS_MAXY]
             com_array = [VAR.CENT_NEG_COM, VAR.CENT_NAU_COM, VAR.CENT_POS_COM]
@@ -1323,19 +1359,24 @@ class Core(object):
 
     """ RANDOM UTILITIES """
     def update_bar_pos(self, var, x):
+        # print "update bar pos"
         pos = self.monitor.get_value(var)
         try:  # if its not set or outside bounds of graph, then move
             if pos == None:
-                pos = min(x) + (max(x) - min(x)) / 2.0
+                v_bar_pos = min(x) + (max(x) - min(x)) / 2.0
             elif not max(x)+(max(x) - min(x))*0.01 > pos:
-                pos = max(x)
+                v_bar_pos = max(x)
             elif not pos > min(x)-(max(x) - min(x))*0.01:
-                pos = min(x)
+                v_bar_pos = min(x)
+            else:
+                v_bar_pos = pos
         except ValueError:
             if pos == None:
-                pos = 0
-        v_bar_pos = pos
-        self.monitor.update(var, v_bar_pos)
+                v_bar_pos = 0
+            else:
+                v_bar_pos = pos
+        if not v_bar_pos == pos:
+            self.monitor.update(var, v_bar_pos)
 
     def update_CB(self, x_data_CB, y_data_CB, type, intes_CB=None):
         self.CB_lock.acquire()
@@ -1364,7 +1405,8 @@ class Core(object):
                     cb.clear()
                     for i in range(len(self.scanner_names)):
                         cb.addItem(self.scanner_names[str(i)])
-                    cb.setCurrentIndex(indicies[j])
+                    if indicies[j] < len(self.scanner_names):
+                        cb.setCurrentIndex(indicies[j])
                 else:
                     indicies.append(0)
         finally:

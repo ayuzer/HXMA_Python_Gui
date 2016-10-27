@@ -213,6 +213,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         self.core = Core(monitor=self.monitor)
         self.core.set_status("Running")
+        self.core.error_callback(self.handle_signal_dialog_info)
 
         self._item_count = 0
 
@@ -412,7 +413,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         # self.handle_comboBox_cent_motor()
         self.init_cent_graph(self.checkBox_cent_single.isChecked())
         self.core.update_filepath(self.lineEdit_cent_select_file, 'cent')
-        self.core.is_centering(self.pushButton_cent_start_stop)
+        self.core.is_centering(self.pushButton_cent_start_stop, label=self.label_cent_center_name)
         
         """ROCKING INIT"""
         # Connect Buttons
@@ -431,9 +432,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.checkBox_rock_zone3.stateChanged.connect(self.omit_hide)
         self.checkBox_rock_zone4.stateChanged.connect(self.omit_hide)
         # INIT RUN
-        self.set_rock_props()  # updating variables from the saved file (last session)
         self.handle_comboBox_rock_motor()
+
         self.update_rock_cols()
+        self.set_rock_props()  # updating variables from the saved file (last session)
         self.core.update_filepath(self.lineEdit_rock_select_file, 'rock')
         self.omit_hide()
         # Plot
@@ -454,23 +456,22 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         pixmap = QtGui.QPixmap('/staff/hamelm/Documents/stage_background.png')
         pic.setPixmap(pixmap.scaled(500, 500, QtCore.Qt.KeepAspectRatio))
         pic.show()
-        self.old_scan_x, self.old_scan_y = ([] for i in range(2))
-        self.old_mesh_x, self.old_mesh_y, self.old_mesh_intes = ([] for i in range(3))
 
         """POPOUTS"""
         self.pushButton_open_pos_load.clicked.connect(self.handle_action_save_load)
         self.saved_pos = []
 
-        self.init_label_props()
-        #
-        # self.pushButton_test.clicked.connect(self.handle_pushButton_test)
 
-    def handle_pushButton_test(self):
-        self.core.handle_pushButton_test()
+        self.init_label_props()
+
+        self.lineEdit_send_SPEC.returnPressed.connect(self.handle_lineEdit_send_SPEC)
+
+        self.old_scan_x, self.old_scan_y = ([] for _ in range(2))
+        self.old_mesh_x, self.old_mesh_y, self.old_mesh_intes = ([] for _ in range(3))
 
     """POPUPS"""
-    def handle_action_save_load(self):
-        center_point = self.geometry().center()
+    def handle_action_save_load(self):  # starts our cell saving/loading popup
+        center_point = self.geometry().center() # Opens at center of OG window
         window = LoadPositionsWindow(monitor=self.monitor,
                                      center=center_point,
                                      motors=self.Motors_Stage,
@@ -480,45 +481,42 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         window.update_callback(self.update_saved_pos)
         self.handle_action_popup(window)
 
-    def handle_action_motor_slots(self):
+    def handle_action_motor_slots(self):  # starts the motor slotting popup
         center_point = self.geometry().center()
-        window = SetMotorSlotWindow(monitor=self.monitor, center=center_point, motors=self.Motors)
+        window = SetMotorSlotWindow(monitor=self.monitor,
+                                    center=center_point,
+                                    motors=self.Motors)
         window.apply_callback(self.update_motors)
         self.handle_action_popup(window)
 
-    def handle_action_set_server_wind(self):
+    def handle_action_set_server_wind(self): # starts the server setting popup
         center_point = self.geometry().center()
-        window = SaveServerWindow(monitor=self.monitor, center=center_point, host=self.monitor.get_value(VAR.SERVER_HOST), port=self.monitor.get_value(VAR.SERVER_PORT))
+        window = SaveServerWindow(monitor=self.monitor,
+                                  center=center_point,
+                                  host=self.monitor.get_value(VAR.SERVER_HOST),
+                                  port=self.monitor.get_value(VAR.SERVER_PORT))
         window.apply_callback(self.core.set_server)
         self.handle_action_popup(window)
 
-
-    def handle_action_popup(self, window):
-        self.child_windows.append(window)
+    def handle_action_popup(self, window):  # General actions for popups
+        self.child_windows.append(window)  # get references of what popups are open for ref
         window.set_close_callback(self.callback_window_closed)
         window.show()
 
     """MOTOR"""
     @decorator_busy_cursor
     def handle_pushButton_motor_movego(self, num, dummy):  # Will pass the ref to relevant motor
-        motor = self.Motors[num-1]
-        if self.core.is_moving(motor.Name):
-            self.core.set_status(motor.Name + " is already moving")
-        else:
-            self.core.move_motor(motor)
-        self.handle_pushButton_motor_all_checkpos(self.Motors)
+        self.core.move_motor(self.Motors[num-1]) # Motor numbering starts at 1, the list does not have a blank 0th entry
 
-    def handle_pushButton_motor_all_move(self, dummy): # this just calls the moving function if enabled for each
-        for i in range(len(self.Motors_Stage)):
-            Motor_inst = self.Motors_Stage[i]
-            if Motor_inst.Enabled:
-                self.core.move_motor(Motor_inst)
+    def handle_pushButton_motor_all_move(self): # this just calls the moving function if enabled for each
+        for motor in self.Motors_Stage:
+            if motor.Enabled:
+                self.core.move_motor(motor)
 
     def handle_pushButton_motor_all_checkpos(self,dummy):  # calls a check_pos for each motor if enabled
-        for i in range(len(self.Motors_Stage)):
-            Motor_inst = self.Motors_Stage[i]
-            if Motor_inst.Enabled:
-                self.core.checkpos_motor(Motor_inst)
+        for motor in self.Motors_Stage:
+            if motor.Enabled:
+                self.core.checkpos_motor(motor)
 
     def handle_checkBox_motor_all_checkpos(self):  # Enables/disables constant position tracking
         self.core.stage_motor_track_state(self.checkBox_motor_all_checkpos.isChecked())
@@ -527,12 +525,11 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.core.extra_motor_track_state(self.checkBox_SPEC_checkpos.isChecked())
 
     def handle_pushButton_motor_all_stop(self):
-        for i in range(len(self.Motors_Stage)):
-            Motor_inst = self.Motors_Stage[i]
-            if Motor_inst.Enabled:
-                self.core.motor_stop(Motor_inst)
+        for motor in self.Motors_Stage:
+            if motor.Enabled:
+                self.core.motor_stop(motor)
 
-    def init_motor_slots(self):
+    def init_motor_slots(self):  # crude way of initalizing all of the motor "slots" for which we will assign motors later
         Motor_Slot = namedtuple('Motor_Slot',
                                 ['Name', 'Mne', 'Enabled', 'Pos_VAR', 'Moveto_SB', 'Move_PB', 'MoveType_CB', 'Extra'])
         self.Motor_1 = Motor_Slot(Pos_VAR=VAR.MOTOR_1_POS,
@@ -589,10 +586,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                   Enabled=False, 
                                   Extra=False,
                                   )
-    # 
-    # def init_motor_beam_cond_slots(self):
-    #     Motor_Slot = namedtuple('Motor_Slot',
-    #                             ['Name', 'Mne', 'Enabled', 'Pos_VAR', 'Moveto_SB', 'Move_PB', 'MoveType_CB', 'Extra'])
         self.Slit_1_Motor_1 = Motor_Slot(Pos_VAR=VAR.SLIT_1_MOTOR_1_POS,
                                   Moveto_SB=self.doubleSpinBox_slit_1_motor_1_moveto,
                                   Move_PB=self.pushButton_slit_1_motor_1_movego,
@@ -779,17 +772,16 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                   Extra=True,
                                   )
 
-    def update_motors(self, Motors):
-        self.core._move_terminate_flag = True
+    def update_motors(self, Motors):  # we update all of the motors
+        self.core._move_terminate_flag = True  # we let all of the motor threads die (1.5 sec), then we start them again
         t = threading.Timer(1.5,  self.core.update_motors, [self.motor_names, Motors,
             (self.comboBox_scan_motor, self.comboBox_rock_motor, self.comboBox_mesh_slow_motor, self.comboBox_mesh_fast_motor)])
         t.start()
         self.Motors = Motors
-        Motor_Stage = []
-        for motor in Motors:
+        self.Motors_Stage = []
+        for motor in self.Motors:
             if not motor.Extra:
-                Motor_Stage.append(motor)
-        self.Motors_Stage = Motor_Stage
+                self.Motors_Stage.append(motor)
         self.populateCentSubMenus(self.Motors_Stage)
 
     """SCAN"""
@@ -822,11 +814,11 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                      self.doubleSpinBox_scan_waittime.value(),
                                      self.Motors  # We need to pass this so we can see which motor we are scanning with
                                      )
-                self.scan_plot_id.timer.start(100.0)
+                self.scan_plot_id.timer.start(100.0) # we replot every 10th of a second
                 self.connect(self.scan_plot_id.timer, QtCore.SIGNAL('timeout()'), self.scan_plot)
 
     def scan_rel(self, check):
-        if check.isChecked():
+        if check.isChecked():  # if we want a relative scan we set some names as well.
             start = 'Relative Start'
             stop = 'Relative Stop'
         else:
@@ -836,28 +828,28 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.label_scan_startpos_name.setText(start)
         self.label_scan_stoppos_name.setText(stop)
 
-    def scan_plot(self):
+    def scan_plot(self):  # we get data and if it's different we update everything
         go, x, y = self.core.get_data(self.comboBox_scan_data_x.currentIndex(),
                                       self.comboBox_scan_data_y.currentIndex())
-
 
         if not self.old_scan_x == x or not self.old_scan_y == y and go:
             self.core.update_bar_pos(VAR.VERT_BAR_SCAN_X, x)
             self.scan_plot_id.new_plot(x, y)
             self.core.scan_calculations(x, y)
-            self.tableWidget_scan_data.setHorizontalHeaderLabels([self.comboBox_scan_data_x.currentText(),
-                                                                  self.comboBox_scan_data_y.currentText(),
-                                                                  ])
-            self.tableWidget_scan_data.setColumnCount(2)
-            self.tableWidget_scan_data.setRowCount(len(x))
-            self.tableWidget_scan_data.horizontalHeader().setResizeMode(Qt.QHeaderView.ResizeToContents)
-            self.tableWidget_scan_data.setFixedWidth(self.tableWidget_scan_data.horizontalHeader().length() + 50)
-            for row in range(len(x)):
-                self.tableWidget_scan_data.setItem(row, 0, QtGui.QTableWidgetItem(QtCore.QString("%1").arg(x[row])))
-                self.tableWidget_scan_data.setItem(row, 1, QtGui.QTableWidgetItem(QtCore.QString("%1").arg(y[row])))
+            self.update_table(self.tableWidget_scan_data, [x,y])
         (self.old_scan_x, self.old_scan_y) = x, y
 
-    def handle_comboBox_scan_motor(self):
+    def update_table(self, Table, cols ):
+        Table.setHorizontalHeaderLabels([self.comboBox_scan_data_x.currentText(), self.comboBox_scan_data_y.currentText(),])
+        Table.setColumnCount(len(cols))
+        Table.setRowCount(len(cols[0]))
+        Table.horizontalHeader().setResizeMode(Qt.QHeaderView.ResizeToContents)
+        Table.setFixedWidth(Table.horizontalHeader().length() + 50)
+        for col in range(len(cols)):
+            for row in range(len(cols[0])):
+                Table.setItem(row, col, QtGui.QTableWidgetItem(QtCore.QString("%1").arg(cols[col][row])))
+
+    def handle_comboBox_scan_motor(self): # if you choose a different scan motor we update some stuff to recognize that
         self.core.scan_settings(self.comboBox_scan_motor.currentText(),
                                 self.doubleSpinBox_scan_startpos,
                                 self.doubleSpinBox_scan_stoppos,
@@ -881,8 +873,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                                  self.comboBox_scan_data_y,
                                  )
 
-    """MESH"""
-    def handle_checkBox_mesh_log(self, PB):
+    """MESH"""  # There are lots of coding similarities between all the scan types, it would have been ideal to make scanning classes
+    def handle_checkBox_mesh_log(self, PB): # is it logarthmic?
         self.mesh_plot_id.log_check(PB.isChecked())
 
     def mesh_button_text(self):
@@ -933,6 +925,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.label_mesh_stoppos_name.setText(stop)
 
     def mesh_plot(self):
+        self.scan_plot()
         go, x, y, intes = self.core.get_mesh_data(
             0, 1,  # hardcoding motors in
             # self.comboBox_mesh_data_x.currentIndex(),
@@ -941,9 +934,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         if not self.core.get_motor(self.comboBox_mesh_slow_motor.currentText(), self.Motors).Mne == self.label_mesh_data_x.text() or \
                 not self.core.get_motor(self.comboBox_mesh_fast_motor.currentText(), self.Motors).Mne == self.label_mesh_data_y.text():
             self.update_mesh_cols()
+            self.mesh_plot_id.set_axis_label_x(self.core.get_motor(self.comboBox_mesh_fast_motor.currentText(), self.Motors).Name + "(mm)")
+            self.mesh_plot_id.set_axis_label_y(self.core.get_motor(self.comboBox_mesh_slow_motor.currentText(), self.Motors).Name + "(mm)" )
         if not self.old_mesh_x == x or not self.old_mesh_y == y or not self.old_mesh_intes == intes and go:
             self.mesh_plot_id.plot(x, y, intes)
-            # print "NEW PLOT"
             self.core.mesh_calculations(x, y, intes)
         (self.old_mesh_x, self.old_mesh_y, self.old_mesh_intes) = x, y, intes
         
@@ -986,7 +980,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
     #                              )
 
     """CENTER"""
-    def handle_comboBox_cent_motor(self):
+    def handle_comboBox_cent_motor(self): # Initazlizing the boxes to set limits and such things
         self.core.cent_settings(self.cent_dict.get('Scan X'),
                             self.cent_dict.get('Angular Motor'),
                             self.doubleSpinBox_cent_relmax,
@@ -1004,7 +998,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             print "Cent scan motor Not set"
 
     def handle_pushButton_cent_start_stop(self):
-        if self.core.is_centering(self.pushButton_cent_start_stop):
+        if self.core.is_centering(self.pushButton_cent_start_stop, label=self.label_cent_center_name):
             self.core.cent_stop()
         else:
             if str(self.label_cent_motor_scan.text()) == None or str(self.label_cent_motor_angle.text()) == None:
@@ -1030,7 +1024,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             plot = self.cent_plot_id
         else:
             plot = self.plots
-        self.core.cent_plotting(plot, self.tableWidget_cent_data,
+        self.core.cent_plotting(plot, self.tableWidget_cent_data,  # plotting and tables are offloaded to core as it became complex
                                 self.comboBox_cent_data_x, self.comboBox_cent_data_y,
                                 self.comboBox_cent_calc_choose, self.checkBox_cent_single.isChecked())
         self.tableWidget_cent_data.horizontalHeader().setResizeMode(Qt.QHeaderView.ResizeToContents)
@@ -1055,30 +1049,22 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.cent_plot_id.set_axis_label_y(PLOT_LABEL_Y)
         self.cent_plot_id.set_legend()
         self.cent_plot_id.setSizePolicy(Qt.QSizePolicy.Ignored, Qt.QSizePolicy.Ignored)
-        i = 0
-        name = ['', 'w-', 'wo', 'w+']
-        for plot in self.plots:
+        name = ['w-', 'wo', 'w+']
+        for i, plot in enumerate(self.plots):
             self.verticalLayout_cent_graph.addWidget(plot)
             plot.setSizePolicy(Qt.QSizePolicy.Ignored, Qt.QSizePolicy.Ignored)
             if i == 0:
-                i = 1
-                plot.set_title(PLOT_TITLE)
-            elif i == 1:
-                i = 2
+                plot.set_title(PLOT_TITLE)  # only put title on the top
             elif i == 2:
-                plot.set_axis_label_x(PLOT_LABEL_X)
+                plot.set_axis_label_x(PLOT_LABEL_X)  # only put x axis title on bottem
             plot.set_axis_label_y(PLOT_LABEL_Y + ' ' + name[i])
-        if single:
-            for plots in self.plots:
-                plots.hide()
-            self.cent_plot_id.show()
-        else:
-            for plot in self.plots:
-                plot.show()
-            self.cent_plot_id.hide()
+        self.cent_graph(single)
 
     def cent_graph(self, Check):
-        single = Check.isChecked()
+        try: # we will allow sending the check object or the bool value
+            single = Check.isChecked()
+        except AttributeError:
+            single = Check
         if single:
             for plot in self.plots:
                 plot.hide()
@@ -1088,12 +1074,12 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                 plot.show()
             self.cent_plot_id.hide()
 
-    def populateCentMenu(self):
+    def populateCentMenu(self):  # Making the drop down menus
         self.cent_menus = ['Centre X', 'Centre Y', 'Scan X', 'Angular Motor']
         for i, menu in enumerate(self.cent_menus):
             self.cent_menus[i] = self.menuCentering.addMenu(menu)
 
-    def populateCentSubMenus(self, Motors):
+    def populateCentSubMenus(self, Motors):   # Continuing to make the drop down menus for choosing centering motors
         motor_list = []
         dict_check=False
         try:
@@ -1135,7 +1121,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                 self.monitor.update(VAR.CENT_AMGLE_MOTOR, value)
             
     """ROCKING"""
-    def handle_comboBox_rock_motor(self):
+    def handle_comboBox_rock_motor(self):  # Again rocking is similar to the otehr types of scans
         self.core.rock_settings(self.comboBox_rock_motor.currentText(),
                                 self.doubleSpinBox_rock_startpos,
                                 self.doubleSpinBox_rock_stoppos,
@@ -1147,7 +1133,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         except AttributeError:
             print "Rocking motor Not set"
 
-    def check_omit(self, passback=False):
+    def check_omit(self, passback=False):  # get our omitted zones in a nice list
         all_regions = [
             [self.checkBox_rock_zone1.isChecked(), self.doubleSpinBox_rock_min_zone1, self.doubleSpinBox_rock_max_zone1],
             [self.checkBox_rock_zone2.isChecked(), self.doubleSpinBox_rock_min_zone2, self.doubleSpinBox_rock_max_zone2],
@@ -1211,7 +1197,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
     def handle_comboBox_rock_data(self):
         pass
 
-    """CONDITIONING"""
+    """CONDITIONING"""  # these are the EPICS motor controls here. Barebones
     def init_beam_cond(self):
         Beam_Cond = namedtuple('Beam_Cond',
                                 ['PV', 'Moveto_SB', 'Move_PB', 'MoveType_CB'])
@@ -1344,9 +1330,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         ]
 
         for move in self.beam_cond:
-            move.MoveType_CB.addItems(['Relative', 'Absolute'])
-            move.Moveto_SB.setDecimals(2)
-            move.Moveto_SB.setRange(-1000, 1000)
+            # move.MoveType_CB.addItems(['Relative', 'Absolute'])
+            # move.Moveto_SB.setDecimals(2)
+            # move.Moveto_SB.setRange(-1000, 1000)
             if move.Move_PB == None:  # No pushbutton therefore commands go off of enter in box
                 # move.MoveType_CB.lineEdit().returnPressed.connect(partial(self.handle_cond_move, move.PV, move.Moveto_SB.value(), move.MoveType_CB.currentText()))
                 pass
@@ -1357,6 +1343,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.core.cond_move(PV, SB.value(), CB.currentText())
 
     """RANDOM"""
+
+    def handle_lineEdit_send_SPEC(self): # sends a command straight to SPEC from a line edit on enter
+        self.core.send_cmd(str(self.lineEdit_send_SPEC.text()))
+
     def update_saved_pos(self, saved_pos):
         self.saved_pos = saved_pos
 
@@ -1367,7 +1357,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         tabText = self.tabWidget.tabText(current)
         self.core.set_status("Tab Clicked: %s" % QtCore.QString(tabText))
 
-    def init_label_props(self):
+    def init_label_props(self): # these are options we set for buttons and such. Most notibly tooltips (hover)
         labels = [[self.pushButton_motor_all_stop, {'hover': 'Stop Motors if they are moving, if they are not moving nothing will happen',
                                                     'text' : 'Stop All',
                                                     }],
@@ -1395,8 +1385,29 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                   [self.label_cent_calc_cent_y, {'hover': 'Position of the relative calculated Y position, \nDouble click to move to',
                                             'move_motor_rel': 'Centre Y'
                                             }],
-
+                  [self.checkBox_motor_all_checkpos, {'hover': 'Allows constant checking of all motors on the Move Page',
+                                                      }],
+                  [self.checkBox_SPEC_checkpos, {
+                      'hover': 'Allows constant checking of all motors in the SPEC Tab',
+                      }],
+                  [self.progressBar_rock, {
+                      'hover': 'Progress UNTIL last rock',
+                      }],
                    ]
+        move_cbs, move_sbs = ([] for _ in range(2))
+        for item in self.Motors+self.beam_cond:
+            move_cbs.append(item.MoveType_CB)
+            move_sbs.append(item.Moveto_SB)
+        cb_dict = {'cb_items': ['Absolute', 'Relative'],
+                    'hover':'Type of movement'}
+        sb_dict = {'sb_range': (-1000, 1000),
+                   'sb_dec': 3,
+                   'hover': "Move distance(mm) \nInputs Limited by range of motor"
+                   }
+        for cb in move_cbs:
+            labels.append([cb, cb_dict])
+        for sb in move_sbs:
+            labels.append([sb, sb_dict])
 
         for label in labels:
             item, dict = label[0], label[1]
@@ -1406,6 +1417,14 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                     item.setToolTip(Qt.QString(value))
                 elif key == 'text':
                     item.setText(value)
+                elif key == 'cb_items':
+                    item.clear()
+                    for each in value:
+                        item.addItem(each)
+                elif key == 'sb_range':
+                    item.setRange(*value)
+                elif key == 'sb_dec':
+                    item.setDecimals(value)
                 elif key == 'move_motor':
                     self.clickable(item).connect(partial(self.move_clicker, value, item))
                 elif key == 'move_motor_comp':
@@ -1418,7 +1437,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.move_clicker(cent, label, rel=True)
         self.move_clicker(scan, label, rel=True, neg=True)
 
-    def move_clicker(self, lab, label, rel=False, neg=False):
+    def move_clicker(self, lab, label, rel=False, neg=False):  # allows us to move on a click event, setup within init_label props as well
         if isinstance(lab, basestring):
             mot = self.cent_dict.get(lab)
         else:
@@ -1457,7 +1476,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         widget.installEventFilter(filter)
         return filter.clicked
 
-    def init_labels(self):
+    def init_labels(self):  # linking the displays with variables, EPICS or local.
         label_map = {
             PV.SYSTEM_TIME:         (self.label_system_time,        '{:s}',     12, True),
             PV.BEAM_STOP:           (self.label_beam_stop,          '{:g}',    12, True),
@@ -1570,9 +1589,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
     def add_label(self, label_map, double=False): # double means we will disconnect any old
         css_normal= "QLabel { background-color : %s; color : %s; }" % \
                   (CSS_COLOUR.GROUP_BOX, CSS_COLOUR.BLUE)
-        for pv_name, data in label_map.iteritems():
+        for pv_name, data in label_map.iteritems():  # This allows us to add labels to our label_map so we can update motor pos
             # self.monitor.add(pv_name)
-
             widget = data[0]
             font = QtGui.QFont('Courier', data[2])
             widget.setFont(font)
@@ -1674,7 +1692,6 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             window.close()
 
         print "===================================="
-
         print self.geometry()
         print "------------------------------------"
         self.save_window_position()

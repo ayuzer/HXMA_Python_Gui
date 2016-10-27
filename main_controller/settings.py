@@ -6,20 +6,16 @@ IMPORT_DIRS = [
     "utils/spec_tools"
 ]
 
-APP_NAME                    = 'HXMA : X-Ray Diffraction Controller'
+APP_NAME                    = 'Pressure to Diffract |HexMotor HPC Control using SPEC|'
 
 ENABLE_ERROR_DECORATOR      = False
 PROMPT_ON_QUIT              = False
 USE_SIMULATED_PVS           = True
 
-SETTINGS_FILE_NAME = ".HXMAguiXRay/settings.json"
-SETTINGS_POP_FILE_NAME = ".HXMAguiXRay/settings_pop.json"
+SETTINGS_FILE_NAME = ".Press2Diff/settings.json"
+SETTINGS_POP_FILE_NAME = ".Press2Diff/settings_pop.json"
 
 class KEY(object):
-    X_MM_START      = 'x_start'
-    X_MM_STOP       = 'x_stop'
-    Z_MM_START      = 'z_start'
-    Z_MM_STOP       = 'z_stop'
     COMMAND         = 'cmd'
     KEY             = 'key'
     PV              = 'pv'

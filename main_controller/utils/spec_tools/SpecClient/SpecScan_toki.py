@@ -18,12 +18,12 @@ from SpecClient import SpecWaitObject
 __author__ = 'Matias Guijarro (ESRF) / Darren Dale (CHESS)'
 __version__ = 1
 
-__editor__ = 'Michael Tokiyoshi Hamel(CLS)'  # added in dscan
+__editor__ = 'Michael Tokiyoshi Hamel(CLS)'  # added in dscan, rocking and several others
 
 
 (TIMESCAN) = (16)
 
-DEBUG = True
+DEBUG = False
 
 
 

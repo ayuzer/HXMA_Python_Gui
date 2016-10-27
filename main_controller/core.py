@@ -197,47 +197,20 @@ class Core(object):
         for var_name in vars.itervalues():
             self.monitor.add(var_name)
 
-        self._terminate_flag = False
+        self._terminate_flag = self._move_terminate_flag = self.mesh_started = self._teminate_rock = False
 
-        self._counter_timer = threading.Timer(1, self.handle_counter)
-        self._counter_timer.start()
-        self.count = False
-        self.count_event = threading.Event()
-        self.count_event.clear()
+        self.count_event, self.scan_event, self.mesh_event, self.cent_event, self.rock_event, \
+                self.stage_move_event, self.extra_move_event, self.check_move_event, self.scan_rw_event, \
+            = (threading.Event() for _ in range(9))  # we have to do it like this to do a "deep" copy
 
-        self.stage_move_event = threading.Event()
-        self.stage_move_event.set()
-        self.extra_move_event = threading.Event()
-        self.extra_move_event.set()
-        self.check_move_event = threading.Event()
-        self.check_move_event.set()
-        self._move_terminate_flag = False
+        for clear_event in [self.count_event, self.scan_event, self.mesh_event, self.cent_event, self.rock_event]:
+            clear_event.clear() # starting a bunch of event flags, some will be flagged and others not
+        for set_event in [self.stage_move_event, self.extra_move_event, self.check_move_event, self.scan_rw_event,]:
+            set_event.set()
 
-        self._scan_timer = threading.Timer(1, self.handle_scan)
-        self._scan_timer.start()
-        self.scan_event = threading.Event()
-        self.scan_event.clear()
-        self.scan_rw_event = threading.Event()
-        self.scan_rw_event.set()
+        for handle in [self.handle_scan, self.handle_mesh, self.handle_cent,  self.handle_rock]:
+            self.start_soon(handle)  # starting a bunch of threads
 
-        self._mesh_timer = threading.Timer(1, self.handle_mesh)
-        self._mesh_timer.start()
-        self.mesh_event = threading.Event()
-        self.mesh_event.clear()
-        self.mesh_started = False
-        self.main_mesh_array = []
-
-        self._cent_timer = threading.Timer(1, self.handle_cent)
-        self._cent_timer.start()
-        self.cent_event = threading.Event()
-        self.cent_event.clear()
-
-        self._rock_timer = threading.Timer(1, self.handle_rock)
-        self._rock_timer.start()
-        self.rock_event = threading.Event()
-        self.rock_event.clear()
-        self._teminate_rock = False
-        
         self.Spec_sess = Spec()
         self.SpecMotor_sess = SpecMotor()
         self.SpecScan_sess = SpecScan()
@@ -245,40 +218,38 @@ class Core(object):
 
         self.SpecMotor_sess.state = SpecMotor_module.NOTINITIALIZED
 
-        self._SpecMotor_sess = [None]*26
+        self._SpecMotor_sess = [None]*26  # We currently have 26 possible motor slots
 
         self.moving_bool_dict = {}
-        self.old_full_array, self.scan_array, self.old_array, self.old_x, self.old_y, = ([] for i in range(5))
+
+        self.main_mesh_array, self.main_scan_array, self.old_full_array, self.scan_array, self.old_array, self.old_x, self.old_y, = ([] for _ in range(7))
         self.cent_props = ('', '', 0, 0, 0, 0, 0, [], True)
         self.CB_lock = threading.Lock()
 
-        self.main_scan_array = []
-
-    def handle_pushButton_test(self):
-        SpecScan.mesh(SpecScan(), )
-
-
     """ MOTOR """
-    def move_motor(self, motor, moveto=None, movetype=None): # IF CALLING PROGRAMATICALLY, DECLARE MOVETO & MOVETYPE
-        if moveto == None:
-            moveto = motor.Moveto_SB.value()
-        if movetype == None:
-            movetype = motor.MoveType_CB.currentText()
-        motor_name = motor.Mne
-        self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor.Name)
-        if motor.Enabled:
-            motor_check = self.checkpos_motor(motor)  # This sets the motor to the correct Mne as well
-            pos = motor_check['pos']
-            (low, high)  = self.SpecMotor_sess.getLimits()
-            if movetype == 'Relative':
-                moveto = pos+moveto
-            if low < moveto < high:
-                SpecMotor.move(self.SpecMotor_sess, moveto)
-                print "Moving motor " + motor_name + " to " + repr(moveto)
-            else:
-                print "The motor was asked to move to " + repr(moveto) + " which is outside of the accepted range of " + repr((low, high))
+    def move_motor(self, motor, moveto=None, movetype=None):  # IF CALLING PROGRAMATICALLY, DECLARE MOVETO & MOVETYPE
+        if self.is_moving(motor.Name):  # Make sure the motors not moving, if so ignore the call
+            self.set_status(motor.Name + " is already moving")
         else:
-            print "Cannot Move non-enabled motor"
+            if moveto == None:
+                moveto = motor.Moveto_SB.value()
+            if movetype == None:
+                movetype = motor.MoveType_CB.currentText()
+            motor_name = motor.Mne
+            self.monitor.update(VAR.STATUS_MSG, "Moving Motor " + motor.Name)
+            if motor.Enabled:
+                motor_check = self.checkpos_motor(motor)  # This sets the motor to the correct Mne as well
+                pos = motor_check['pos']
+                (low, high) = self.SpecMotor_sess.getLimits()
+                if movetype == 'Relative':
+                    moveto = pos+moveto
+                if low < moveto < high:  # make sure its within limits before
+                    SpecMotor.move(self.SpecMotor_sess, moveto)
+                    print "Moving motor " + motor_name + " to " + repr(moveto)
+                else:
+                    self._error_callback("The motor was asked to move to " + repr(moveto) + " \nwhich is outside of the accepted range of " + repr((low, high)))
+            else:
+                self._error_callback("Cannot Move non-enabled motor")
 
     def motor_stop(self, motor):
         if motor.Enabled:
@@ -294,15 +265,13 @@ class Core(object):
         if SpecMot == None:
             SpecMot = self.SpecMotor_sess
         self.check_move_event.wait()
-        self.check_move_event.clear()
-        if SpecMot.specName == motor.Mne:
-            pass
-        else:
+        self.check_move_event.clear()  # We have to go one check at a time so we don't catch the wrong signal
+        if not SpecMot.specName == motor.Mne:
             SpecMotor.connectToSpec(SpecMot, motor.Mne, self.monitor.get_value(VAR.SERVER_ADDRESS))
         try:
             init_pos = self.monitor.get_value(motor.Pos_VAR)
             pos = SpecMotor.getPosition(SpecMot)
-            moved = not (init_pos == pos)
+            moved = not (init_pos == pos)  # Our motors are stable and when they stop the detector has never seen movement, this will break if it does
             if moved:  # this is where you can hook if motors are moving or not
                 self.monitor.update(motor.Pos_VAR, pos)
                 if print_val:
@@ -314,12 +283,11 @@ class Core(object):
         self.check_move_event.set()
         return {'pos': pos, 'moved': moved}
 
-    def init_motor_thread(self, motors):
-        for i in range(len(motors)):
-            motor_inst = motors[i]
-            if motor_inst.Enabled:
+    def init_motor_thread(self, Motors):  # Start thread for each motor which is going to be checked
+        for i, motor in enumerate(Motors):
+            if motor.Enabled:
                 self.move_thread = threading.Thread(group=None, target=self.handle_motor_moving_thread, name=None,
-                                                    args=(motor_inst, i))
+                                                    args=(motor, i))
                 self.move_thread.start()
 
     def handle_motor_moving_thread(self, motor, id):
@@ -339,11 +307,8 @@ class Core(object):
                 # I believe this issue is with SpecClient and not with my code...
                 '''
                 self.check_move_event.wait()  # This stops the motors from updating each other's monitors
-                # self.check_move_event.clear()
                 motor_check = self.checkpos_motor(motor, False, SpecMot=self._SpecMotor_sess[id])
-                # self.check_move_event.set()
-                moved = motor_check['moved']
-                pos = motor_check['pos']
+                moved, pos = motor_check['moved'], motor_check['pos']
                 if moved:
                     # time.sleep(0.1)
                    print motor.Name + " has moved to " + repr(pos)
@@ -351,7 +316,7 @@ class Core(object):
                     time.sleep(.5)
                 try:
                     self.moving_bool_dict[motor.Name] = moved
-                except KeyError:
+                except KeyError:  # if we have no entry we add one.
                     self.moving_bool_dict.update({motor.name, moved})
             else:  # making sure we're looking at the right motor
                 time.sleep(1)
@@ -376,11 +341,11 @@ class Core(object):
 
     def is_moving(self, motor_name='none'):  # will return if all motors are moving or not unless motor is specified
         if motor_name == 'none':
-            return not all(bool==False for bool in self.moving_bool_dict.values())
+            return not all(bool == False for bool in self.moving_bool_dict.values())
         else:
             return self.moving_bool_dict[motor_name]
 
-    def update_motors(self, motor_names, Motors, CBs):
+    def update_motors(self, motor_names, Motors, CBs):  # updates motor variables and such and starts threads
         self._move_terminate_flag = False
         for CB in CBs:
             CB.clear()
@@ -394,38 +359,8 @@ class Core(object):
                 (min_lim, max_lim) = self.check_limits(Motor_inst)
                 Motor_inst.Moveto_SB.setRange(min_lim * 2, max_lim * 2)
 
-    """ COUNTER """
-    def handle_counter(self):
-        pass
-        # address = self.monitor.get_value(VAR.SERVER_ADDRESS) #Just initalizing the counter classes which we'll read
-        # self.SpecCounter_ic2 = SpecCounter()
-        # self.SpecCounter_pinf = SpecCounter()
-        # self.SpecCounter_sec = SpecCounter()
-        # SpecCounter.connectToSpec(self.SpecCounter_ic2, 'ic2', address)
-        # SpecCounter.connectToSpec(self.SpecCounter_pinf, 'pinf', address)
-        # SpecCounter.connectToSpec(self.SpecCounter_sec, 'sec', address)
-        # i=0
-        # while True:
-        #     self.count_event.wait()
-        #     if self._terminate_flag: break
-        #     i = i + 1
-        #     # print i
-        #     count_time = SpecCounter.count(self.SpecCounter_sec, self.count_time_set_SB.value())
-        #     self.monitor.update(VAR.COUNT_TIME, count_time)
-        #     self.monitor.update(VAR.COUNTER_1_COUNT, SpecCounter.getValue(self.SpecCounter_ic2))
-        #     self.monitor.update(VAR.COUNTER_2_COUNT, SpecCounter.getValue(self.SpecCounter_pinf))
-
-    def counting_state(self, state, spinBox_counter):
-        self.count_time_set_SB = spinBox_counter
-        if state:  #Enable Counting
-            self.count_state = True
-            self.count_event.set()
-        else:  # Disable Counting
-            self.count_event.clear()
-
     """ SCANNING """
-
-    def is_scanning(self, button=None):
+    def is_scanning(self, button=None):  # We want to set the button that we use... this is not how I should've approached this
         if button == None:
             try:
                 button = self.saved_button
@@ -440,21 +375,19 @@ class Core(object):
             self.update_CB(self.x_scan_data_CB, self.y_scan_data_CB, 'scan')
         else:
             if str(button.text()) == 'Stop':
-                t = threading.Timer(1, self.post_scan)
+                t = threading.Timer(.25, self.post_scan)  # after scan we can do some actions
                 t.start()
             button.setText('Start')
             try:
                 self.backup_scan()
             except OSError:
                 print "Backup Directory not specified, BACKUP NOT SAVED"
-            # if self.is_moving():
-            #     self.scan_event.clear() # stops the scanning thread when the scan isn't running
         return self.SpecScan_sess.scanning
 
     def post_scan(self):
         if not self.is_scanning():
             print "Scan Finished"
-            self.scan_event.clear()
+            self.scan_event.clear()  # This stops the thread from spamming checks after the scan is done
 
     def scan_start(self, scantype, motor_name, startpos, endpos, intervals, count_time, Motors):
         self.mesh_event.clear()
@@ -541,6 +474,7 @@ class Core(object):
                     repeats = repeats + 1
                     ratio = 0.5 + _rep*0.1
                     self.scan_SB_sleeper(ratio=ratio, _min=False)
+            if self._terminate_flag: break
             self.scan_SB_sleeper()
 
     def scan_stop(self):
@@ -691,7 +625,7 @@ class Core(object):
     def mesh_start(self, fast_motor_name, slow_motor_name, fast_startpos, fast_endpos, 
                    slow_startpos, slow_endpos, fast_intervals, slow_intervals, count_time, Motors):
         (fast_found, slow_found) = False, False
-        self.scan_event.clear()
+        # self.scan_event.clear()
         for i in range(len(Motors)):
             if not fast_found:
                 Fast_Motor_inst = Motors[i]
@@ -715,7 +649,10 @@ class Core(object):
                 break
         if slow_found and fast_found:
             print "Mesh Started"
+            t = threading.Timer(1, self.is_meshing)
+            t.start()
             return True  # Saying the mesh is started
+
         else:
             raise Exception('Mesh cannot be started as the motor was not Enabled')
 
@@ -765,6 +702,8 @@ class Core(object):
     def mesh_stop(self):
         SpecScan.abort(self.SpecMesh_sess)
         self.mesh_event.clear()
+        t = threading.Timer(1, self.is_meshing)
+        t.start()
         print "Mesh Stopped"
         return False  # Saying the mesh is stopped
 
@@ -895,7 +834,7 @@ class Core(object):
                     angle_o_SB.setRange(min_lim, max_lim)
                     angle_pm_SB.setRange(-1 * full_range/2, full_range/2)
 
-    def is_centering(self, start_stop_PB):
+    def is_centering(self, start_stop_PB, label = None):
         if start_stop_PB == None:
             try:
                 start_stop_PB = self.start_stop_PB
@@ -904,11 +843,21 @@ class Core(object):
         else:
             self.start_stop_PB = start_stop_PB
             # This property is checked, so functions here will work
+        if label == None:
+            try:
+                label = self.start_stop_label
+            except UnboundLocalError:
+                pass
+        else:
+            self.start_stop_label = label
+            # This property is checked, so functions here will work
         if self.cent_event._Event__flag:
             start_stop_PB.setText('Stop')
+            label.setText('Curr Pos')
             self.update_CB(self.x_cent_data_CB, self.y_cent_data_CB, 'cent')
         else:
             start_stop_PB.setText('Start')
+            label.setText('Center')
         return self.cent_event._Event__flag
 
     def cent_stop(self):
@@ -1056,21 +1005,6 @@ class Core(object):
                 self.monitor.update(max_array[i], calc.x_at_y_max())
                 self.monitor.update(com_array[i], calc.COM())
                 self.monitor.update(cwhm_array[i], calc.CFWHM())
-                if i==2: # if we have enough data to calculate the center x,y we do it
-                    if str(calc_CB.currentText()) == 'Max Y':
-                        pos = self.monitor.get_value(VAR.CENT_POS_MAXY)
-                        neg = self.monitor.get_value(VAR.CENT_NEG_MAXY)
-                    elif str(calc_CB.currentText()) == 'COM':
-                        pos = self.monitor.get_value(VAR.CENT_POS_COM)
-                        neg = self.monitor.get_value(VAR.CENT_NEG_COM)  # these are center x/y calcs \/ J Synchrotron Rad 2009 16 83-96 sect eqn 7 + 8 -- http://journals.iucr.org/s/issues/2009/01/00/ie5024/ie5024.pdf
-                    elif str(calc_CB.currentText()) == 'Curser':
-                        pos = self.monitor.get_value(VAR.VERT_BAR_POS_X)
-                        neg = self.monitor.get_value(VAR.VERT_BAR_NEG_X)
-                    elif str(calc_CB.currentText()) == 'CWHM':
-                        pos = self.monitor.get_value(VAR.CENT_POS_CWHM)
-                        neg = self.monitor.get_value(VAR.CENT_NEG_CWHM)
-                    self.monitor.update(VAR.CENT_CENTERED_X, (pos + neg)/(2*(1-np.cos(np.degrees(self.angle_pm)))))
-                    self.monitor.update(VAR.CENT_CENTERED_Y, (pos - neg) / (2 * (np.sin(np.degrees(self.angle_pm)))))
             if not self.cent_started:
                 (x_arr, y_arr) = ([[], [], []], [[], [], []])  # Passing an empty variable if the centering has not begun to clear
                 for i in range(3):
@@ -1098,6 +1032,22 @@ class Core(object):
                     except IndexError: # If it's outside of range this means no entry, hence blank
                         table.setItem(row, i + 1, tableItem(str2q("%1").arg('')))
             (self.old_x, self.old_y) = x_arr, y_arr
+        if length >= 3:  # if we have enough data to calculate the center x,y we do it
+            if str(calc_CB.currentText()) == 'Max Y':
+                pos = self.monitor.get_value(VAR.CENT_POS_MAXY)
+                neg = self.monitor.get_value(VAR.CENT_NEG_MAXY)
+            elif str(calc_CB.currentText()) == 'COM':
+                pos = self.monitor.get_value(VAR.CENT_POS_COM)
+                neg = self.monitor.get_value(
+                    VAR.CENT_NEG_COM)  # these are center x/y calcs \/ J Synchrotron Rad 2009 16 83-96 sect eqn 7 + 8 -- http://journals.iucr.org/s/issues/2009/01/00/ie5024/ie5024.pdf
+            elif str(calc_CB.currentText()) == 'Curser':
+                pos = self.monitor.get_value(VAR.VERT_BAR_POS_X)
+                neg = self.monitor.get_value(VAR.VERT_BAR_NEG_X)
+            elif str(calc_CB.currentText()) == 'CWHM':
+                pos = self.monitor.get_value(VAR.CENT_POS_CWHM)
+                neg = self.monitor.get_value(VAR.CENT_NEG_CWHM)
+            self.monitor.update(VAR.CENT_CENTERED_X, (pos + neg) / (2 * (1 - np.cos(np.degrees(self.angle_pm)))))
+            self.monitor.update(VAR.CENT_CENTERED_Y, (pos - neg) / (2 * (np.sin(np.degrees(self.angle_pm)))))
 
     def save_cent_curr(self, filename, x_CB, y_CB):
         filedir = self.cent_dir
@@ -1252,7 +1202,6 @@ class Core(object):
             Motor_inst = Motors[i]
             if Motor_inst.Enabled:
                 self.motor_stop(Motor_inst)
-
 
     def rock_roll(self, motor, startlist, stoplist, intervallist, count_time, Motors):
         """Here is where we should start the rocking and then push it to the plot"""
@@ -1412,6 +1361,13 @@ class Core(object):
         finally:
             self.CB_lock.release()
 
+    def send_cmd(self, cmd):
+        if self.Spec_sess.connection.isSpecConnected():
+            self.Spec_sess.connection.send_msg_cmd(cmd)
+            return True
+        else:
+            return False
+
     def get_var(self, var_name):
         """Return variable"""
         if self.Spec_sess.connection is not None:
@@ -1495,6 +1451,13 @@ class Core(object):
             elif motor_name == motor.Mne:
                 return motor
         return False  # Failed to find Motor
+
+    def start_soon(self, handle):
+        timer = threading.Timer(1, handle)
+        timer.start()
+
+    def error_callback(self, callback):
+        self._error_callback = callback
 
 class Calculation:
 

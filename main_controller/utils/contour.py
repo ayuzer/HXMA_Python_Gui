@@ -4,6 +4,7 @@
 
 import sys
 from PyQt4 import Qt
+from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4 import Qwt5 as Qwt
 import cProfile, pstats, StringIO
@@ -606,6 +607,25 @@ class Contour(Qwt.QwtPlot):
         else:
             self.__spectrogram.invalidateCache()
             self.replot()
+    def set_axis_label_x(self, label):
+
+        titleFont = QtGui.QFont('Monospace', 10)
+        titleFont.setWeight(QtGui.QFont.Light)
+
+        xAxisLabel = Qwt.QwtText(label)
+        xAxisLabel.setFont(titleFont)
+        self.setAxisTitle(Qwt.QwtPlot.xBottom, xAxisLabel)
+
+    def set_axis_label_y(self, label):
+
+        titleFont = QtGui.QFont('Monospace', 10)
+        titleFont.setWeight(QtGui.QFont.Light)
+
+        yAxisLabel = Qwt.QwtText(label)
+        yAxisLabel.setFont(titleFont)
+
+        self.setAxisTitle(Qwt.QwtPlot.yLeft, yAxisLabel)
+
 
     def autoscale(self):
         """Auto scale and clear the zoom stack

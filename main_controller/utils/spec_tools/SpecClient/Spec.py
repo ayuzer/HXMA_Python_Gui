@@ -2,10 +2,13 @@
 
 This module define the Spec class for emulating a kind of Spec interpreter in
 a Python object
+
+Michael-Added object which will send command
 """
 
 __author__ = 'Matias Guijarro'
-__version__ = '1.0'
+__editor__ = 'Michael Tokiyoshi Hamel'
+__version__ = '1.1'
 
 import SpecConnectionsManager
 import SpecEventsDispatcher
@@ -99,3 +102,10 @@ class Spec:
             nameChannel = self.connection.getChannel('var/SPEC')
 
             return nameChannel.read()
+
+    def cmdSend(self, cmd):
+        if self.connection.isSpecConnected():
+            self.connection.send_msg_cmd(cmd)
+            return True
+        else:
+            return False

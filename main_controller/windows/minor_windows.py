@@ -421,7 +421,7 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
 
         self.load_ui("windows/motor_slotting.ui")
 
-        self.setWindowTitle(settings.APP_NAME)
+        self.setWindowTitle("MOTOR SLOTTING FOR : " + settings.APP_NAME )
 
         frame_geometry = self.frameGeometry()
         frame_geometry.moveCenter(center_point)
@@ -505,6 +505,7 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
         self.fill_CB(self.comboboxes)
 
         self.pushButton_apply.clicked.connect(self.handle_pushButton_apply)
+        self.pushButton_cancel.clicked.connect(self.handle_pushButton_cancel)
 
         for i in range(len(self.comboboxes)):
             self.comboboxes[i].currentIndexChanged.connect(partial(self.handle_CB_ref, i+1))
@@ -514,7 +515,10 @@ class SetMotorSlot(QtGui.QWidget, DragTextMixin, UiMixin):
                 index = self.comboboxes[i].findText(motor.Name, QtCore.Qt.MatchFixedString)
                 if index >= 0 :
                     self.comboboxes[i].setCurrentIndex(index)
+            else:
+                self.comboboxes[i].setCurrentIndex(-1)
             self.checkboxes[i].setChecked(motor.Enabled)
+
 
     def set_close_callback(self, callback):
         self._close_callback = callback
@@ -581,6 +585,7 @@ class SetServer(QtGui.QWidget, DragTextMixin, UiMixin):
         self.drag_text_mixin_initialize()
 
         self.pushButton_apply.clicked.connect(self.handle_pushButton_apply)
+        self.pushButton_cancel.clicked.connect(self.handle_pushButton_cancel)
 
         self.lineEdit_host.setText(self.host)
         self.lineEdit_port.setText(self.port)

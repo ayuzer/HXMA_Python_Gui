@@ -209,7 +209,8 @@ class Core(object):
             set_event.set()
 
         for handle in [self.handle_scan, self.handle_mesh, self.handle_cent,  self.handle_rock]:
-            self.start_soon(handle)  # starting a bunch of threads
+            timer = threading.Timer(.1, handle)
+            timer.start()  # starting all the threads
 
         self.Spec_sess = Spec()
         self.SpecMotor_sess = SpecMotor()
@@ -390,9 +391,8 @@ class Core(object):
             self.scan_event.clear()  # This stops the thread from spamming checks after the scan is done
 
     def scan_start(self, scantype, motor_name, startpos, endpos, intervals, count_time, Motors):
-        self.mesh_event.clear()
-        for i in range(len(Motors)):
-            Motor_inst = Motors[i]
+        self.mesh_event.clear()  # Stops Mesh as these use the same backend and shouldnt be run at the same time.
+        for Motor_inst in Motors:
             if Motor_inst.Name == motor_name:
                 if Motor_inst.Enabled:
                     self.scan_array_counter = 0
@@ -431,31 +431,30 @@ class Core(object):
             while True:
                 if self._terminate_flag: break
                 self.scan_event.wait()
-                old_data = self.scan_data
+                # old_data = self.scan_data
                 self.check_move_event.wait()
                 self.check_move_event.clear()
                 old_point = self.scan_point
                 #self.scan_data = SpecScan.get_SCAN_D(self.SpecScan_sess)
                 try:
                     # print "Grabbing Point"
+                    # Note we grab SCAN_PT which is the last point, it may be better to work with SCAN_D which is the full array, but I had troubles
                     self.scan_point = json.JSONDecoder.decode(json.JSONDecoder(), SpecScan.get_SCAN_PT(self.SpecScan_sess))
                     # scan_arr = SpecScan.get_SCAN_D(self.SpecScan_sess)
                     # scan_arr = scan_arr[~np.all(scan_arr == 0, axis=1)]
                 except (ValueError, TypeError):
                     print "Error: Scan Point"
-                    pass
                 self.check_move_event.set()
                 #elif array_equal(old_data, self.scan_data):
                 if not old_point == self.scan_point: # here is where you would graph it/save it to the csv
-                    _rep = (repeats +_rep)/2
-                    # print "repeats ", _rep
+                    _rep = (repeats +_rep)/2  # this is an odd thing I used to slow down requests
                     repeats = 0
                     # print "Scan point " + repr(self.scan_point[0]) + " Counter: " +repr(self.scan_array_counter)
                     if self.scan_point[0] == 1 and self.scan_array_counter == 0:
-                        self.scan_array_counter = self.scan_array_counter + 1
+                        self.scan_array_counter = self.scan_array_counter + 1  # allows missing of 0th point
                     if self.scan_point[0] > self.scan_array_counter and self.scan_array_counter == 0: #Skips old point
                         print "Scan point ignored ScanPoint:" + repr(self.scan_point[0]) + " Counter: " + repr(self.scan_array_counter)
-                    elif self.scan_point[0] == self.scan_array_counter:
+                    elif self.scan_point[0] == self.scan_array_counter:  #actually adds data
                         self.scan_array.insert(self.scan_point[0], self.scan_point[1])
                         self.scan_array_counter = self.scan_array_counter + 1
                         print "Scan point " + repr(self.scan_point[0]), " added to array"
@@ -473,7 +472,7 @@ class Core(object):
                 else:
                     repeats = repeats + 1
                     ratio = 0.5 + _rep*0.1
-                    self.scan_SB_sleeper(ratio=ratio, _min=False)
+                    self.scan_SB_sleeper(ratio=ratio, _min=False) # slows down thread
             if self._terminate_flag: break
             self.scan_SB_sleeper()
 
@@ -483,7 +482,7 @@ class Core(object):
         print "Scan Stopped"
         return False  # Saying the scan is stopped
 
-    def scan_settings(self, motor_name, startpos_SB, stoppos_SB, Motors, wait_time_SB):
+    def scan_settings(self, motor_name, startpos_SB, stoppos_SB, Motors, wait_time_SB): #setting some properties based off motor choice
         self.scan_wait_time_SB = wait_time_SB
         for i in range(len(Motors)):
             Motor_inst = Motors[i]
@@ -495,9 +494,8 @@ class Core(object):
 
     def scan_SB_sleeper(self, default_time=2, ratio=1.0, _min=True):
         try:  # Setting wait times to the interval time of the scan's spinbox if it isn't too small
-            if not min:
+            if not _min:
                 sleep_time = default_time
-
             elif self.scan_wait_time_SB.value() >= 0.01:
                 sleep_time = self.wait_time_SB.value() * ratio
             else:
@@ -516,7 +514,7 @@ class Core(object):
         if array is None or not array:
             return False, [], []
         else:
-            try:
+            try:  # getting data relevant to the array entry we actually want
                 (x, y) = [point[x_index] for point in array], [point[y_index] for point in array]
                 return True, x, y
             except IndexError:
@@ -541,8 +539,8 @@ class Core(object):
                 return fixed, x, y
 
     def scan_calculations(self, x, y):
-        calc = Calculation(x, y)
-        self.monitor.update(VAR.SCAN_MAX_Y, calc.y_max_string())
+        calc = Calculation(x, y)  # we do some calculations and set the monitor to them
+        # self.monitor.update(VAR.SCAN_MAX_Y, calc.y_max_string())
         self.monitor.update(VAR.SCAN_MAX_Y_NUM, calc.x_at_y_max())
         self.monitor.update(VAR.SCAN_FWHM, calc.FWHM())
         self.monitor.update(VAR.SCAN_COM, calc.COM())
@@ -596,7 +594,7 @@ class Core(object):
     """ MESHING """
 
     def is_meshing(self, button=None):
-        if button == None:
+        if button == None:  # Silly button stuff is same as scan
             try:
                 button = self.saved_button
             except UnboundLocalError:
@@ -657,8 +655,8 @@ class Core(object):
             raise Exception('Mesh cannot be started as the motor was not Enabled')
 
     def handle_mesh(self):
-        # Thread which handles mesh data
-        # self.mesh_event.wait()
+        # Thread which handles mesh data, incredibly similar to scan, doing a class would've made more sense in retrospect
+        self.mesh_event.wait()
         self.mesh_data = []  # Initalizing empty arrays
         self.mesh_point = []
         while True:
@@ -769,6 +767,7 @@ class Core(object):
         time.sleep(0.01)
         self.move_motor(self.get_motor(ymne, Motors), moveto=float(self.monitor.get_value(yvar)), movetype='Absolute')
 
+    # SAVING DOES NOT EXIST IN THIS VERSION, but here is framwork slightly altered from scan
 
     # def save_mesh_curr(self, filename, x_CB, y_CB):
     #     filedir = self.mesh_dir
@@ -878,7 +877,7 @@ class Core(object):
                             angle_o - angle_pm, angle_o, angle_o + angle_pm, steps, waittime, Motors, center, False)
         self._teminate_cent = False
         self.cent_started = False
-        self.cent_event.set()
+        self.cent_event.set()  # Just allowing thread to start after setting props
 
     def cent_command_buff(self, wait_condit, command, commandargs, message, command2=None, command2args=None, waitsleep=1, finalsleep=7.5):
         while wait_condit():
@@ -887,7 +886,7 @@ class Core(object):
         if not command2 == None:
             command2(*command2args)
         self.set_status(message)
-        time.sleep(finalsleep)
+        time.sleep(finalsleep) # The final sleep is very long, and I belive that this was to solve an issue with the EPICS sudomotors, can be reduced if SPEC probably?
 
     def set_array(self, name, dummy):
         if name == 'neg':
@@ -914,12 +913,13 @@ class Core(object):
             if not terminate:
                 self.is_centering(None)
                 # Each of these blocks are nearly identical, they just tell the motor to go to a position and then scan
+                # we have waits and opportunities to break out at every stage which makes it look quite odd.
                 try:
                     self.cent_command_buff(self.is_moving, self.move_motor, (angle_motor, cent_angle_m, "Absolute"),
                                        "CENTERING: MOVING TO W-", command2=self.move_motor,
-                                       command2args=(scan_motor, cent_scan_start, "Absolute"))
+                                       command2args=(scan_motor, cent_scan_start, "Absolute"), finalsleep=0)
                 except UnboundLocalError:
-                    print "No Motor Chosen \nWill Reset"
+                    self._error_callback = "No Motor Chosen \nWill Reset"
                     self.cent_event.clear()
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
@@ -927,10 +927,9 @@ class Core(object):
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
                 self.cent_started = self.is_centering(None)
-                self.cent_command_buff(self.is_scanning, self.set_array, ('neg', False), "W- Scan Successful", waitsleep=3)
+                self.cent_command_buff(self.is_scanning, self.set_array, ('neg', False), "W- Scan Successful", waitsleep=3,  finalsleep = 2 )
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-
                 self.cent_command_buff(self.is_moving, self.move_motor, (angle_motor, cent_angle_o, "Absolute"),
                                        "CENTERING: MOVING TO Wo", command2=self.move_motor,
                                        command2args=(scan_motor, cent_scan_start, "Absolute"))
@@ -939,7 +938,7 @@ class Core(object):
                 self.cent_command_buff(self.is_moving, self.scan_start, ('Abs', scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: Wo")
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_scanning, self.set_array, ('nau',False), "Wo Scan Successful", waitsleep=3)
+                self.cent_command_buff(self.is_scanning, self.set_array, ('nau',False), "Wo Scan Successful", waitsleep=3, finalsleep =2)
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
 
@@ -951,12 +950,12 @@ class Core(object):
                 self.cent_command_buff(self.is_moving, self.scan_start, ('Abs', scan_motor_name, cent_scan_start, cent_scan_stop, steps, waittime, Motors), "SCANNING: W+")
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
-                self.cent_command_buff(self.is_scanning, self.set_array, ('pos', False), "W+ Scan Successful", waitsleep=3)
+                self.cent_command_buff(self.is_scanning, self.set_array, ('pos', False), "W+ Scan Successful", waitsleep=3, finalsleep =2)
                 if self._terminate_flag: break
                 if self._teminate_cent: continue
                 self.cent_command_buff(self.is_moving, self.move_motor, (angle_motor, cent_angle_o, "Absolute"),
                                        "CENTERING: MOVING BACK", command2=self.move_motor,
-                                       command2args=(scan_motor, cent, "Absolute"))
+                                       command2args=(scan_motor, cent, "Absolute"),  finalsleep = 2 )
                 self.cent_event.clear()
                 self.is_centering(None)
             print "Centering Complete"
@@ -1277,7 +1276,6 @@ class Core(object):
             (x, y) = [point[x_CB.currentIndex()] for point in self.rock_array], [point[y_CB.currentIndex()] for point in self.rock_array]
             return True, x, y
     """SAVE/LOAD"""
-
     def save_table(self, filename, table, vert_head, hor_head):
         filedir = self.pos_dir
         curr_time = time.strftime("%b_%d_%Y_%H-%M-%S")
@@ -1394,9 +1392,7 @@ class Core(object):
         self.monitor.update(VAR.STATUS_MSG, status_msg)
 
     def set_server(self, host='10.52.36.1', port='8585'):
-        """Right now this is simply a placeholder function for an interactive set server
-        This is awful -----------------------------RECODE THIS!!!!-------------------
-        """
+        # we set the default server, if none is set. Lazy code.
         self.monitor.update(VAR.SERVER_HOST, host)
         self.monitor.update(VAR.SERVER_PORT, port)
         self.monitor.update(VAR.SERVER_ADDRESS, ''.join((self.monitor.get_value(VAR.SERVER_HOST), ':', self.monitor.get_value(VAR.SERVER_PORT))))
@@ -1419,7 +1415,6 @@ class Core(object):
             sess = self.term_sess(sess)
             del sess
         SpecConnectionsManager.SpecConnectionsManager().stop()
-
 
     def term_sess(self, sess):
         try:
@@ -1452,10 +1447,6 @@ class Core(object):
                 return motor
         return False  # Failed to find Motor
 
-    def start_soon(self, handle):
-        timer = threading.Timer(1, handle)
-        timer.start()
-
     def error_callback(self, callback):
         self._error_callback = callback
 
@@ -1482,7 +1473,7 @@ class Calculation:
         return " " + "{:.2f}".format(y_max) + "\n@" + r"{:.2f}".format(x_val)
 
     def FWHM_full(self):
-        # modified from http://stackoverflow.com/a/16489955 second comment
+        # Modified from http://stackoverflow.com/a/16489955 second comment
         zeroed_y = np.array(self.y) - min(self.y)
         diff = zeroed_y - ((self.y_max()- min(self.y))/ 2)
         indexes = np.where(diff > 0)[0]
@@ -1501,36 +1492,16 @@ class Calculation:
 
     def COM(self):
         try:
-            return np.average(self.x, weights=(np.array(self.y)-min(self.y)))
+            return np.average(self.x, weights=(np.array(self.y)-min(self.y)))  # 1D weighted average is a COM
         except ZeroDivisionError:
             return 0
-
-    # def Centroid(self):
-    #     x_y=[]
-    #     x_step=[]
-    #     steps=[]
-    #     for i in range(len(self.x)):
-    #         pos = self.x[i]
-    #         intes = self.y[i]
-    #         x_y.append(pos*intes)
-    #         try:
-    #             step = abs(self.x[i+1] - self.x[i])
-    #         except IndexError:
-    #             step = abs(self.x[i] - self.x[i-1])
-    #         steps.append(step)
-    #         x_step.append(step*intes)
-    #     step = np.average(steps)
-    #     try:
-    #         return (step*np.sum(x_y))/(np.sum(x_step))
-    #     except RuntimeWarning:
-    #         return 0
 
 class Calculation3D:
     def __init__(self, x, y, z):
         (self.x, self.y, self.z) = x, y, z
         self.array_z, self.array_labels = self.array_maker()
             
-    def COM(self):
+    def COM(self):  # Find COM, then we get indicies back so we have to do some linear "interpolation"
         x_com_cord, y_com_cord = self.com(self.array_z)
         try:
             x_low, y_low = self.array_labels[int(math.floor(x_com_cord)), int(math.floor(y_com_cord))]
@@ -1542,13 +1513,10 @@ class Calculation3D:
         except TypeError:
             return None, None
 
-    def com(self, inp, labels=None, index=None):
+    def com(self, inp, labels=None, index=None): # find COM indicies, based on the scipy COM calc, but that is in a later version
         normalizer = meas.sum(inp, labels, index)
 
         grids = np.ogrid[[slice(0, i) for i in inp.shape]]
-
-        # results = [sum(filter(None, (inp * grids[dir].astype(float), labels) / normalizer
-        #            for dir in range(inp.ndim)))]
 
         results = [meas.sum(inp * grids[dir].astype(float), labels) / normalizer
                    for dir in range(inp.ndim)]
@@ -1558,7 +1526,7 @@ class Calculation3D:
 
         return [tuple(v) for v in np.array(results).T]
 
-    def array_maker(self):
+    def array_maker(self): # Thus makes an array, most of this is error handling
         x, y, z = (self.x, self.y, self.z)
         xyz = zip(x, y, z)
         array_z = np.empty((x.count(x[0]), y.count(y[0])))

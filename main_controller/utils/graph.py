@@ -22,6 +22,8 @@ class Plotter(Qwt.QwtPlot):
 
         Qwt.QwtPlot.__init__(self, *args)
 
+        self.contour=False
+
         self.setCanvasBackground(Qt.Qt.white)
 
         self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.RightLegend);

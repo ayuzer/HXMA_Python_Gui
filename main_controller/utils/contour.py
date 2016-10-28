@@ -1,22 +1,181 @@
 #!/usr/bin/env python
 
-# The Python version of Qwt-5.0.0/examples/spectrogram
-
-import sys
+# Based off of The Python version of Qwt-5.0.0/examples/spectrogram
 from PyQt4 import Qt
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4 import Qwt5 as Qwt
-import cProfile, pstats, StringIO
 import math
-import scipy
-
-import time
 
 import numpy as np
 
-import random
+class Contour(Qwt.QwtPlot):
+    def __init__(self, *args, **kwargs):
 
+        self.monitor = kwargs['monitor']
+        del kwargs['monitor']
+
+        self.VAR = kwargs['VAR']
+        del kwargs['VAR']
+
+        Qwt.QwtPlot.__init__(self, *args)
+        self.contour=True
+        self.__spectrogram = Qwt.QwtPlotSpectrogram()
+        # LeftButton for the zooming
+        # MidButton for the panning
+        # RightButton: zoom out by 1
+        # Ctrl+RighButton: zoom out to full size
+        self.zoomer = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
+                                        Qwt.QwtPlot.yLeft,
+                                        Qwt.QwtPicker.DragSelection,
+                                        Qwt.QwtPicker.AlwaysOn,
+                                        self.canvas())
+        self.zoomer.setMousePattern(Qwt.QwtEventPattern.MouseSelect2,
+                                    Qt.Qt.RightButton, Qt.Qt.ControlModifier)
+        self.zoomer.setMousePattern(Qwt.QwtEventPattern.MouseSelect3,
+                                    Qt.Qt.RightButton)
+        self.zoomer.setRubberBandPen(Qt.Qt.darkBlue)
+        self.zoomer.setTrackerPen(Qt.Qt.darkBlue)
+
+        if not hasattr(self, 'log'):
+            self.log = False
+
+        xmin = -10
+        ymin = -10
+        xmax = 10
+        ymax = 10
+        x_a = []
+        y_a = []
+        intes = []
+        for x in np.linspace(xmin, xmax, 50):
+            for y in np.linspace(ymin, ymax, 50):
+                x_a.append(x)
+                y_a.append(y)  # I just used a random function from https://www.physicsforums.com/threads/cool-3-d-functions-for-graphing.140087/ to display
+                # intes.append(x+y) # This is the actual function I used for testing. It is much simplier and you can tell where every point should be
+                intes.append(max([-2*(round(math.e**(-(x*2)**2)) + round(math.e**(-(y*2)**2)))+ 2+2*math.cos((x**2+y**2)/4), 25*math.e**(-1*(x**2+y**2)*3)]))
+
+        self.plot(x_a, y_a, intes)
+
+        panner = Qwt.QwtPlotPanner(self.canvas())
+        panner.setAxisEnabled(Qwt.QwtPlot.yRight, False)
+        panner.setMouseButton(Qt.Qt.MidButton)
+
+        # Avoid jumping when labels with more/less digits
+        # appear/disappear when scrolling vertically
+        #
+        fm = Qt.QFontMetrics(self.axisWidget(Qwt.QwtPlot.yLeft).font())
+        self.axisScaleDraw(
+            Qwt.QwtPlot.yLeft).setMinimumExtent(fm.width("100.00"))
+
+    def mousePressEvent(self, event):
+        # print "Mouse PRESS", event.pos()
+
+        canvasPos = self.canvas().mapFrom(self, event.pos())
+        xFloat = self.invTransform(Qwt.QwtPlot.xBottom, canvasPos.x())
+        yFloat = self.invTransform(Qwt.QwtPlot.yLeft, canvasPos.y())
+
+        try:
+            self.monitor.update(self.VAR.MESH_CLICK_X, xFloat)
+            self.monitor.update(self.VAR.MESH_CLICK_Y, yFloat)
+        except (TypeError, AttributeError):
+            print "Canvas not set, clicking is ineffective"
+
+    def plot(self, x=None, y=None, z=None):
+        if (x == None or x == True or x == False) and y == None and z == None:
+            x, y, z = self.old_x, self.old_y, self.old_z
+        else:
+            self.old_x, self.old_y, self.old_z = x, y, z
+
+        if all(p == x[0] for p in x) or all(p == y[0] for p in y):# is data 1D?
+            xy = [x, y]
+            for i, k in enumerate(xy):
+                try: # if the data is 1D we will make it slightly bigger so we can graph a contour of it
+                    if k[0] == k[1]:
+                        xy[i].extend([q+0.1 for q in xy[i]])
+                    else:
+                        xy[i].extend(xy[i])
+                except IndexError:
+                    continue
+            z.extend(z)
+        self.data = SpectrogramData(x, y, z)
+        self.__spectrogram.setData(self.data)
+
+        self.log_check(self.log, replot = False)
+        if self.zoomer.zoomRectIndex() == 0:
+            self.autoscale()
+        else:
+            self.__spectrogram.invalidateCache()
+            self.replot()
+
+    def set_axis_label_x(self, label):
+
+        titleFont = QtGui.QFont('Monospace', 10)
+        titleFont.setWeight(QtGui.QFont.Light)
+
+        xAxisLabel = Qwt.QwtText(label)
+        xAxisLabel.setFont(titleFont)
+        self.setAxisTitle(Qwt.QwtPlot.xBottom, xAxisLabel)
+
+    def set_axis_label_y(self, label):
+
+        titleFont = QtGui.QFont('Monospace', 10)
+        titleFont.setWeight(QtGui.QFont.Light)
+
+        yAxisLabel = Qwt.QwtText(label)
+        yAxisLabel.setFont(titleFont)
+
+        self.setAxisTitle(Qwt.QwtPlot.yLeft, yAxisLabel)
+
+    def autoscale(self):
+        """Auto scale and clear the zoom stack
+        """
+        self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
+        self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
+        self.__spectrogram.invalidateCache()
+        self.zoomer.setZoomBase()
+
+    def log_check(self, log, replot=True):
+        self.log = log
+        min_intes = self.data.intes_array.min()
+        max_intes = math.ceil(self.data.intes_array.max()) + 1.0
+        if log: # most of this is changing color scaling for logarithimc
+            colorMap = Qwt.QwtLinearColorMap(Qt.Qt.darkCyan, Qt.Qt.red)
+            if min_intes <=0:
+                logmin = 0.01
+            else:
+                logmin = min_intes
+
+            self.setAxisScale(Qwt.QwtPlot.yRight,
+                              logmin,
+                              max_intes)
+            oom = int(math.log10(max_intes)) # for log scale we will add in colours depnding on order of magnatiude (oom)
+            map = [[1.0/(10**oom), Qt.Qt.cyan], [0.1, Qt.Qt.yellow], [0.01, Qt.Qt.darkGreen],
+                   [1.0 / (10 ** (oom-1)), Qt.Qt.blue], [1.0 / (10 ** (oom - 2)), Qt.Qt.darkBlue], [1.0 / (10 ** (oom - 3 )), Qt.Qt.green]]
+            for i in range(oom):
+                colorMap.addColorStop(map[i][0], map[i][1])
+            self.__spectrogram.setColorMap(colorMap)
+            self.setAxisScaleEngine(Qwt.QwtPlot.yRight, Qwt.QwtLog10ScaleEngine())
+        else:
+            colorMap = Qwt.QwtLinearColorMap(Qt.Qt.darkCyan, Qt.Qt.red)
+            self.setAxisScale(Qwt.QwtPlot.yRight,
+                             math.floor(min_intes),
+                             math.ceil(max_intes))
+
+            colorMap.addColorStop(0.25, Qt.Qt.cyan)
+            colorMap.addColorStop(0.5, Qt.Qt.darkGreen)
+            colorMap.addColorStop(0.75, Qt.Qt.yellow)
+            self.setAxisScaleEngine(Qwt.QwtPlot.yRight, Qwt.QwtLinearScaleEngine())
+
+            self.__spectrogram.setColorMap(colorMap)
+        self.__spectrogram.attach(self)
+        rightAxis = self.axisWidget(Qwt.QwtPlot.yRight)
+        rightAxis.setTitle("Intensity")
+        rightAxis.setColorBarEnabled(True)
+        rightAxis.setColorMap(self.__spectrogram.data().range(),
+                              self.__spectrogram.colorMap())
+        self.enableAxis(Qwt.QwtPlot.yRight)
+        if replot:
+            self.replot()
 
 class SpectrogramData(Qwt.QwtRasterData):
     def __init__(self, _x, _y, _z):
@@ -29,7 +188,7 @@ class SpectrogramData(Qwt.QwtRasterData):
             for each in point[0]:
                 if point[1] < point[0].count(each):
                     point[1] = point[0].count(each)
-        self.intes_array = np.zeros((points[0][1], points[1][1]))
+        self.intes_array = np.zeros((points[0][1], points[1][1])) # creating an array based off of number of repeated entries
         for index, (x, y) in enumerate(zip(_x, _y)):
             if y not in self.new_y:
                 self.new_y.append(y)
@@ -38,7 +197,7 @@ class SpectrogramData(Qwt.QwtRasterData):
                 self.new_x.append(x)
             i = self.new_x.index(x)
             try:
-                self.intes_array[j, i] = _z[index]
+                self.intes_array[j, i] = _z[index] # build an array from flat
             except IndexError:  # The dimentionality of array can be incorrect due to an issue with SPEC data output
                 adj = False   # This is a crude fix which just adjusts the size of the array up by one to accommodate
                 _j, _i, = self.intes_array.shape
@@ -69,8 +228,6 @@ class SpectrogramData(Qwt.QwtRasterData):
         if not min(self.new_y) == self.new_y[0]:  # Array is not sorted properly
             self.new_y = sorted(self.new_y)
             self.intes_array = np.flipud(self.intes_array)  # we assume that it is exactly reversed so we flip the array too
-        # print self.new_y
-        # print self.new_x
         print self.intes_array
 
         Qwt.QwtRasterData.__init__(self, Qt.QRectF(min(self.new_x), min(self.new_y),
@@ -81,25 +238,6 @@ class SpectrogramData(Qwt.QwtRasterData):
         # print "Begun Raster Initialization"
         ypix = (size.height())
         xpix = (size.width())
-        # if min(self.new_x) < QRect.left():
-        #     left = QRect.left()
-        # else:
-        #     left = min(self.new_x)
-        # if max(self.new_x) > QRect.right():
-        #     right = QRect.right()
-        # else:
-        #     right = max(self.new_x)
-        # if min(self.new_y)  QRect.bottom():
-        #     bottom = QRect.bottom()
-        # else:
-        #     bottom = min(self.new_y)
-        # if max(self.new_y) < QRect.top():
-        #     top = QRect.top()
-        # else:
-        #     top = max(self.new_y)
-        #
-        # x__ = sorted(np.linspace(left, right, xpix, endpoint=False).tolist())
-        # y__ = sorted(np.linspace(bottom, top, ypix, endpoint=False).tolist(), reverse = True)  # this should be reverse but the axis are messsed up??
         x__ = sorted(np.linspace(QRect.left(), QRect.right(), xpix, endpoint=False).tolist())
         y__ = sorted(np.linspace(QRect.bottom(), QRect.top(), ypix, endpoint=False).tolist(),
                      reverse=True)  # this should be reverse but the axis are messsed up??
@@ -111,7 +249,7 @@ class SpectrogramData(Qwt.QwtRasterData):
         self.pairs = pairs
         # print "Initalized Raster"
 
-        self.interp_matrix = self.interpolate_custom(self.new_x, self.new_y, self.intes_array, pairs)
+        self.interp_matrix = self.interpolate_custom(self.new_x, self.new_y, self.intes_array, pairs) # interpolate full matrix so we can pull from it
 
     def value(self, x, y):
         (x1, y1) = self.pairs[0]  # reset count if we are starting
@@ -154,17 +292,24 @@ class SpectrogramData(Qwt.QwtRasterData):
     #
     def rasterHint(self, QwtRect):
         # print "RastHint Started"
-        x_scale = int(25 * len(self.new_x))
+        x_scale = int(25 * len(self.new_x)) # This is resolution, I am forcing it to be small for the most part
         y_scale = int(25 * len(self.new_y))
         if x_scale > 150:
             x_scale = 150
+            if len(self.new_x) > 30:
+                x_scale = 5 * len(self.new_x)
         elif x_scale < 50:
             x_scale = 50
         if y_scale > 150:
             y_scale = 150
+            if len(self.new_x) > 30:
+                x_scale = 5 * len(self.new_x)
         elif y_scale < 50:
             y_scale = 50
         return Qt.QSize(x_scale, y_scale)
+
+    # This interpolation is not mine, http://www.floodhack.org/apidocs/safe.gis.interpolation2d.html or http://api.inasafe.org/_modules/safe/gis/interpolation2d.html
+    # It has all been edited to fit my needs, but not extensively
 
     """Module for 2D interpolation over a rectangular mesh
     This module
@@ -476,233 +621,6 @@ class MouseTracker(Qt.QObject):
         # False indicates event should NOT be eaten
         return False
 
-class Contour(Qwt.QwtPlot):
-    def __init__(self, *args, **kwargs):
-
-        self.monitor = kwargs['monitor']
-        del kwargs['monitor']
-
-        self.VAR = kwargs['VAR']
-        del kwargs['VAR']
-
-        Qwt.QwtPlot.__init__(self, *args)
-        self.__spectrogram = Qwt.QwtPlotSpectrogram()
-
-        self.zoomer = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
-                                        Qwt.QwtPlot.yLeft,
-                                        Qwt.QwtPicker.DragSelection,
-                                        Qwt.QwtPicker.AlwaysOn,
-                                        self.canvas())
-        self.zoomer.setMousePattern(Qwt.QwtEventPattern.MouseSelect2,
-                                    Qt.Qt.RightButton, Qt.Qt.ControlModifier)
-        self.zoomer.setMousePattern(Qwt.QwtEventPattern.MouseSelect3,
-                                    Qt.Qt.RightButton)
-        self.zoomer.setRubberBandPen(Qt.Qt.darkBlue)
-        self.zoomer.setTrackerPen(Qt.Qt.darkBlue)
-
-        if not hasattr(self, 'log'):
-            self.log = False
-
-        xmin = -10
-        ymin = -10
-        xmax = 10
-        ymax = 10
-        x_a = []
-        y_a = []
-        intes = []
-        for x in np.linspace(xmin, xmax, 50):
-            for y in np.linspace(ymin, ymax, 50):
-                x_a.append(x)
-                y_a.append(y)  # I just used a random function from https://www.physicsforums.com/threads/cool-3-d-functions-for-graphing.140087/ to display
-                # intes.append(x+y) # This is the actual function I used for testing. It is much simplier and you can tell where every point should be
-                intes.append(max([-2*(round(math.e**(-(x*2)**2)) + round(math.e**(-(y*2)**2)))+ 2+2*math.cos((x**2+y**2)/4), 25*math.e**(-1*(x**2+y**2)*3)]))
-        #
-        # x_a = sorted(x_a, reverse= True)
-        # y_a = sorted(y_a, reverse=True)
-
-        self.plot(x_a, y_a, intes)
-
-        # LeftButton for the zooming
-        # MidButton for the panning
-        # RightButton: zoom out by 1
-        # Ctrl+RighButton: zoom out to full size
-        #
-        panner = Qwt.QwtPlotPanner(self.canvas())
-        panner.setAxisEnabled(Qwt.QwtPlot.yRight, False)
-        panner.setMouseButton(Qt.Qt.MidButton)
-
-        # Avoid jumping when labels with more/less digits
-        # appear/disappear when scrolling vertically
-        #
-        fm = Qt.QFontMetrics(self.axisWidget(Qwt.QwtPlot.yLeft).font())
-        self.axisScaleDraw(
-            Qwt.QwtPlot.yLeft).setMinimumExtent(fm.width("100.00"))
-        #
-        # fm = Qt.QFontMetrics(self.axisWidget(Qwt.QwtPlot.xBottom).font())
-        # self.axisScaleDraw(
-        #     Qwt.QwtPlot.xBottom).setMinimumExtent(fm.width("100.00"))
-
-    # __init__()
-
-    def showContour(self, on):
-        # pr = cProfile.Profile()
-        # pr.enable()
-        self.__spectrogram.setDisplayMode(
-            Qwt.QwtPlotSpectrogram.ContourMode, on)
-        self.replot()
-        # pr.disable()
-        # s = StringIO.StringIO()
-        # sortby = 'cumulative'
-        # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        # ps.print_stats()
-        # print s.getvalue()
-
-    def mousePressEvent(self, event):
-        # print "Mouse PRESS", event.pos()
-
-        canvasPos = self.canvas().mapFrom(self, event.pos())
-        xFloat = self.invTransform(Qwt.QwtPlot.xBottom, canvasPos.x())
-        yFloat = self.invTransform(Qwt.QwtPlot.yLeft, canvasPos.y())
-
-        try:
-            self.monitor.update(self.VAR.MESH_CLICK_X, xFloat)
-            self.monitor.update(self.VAR.MESH_CLICK_Y, yFloat)
-        except (TypeError, AttributeError):
-            print "Canvas not set, clicking is ineffective"
-
-    # showContour()
-
-    def showSpectrogram(self, on):
-        self.__spectrogram.setDisplayMode(Qwt.QwtPlotSpectrogram.ImageMode, on)
-        if on:
-            pen = Qt.QPen()
-        else:
-            pen = Qt.QPen(Qt.Qt.NoPen)
-        self.__spectrogram.setDefaultContourPen(pen)
-        self.replot()
-
-    def plot(self, x=None, y=None, z=None):
-        if (x == None or x == True or x == False) and y == None and z == None:
-            x, y, z = self.old_x, self.old_y, self.old_z
-        else:
-            self.old_x, self.old_y, self.old_z = x, y, z
-
-        if all(p == x[0] for p in x) or all(p == y[0] for p in y):# is data 1D?
-            xy = [x, y]
-            for i, k in enumerate(xy):
-                try: # if the data is 1D we will make it slightly bigger so we can graph a contour of it
-                    if k[0] == k[1]:
-                        xy[i].extend([q+0.1 for q in xy[i]])
-                    else:
-                        xy[i].extend(xy[i])
-                except IndexError:
-                    continue
-            z.extend(z)
-        self.data = SpectrogramData(x, y, z)
-        self.__spectrogram.setData(self.data)
-
-        self.log_check(self.log, replot = False)
-        if self.zoomer.zoomRectIndex() == 0:
-            self.autoscale()
-        else:
-            self.__spectrogram.invalidateCache()
-            self.replot()
-    def set_axis_label_x(self, label):
-
-        titleFont = QtGui.QFont('Monospace', 10)
-        titleFont.setWeight(QtGui.QFont.Light)
-
-        xAxisLabel = Qwt.QwtText(label)
-        xAxisLabel.setFont(titleFont)
-        self.setAxisTitle(Qwt.QwtPlot.xBottom, xAxisLabel)
-
-    def set_axis_label_y(self, label):
-
-        titleFont = QtGui.QFont('Monospace', 10)
-        titleFont.setWeight(QtGui.QFont.Light)
-
-        yAxisLabel = Qwt.QwtText(label)
-        yAxisLabel.setFont(titleFont)
-
-        self.setAxisTitle(Qwt.QwtPlot.yLeft, yAxisLabel)
-
-
-    def autoscale(self):
-        """Auto scale and clear the zoom stack
-        """
-        self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
-        self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
-        # try:
-        #     print "Axis Scale setting"
-        #     #self.setAxisScale(Qwt.QwtPlot.xBottom, min(self.data.new_x), max(self.data.new_x))  # this breaks everything.... no idea why
-        #     # self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
-        #     self.setAxisScale(Qwt.QwtPlot.yLeft, min(self.data.new_y), max(self.data.new_y))
-        #     print min(self.data.new_x), max(self.data.new_x)
-        #     print min(self.data.new_y), max(self.data.new_y)
-        #     print "Axis Scale set"
-        # except AttributeError:
-        #     print "Axis Scale unset"
-        #     pass
-
-            # self.setAxisAutoScale(Qwt.QwtPlot.xBottom)
-            # self.setAxisAutoScale(Qwt.QwtPlot.yLeft)
-        self.__spectrogram.invalidateCache()
-        self.zoomer.setZoomBase()
-        # #
-        # self.replot()
-
-        # showSpectrogram()
-    def log_check(self, log, replot=True):
-        self.log = log
-        min_intes = self.data.intes_array.min()
-        max_intes = math.ceil(self.data.intes_array.max()) + 1.0
-        # print "Max intes : ",max_intes, "Min Intes : ", min_intes
-        # size_intes = abs(max_intes - min_intes)
-        if log:
-            colorMap = Qwt.QwtLinearColorMap(Qt.Qt.darkCyan, Qt.Qt.red)
-            if min_intes <=0:
-                logmin = 0.01
-            else:
-                logmin = min_intes
-
-            self.setAxisScale(Qwt.QwtPlot.yRight,
-                              logmin,
-                              max_intes)
-            oom = int(math.log10(max_intes)) # for log scale we will add in colours depnding on order of magnatiude (oom)
-            map = [[1.0/(10**oom), Qt.Qt.cyan], [0.1, Qt.Qt.yellow], [0.01, Qt.Qt.darkGreen],
-                   [1.0 / (10 ** (oom-1)), Qt.Qt.blue], [1.0 / (10 ** (oom - 2)), Qt.Qt.darkBlue], [1.0 / (10 ** (oom - 3 )), Qt.Qt.green]]
-            for i in range(oom):
-                colorMap.addColorStop(map[i][0], map[i][1])
-            # colorMap.addColorStop(0.1, Qt.Qt.yellow)
-            # colorMap.addColorStop(0.25, Qt.Qt.cyan)
-            # colorMap.addColorStop(0.5, Qt.Qt.darkGreen)
-            # colorMap.addColorStop(0.75, Qt.Qt.yellow)
-            self.__spectrogram.setColorMap(colorMap)
-            self.setAxisScaleEngine(Qwt.QwtPlot.yRight, Qwt.QwtLog10ScaleEngine())
-
-            # print "log"
-        else:
-            colorMap = Qwt.QwtLinearColorMap(Qt.Qt.darkCyan, Qt.Qt.red)
-            self.setAxisScale(Qwt.QwtPlot.yRight,
-                             math.floor(min_intes),
-                             math.ceil(max_intes))
-
-            colorMap.addColorStop(0.25, Qt.Qt.cyan)
-            colorMap.addColorStop(0.5, Qt.Qt.darkGreen)
-            colorMap.addColorStop(0.75, Qt.Qt.yellow)
-            self.setAxisScaleEngine(Qwt.QwtPlot.yRight, Qwt.QwtLinearScaleEngine())
-
-            self.__spectrogram.setColorMap(colorMap)
-            # print "linear"
-        self.__spectrogram.attach(self)
-        rightAxis = self.axisWidget(Qwt.QwtPlot.yRight)
-        rightAxis.setTitle("Intensity")
-        rightAxis.setColorBarEnabled(True)
-        rightAxis.setColorMap(self.__spectrogram.data().range(),
-                              self.__spectrogram.colorMap())
-        self.enableAxis(Qwt.QwtPlot.yRight)
-        if replot:
-            self.replot()
 
 #
 # class Contour()

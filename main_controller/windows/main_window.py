@@ -74,7 +74,7 @@ class COLOR(object):
 
 #------------------------------------------------------------------------------
 
-RELEASE_DATE            = 'NOT Released : IN TESTING'
+RELEASE_DATE            = 'October 28th, 2016'
 
 PLOT_TITLE = "SCAN POSITION vs INTENSITY"
 PLOT_LABEL_X = "POSITION"
@@ -453,7 +453,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         """PICTURE"""
         pic = QtGui.QLabel(self.label_motor_picture)
-        pixmap = QtGui.QPixmap('/staff/hamelm/Documents/stage_background.png')
+        pixmap = QtGui.QPixmap('graphics/stage_background.png')
         pic.setPixmap(pixmap.scaled(500, 500, QtCore.Qt.KeepAspectRatio))
         pic.show()
 
@@ -461,6 +461,10 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.pushButton_open_pos_load.clicked.connect(self.handle_action_save_load)
         self.saved_pos = []
 
+        """RANDOM"""
+
+        self.all_plots = [self.scan_plot_id, self.rock_plot_id, self.mesh_plot_id, self.cent_plot_id,
+                          self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3, ]
 
         self.init_label_props()
 
@@ -468,6 +472,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
         self.old_scan_x, self.old_scan_y = ([] for _ in range(2))
         self.old_mesh_x, self.old_mesh_y, self.old_mesh_intes = ([] for _ in range(3))
+
 
     """POPUPS"""
     def handle_action_save_load(self):  # starts our cell saving/loading popup
@@ -1371,6 +1376,9 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                   [self.label_scan_CWHM, {'hover': 'Position of the center of half maximum, \nDouble click to move to',
                                                     'move_motor': self.comboBox_scan_motor,
                                                     }],
+                  [self.label_scan_max_y, {'hover': 'Position of the maximum, \nDouble click to move to',
+                                          'move_motor': self.comboBox_scan_motor,
+                                          }],
                   [self.label_scan_COM, {'hover': 'Position of the center of mass, \nDouble click to move to',
                                           'move_motor': self.comboBox_scan_motor,
                                           }],
@@ -1385,15 +1393,42 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
                   [self.label_cent_calc_cent_y, {'hover': 'Position of the relative calculated Y position, \nDouble click to move to',
                                             'move_motor_rel': 'Centre Y'
                                             }],
-                  [self.checkBox_motor_all_checkpos, {'hover': 'Allows constant checking of all motors on the Move Page',
-                                                      }],
-                  [self.checkBox_SPEC_checkpos, {
-                      'hover': 'Allows constant checking of all motors in the SPEC Tab',
-                      }],
-                  [self.progressBar_rock, {
-                      'hover': 'Progress UNTIL last rock',
-                      }],
-                   ]
+
+                  [self.doubleSpinBox_cent_angle_pm, {'hover': 'How far omega will move from center on + and -\nReccomended to start low(2) and increase on later centerings'}],
+
+                  [self.doubleSpinBox_cent_angle_o, {'hover': 'Where will omega start?'}],
+
+                  [self.doubleSpinBox_cent_relmax, {'hover': 'Relative to current center where should scan start?'}],
+
+                  [self.doubleSpinBox_cent_relmin, {'hover': 'Relative to current center where should scan stop?'}],
+
+                  [self.doubleSpinBox_cent_steps, {'hover': 'How many steps per scan?'}],
+
+                  [self.doubleSpinBox_cent_waittime, {'hover': 'How much time spent collecting counts at each stop?'}],
+
+                  [self.doubleSpinBox_cent_waittime, {'hover': 'How much time spent collecting counts at each stop?'}],
+
+                  [self.comboBox_cent_data_x, {'hover': 'Choose data to display on X Axis\nScan X is reccomended'}],
+
+                  [self.comboBox_cent_data_y, {'hover': 'Choose data to display on Y Axis\nIntensity at Beam Stop is reccomended'}],
+
+                  [self.doubleSpinBox_rock_startpos, {'hover': 'Start of Rocking, one endpoint'}],
+
+                  [self.doubleSpinBox_rock_stoppos, {'hover': 'Stop of Rocking, other endpoint'}],
+
+                  [self.doubleSpinBox_rock_steps, {'hover': 'Steps per rock'}],
+
+                  [self.doubleSpinBox_rock_waittime, {'hover': 'Time spent at each point'}],
+
+                  [self.doubleSpinBox_rock_time, {'hover': 'Minimum rocking time, after this no new rocks will occur, ongoing rocks do not change'}],
+
+                  [self.checkBox_mesh_log, {'hover': 'Enable log/normal scaling, will not change data, only display'}],
+
+                  [self.comboBox_rock_motor, {'hover': 'Choose motor to rock, angular motor is reccomended'}],
+
+                  [self.progressBar_rock, {'hover': 'Progress until last rock'}],
+        ]
+
         move_cbs, move_sbs = ([] for _ in range(2))
         for item in self.Motors+self.beam_cond:
             move_cbs.append(item.MoveType_CB)
@@ -1408,6 +1443,25 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             labels.append([cb, cb_dict])
         for sb in move_sbs:
             labels.append([sb, sb_dict])
+
+        plot_dict = {'hover':"This plot will dynamically update after a scan begins\n"
+                             "\nLeft Shift + Left Drag  = Zoom into area "
+                             "\nRight Click                   = Zoom out 1 layer"
+                             "\nMiddle Click                 = Zoom out to full size"
+                             "\n\nIf the graph is completely zoomed out, it will Autoscale"
+                   }
+        contour_dict = {'hover': "This plot will dynamically update once mesh data is made\n"
+                                 "\nLeft Drag               =      Zoom into area "
+                                 "\nRight Click             =      Zoom out 1 layer"
+                                 "\nCtrl + RighButton   =      Zoom out to full size"
+                                 "\nMiddle Click           =      Panning, hold to move area"
+                                 "\n\nIf the graph is completely zoomed out, it will Autoscale"
+                     }
+        for plot in self.all_plots:
+            if plot.contour:
+                labels.append([plot, contour_dict])
+            else:
+                labels.append([plot, plot_dict])
 
         for label in labels:
             item, dict = label[0], label[1]
@@ -1522,7 +1576,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
             VAR.MESH_COM_X:         (self.label_mesh_com_x,         '{:,.3f}',  9, True),
             VAR.MESH_COM_Y:         (self.label_mesh_com_y,         '{:,.3f}',  9, True),
 
-            VAR.SCAN_MAX_Y:         (self.label_scan_max_y,         '{:s}',     12, True),
+            VAR.SCAN_MAX_Y_NUM:     (self.label_scan_max_y,         '{:.2f}',   12, True),
             VAR.SCAN_FWHM:          (self.label_scan_FWHM,          '{:.2f}',   12, True),
             VAR.SCAN_COM:           (self.label_scan_COM,           '{:.2f}',   12, True),
             VAR.SCAN_CWHM:          (self.label_scan_CWHM,          '{:.2f}',   12, True),
@@ -1708,8 +1762,7 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
         self.cent_plot_id_2.terminate()
         self.cent_plot_id_3.terminate()
 
-        for plot in [self.scan_plot_id, self.rock_plot_id, self.mesh_plot_id, self.cent_plot_id,
-                     self.cent_plot_id_1, self.cent_plot_id_2, self.cent_plot_id_3,]:
+        for plot in self.all_plots:
             try:
                 plot.timer.stop()
             except AttributeError:

@@ -1426,6 +1426,8 @@ class MainWindow(QtGui.QMainWindow, UiMixin, DragTextMixin, ServMixin, ScanMixin
 
                   [self.comboBox_rock_motor, {'hover': 'Choose motor to rock, angular motor is reccomended'}],
 
+                  [self.lineEdit_send_SPEC, {'hover': 'Sends command directly to SPEC on enter'}],
+
                   [self.progressBar_rock, {'hover': 'Progress until last rock'}],
         ]
 
